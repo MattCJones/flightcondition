@@ -1,0 +1,8 @@
+*__pycache__
+TODO*
+build
+dist
+*.egg-info
+scripts
+tags
+archive
