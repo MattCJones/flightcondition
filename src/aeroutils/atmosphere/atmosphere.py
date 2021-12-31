@@ -17,8 +17,8 @@ from functools import wraps
 
 from ..constants import Physical as Phys
 from ..constants import Atmosphere as Atmo
-from ..units import unit, dimless, check_dimensioned,\
-        check_length_dimensioned, to_base_units_wrapper
+from ..units import unit, check_dimensioned, check_length_dimensioned,\
+    to_base_units_wrapper
 
 
 def _len1array_to_scalar(func):
@@ -61,23 +61,25 @@ class Atmosphere():
 
     Usage:
 
-        from aeroutils.atmosphere import Atmosphere
-        from aeroutils.units import *
+        from aeroutils import Atmosphere, unit
 
         # Compute atmospheric data for a scalar or array of altitudes
-        h = [0.0, 12.0, 33.5] * unit('km')
+        h = [0.0, 12.7, 44.2, 81.0] * unit('km')
         atm = Atmosphere(h)
-        print(f"Abbreviated output: {atm}")
-        print(f"Extended output in Imperial units: "
+        print(f"Abbreviated output:\n{atm}")
+        print(f"Extended output in Imperial units:\n"
             f"{atm.tostring(short_repr=False, imperial_units=False)}")
+        # See also the linspace() function from numpy, e.g.
+        # h = linspace(0, 81.0, 82) * unit('km')
 
         # Access individual properties and convert to desired units: "
-        print(f"\np={atm.p}\nT={atm.T.to('degR')}\nrho={atm.rho.to('kg/m^3')}")
+        p, T, rho, nu, a = atm.p, atm.T, atm.rho, atm.nu, atm.a
+        print(f"\nThe pressure in psi is {p.to('psi'):.5g}")
 
-        # Compute properties such as thermal conductivity, mean free path and
-        # many more!
-        print(f"\nthermal conductivity k={atm.k}"
-            f"\nmean free path = {atm.mean_free_path} and many more!")
+        # Compute additional properties such as thermal conductivity,
+        # mean free path, and more (see class for all options)
+        print(f"\nThe thermal conductivity is {atm.k:.5g}"
+            f"\nThe mean free path = {atm.mean_free_path:.5g}")
     """
 
     class Layer():
@@ -165,7 +167,7 @@ class Atmosphere():
 
         """
 
-        self._h = self._process_input_altitude(altitude)
+        self._h = __class__._process_input_altitude(altitude)
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)
 
@@ -176,7 +178,8 @@ class Atmosphere():
         """
         return self.tostring(short_repr=True)
 
-    def _process_input_altitude(self, alt):
+    @staticmethod
+    def _process_input_altitude(alt):
         """Check that input is of type Quantity from pint package. Check that
         input is length dimension.  Check bounds.  Format as array even if
         scalar input.
@@ -186,7 +189,6 @@ class Atmosphere():
 
         """
         h = atleast_1d(alt)
-        self.arr_len = size(h)
 
         check_dimensioned(h)
         check_length_dimensioned(h)
@@ -194,14 +196,16 @@ class Atmosphere():
         if len(shape(h)) > 1:
             raise TypeError("Input must be scalar or 1-D array.")
 
-        # Limits to input geometric height
-        h_min = -5.004 * unit('km')
-        h_max = 81.020 * unit('km')
+        H_min = Atmo.H_base[0]
+        H_max = Atmo.H_base[-1]
+
+        h_min = __class__.h_from_H(H_min)
+        h_max = __class__.h_from_H(H_max)
 
         if (h < h_min).any() or (h > h_max).any():
             raise ValueError(
-                    f"Input altitude is out of bounds: "
-                    f"{Atmo.h_min:.0g} < h < {Atmo.h_max:.0g}"
+                f"Input altitude is out of bounds "
+                f"({h_min:.5g} < h < {h_max:.5g})"
                 )
 
         return h

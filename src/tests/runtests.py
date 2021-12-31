@@ -14,14 +14,14 @@ import sys
 
 from numpy import array
 
-from pathlib import Path
+# Uncomment below for running tests pre-built
+# from pathlib import Path
 # package_root_directory = Path(__file__).resolve().parents[1]/"aeroutils"
 # sys.path.append(str(package_root_directory))
 
-from aeroutils.atmosphere import Atmosphere
-from aeroutils.flightcondition import FlightCondition
-from aeroutils.units import *
+from aeroutils import Atmosphere, FlightCondition, unit, dimless
 
+# Atmospheric ground truth data
 h_geom_truth_arr = [
         0,  5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000,
         50000, 55000, 60000, 65000, 70000, 75000, 80000] * unit('m')
@@ -60,6 +60,13 @@ nu_inf_truth_arr = [
         5.11412252e-02, 9.26179078e-02, 1.73576137e-01, 3.44655513e-01,
         7.15580116e-01] * unit('m^2/s')
 
+maxpercdiff = 0.01
+
+
+def percdiff(arg1, arg2):
+    """Percentage difference of arg1 relative to arg2 """
+    return 100*(arg1 - arg2)/arg2
+
 
 def ut_print(*args, **kwargs):
     """Print that takes into account verbosity level of test suite. """
@@ -73,6 +80,7 @@ class TestStandardAtm(unittest.TestCase):
 
     def setUp(self):
         """Set up fields and testing function. """
+
         ut_print("\nComputing standard atmosphere fields")
         atm = Atmosphere(h_geom_truth_arr)
         self.h_geop_arr = atm.H
@@ -90,13 +98,15 @@ class TestStandardAtm(unittest.TestCase):
                     h_geom_truth_arr.to('km').magnitude,
                     field_arr.to(unit_str).magnitude,
                     field_truth_arr.to(unit_str).magnitude):
+                pd = percdiff(field, field_truth)
                 self.assertAlmostEqual(
-                    field, field_truth, places=N_precision,
+                    0, pd, delta=maxpercdiff,
                     msg=f"Failed at z={h_geom_truth:.2g} km")
         self.test_field = test_field
 
     def test_h_geop(self):
-        self.test_field(self.h_geop_arr, h_geop_truth_arr, 'h_geop', 'km')
+        self.test_field(self.h_geop_arr[1:], h_geop_truth_arr[1:], 'h_geop',
+                        'km')
 
     def test_T_inf(self):
         self.test_field(self.T_inf_arr, T_inf_truth_arr, 'T_inf', 'degC')
@@ -125,28 +135,92 @@ class TestFlightCondition(unittest.TestCase):
         self.h_geom_arr = [0, 30e3] * unit('ft')
 
         def test_field(field_arr, field_truth_arr, field_name, unit_str):
-            N_precision = 4
             """Test that output field matches truth data. """
             ut_print("\nTesting {field_name}")
             for h_geom, field, field_truth in zip(
                     self.h_geom_arr.to('kft').magnitude,
                     field_arr.to(unit_str).magnitude,
                     field_truth_arr.to(unit_str).magnitude):
-                self.assertAlmostEqual(field, field_truth, places=N_precision,
+                pd = percdiff(field, field_truth)
+                self.assertAlmostEqual(0, pd, delta=maxpercdiff,
                                        msg=f"Failed at h={h_geom:.2g} kft")
         self.test_field = test_field
 
-    def test_EAS(self):
-        fc = FlightCondition(self.h_geom_arr, EAS=300*unit('knots'))
-        EAS_result = fc.EAS
-        EAS_truth = array([300, 300]) * unit('knots')
-        self.test_field(EAS_result, EAS_truth, 'KEAS', 'knots')
+    def test_TAS(self):
+        fc = FlightCondition(self.h_geom_arr, TAS=300*unit('knots'))
+        TAS_truth = array([300, 300]) * unit('knots')
+        self.test_field(fc.TAS, TAS_truth, 'KTAS', 'knots')
+        CAS_truth = array([300, 187.7518]) * unit('knots')
+        self.test_field(fc.CAS, CAS_truth, 'KCAS', 'knots')
+        EAS_truth = array([300, 183.6448]) * unit('knots')
+        self.test_field(fc.EAS, EAS_truth, 'KEAS', 'knots')
+        mach_truth = array([0.4535, 0.5090]) * dimless
+        self.test_field(fc.mach, mach_truth, 'mach', 'dimensionless')
 
     def test_CAS(self):
         fc = FlightCondition(self.h_geom_arr, CAS=300*unit('knots'))
-        CAS_result = fc.EAS
-        CAS_truth = array([300, 285.0357]) * unit('knots')
-        self.test_field(CAS_result, CAS_truth, 'KCAS', 'knots')
+        TAS_truth = array([300, 465.6309]) * unit('knots')
+        self.test_field(fc.TAS, TAS_truth, 'KTAS', 'knots')
+        CAS_truth = array([300, 300]) * unit('knots')
+        self.test_field(fc.CAS, CAS_truth, 'KCAS', 'knots')
+        EAS_truth = array([300, 285.0357]) * unit('knots')
+        self.test_field(fc.EAS, EAS_truth, 'KEAS', 'knots')
+        mach_truth = array([0.4535, 0.7900]) * dimless
+        self.test_field(fc.mach, mach_truth, 'mach', 'dimensionless')
+
+    def test_EAS(self):
+        fc = FlightCondition(self.h_geom_arr, EAS=300*unit('knots'))
+        TAS_truth = array([300, 490.0764]) * unit('knots')
+        self.test_field(fc.TAS, TAS_truth, 'KTAS', 'knots')
+        CAS_truth = array([300, 317.3602]) * unit('knots')
+        self.test_field(fc.CAS, CAS_truth, 'KCAS', 'knots')
+        EAS_truth = array([300, 300]) * unit('knots')
+        self.test_field(fc.EAS, EAS_truth, 'KEAS', 'knots')
+        mach_truth = array([0.4535, 0.8314]) * dimless
+        self.test_field(fc.mach, mach_truth, 'mach', 'dimensionless')
+
+    def test_mach(self):
+        fc = FlightCondition(self.h_geom_arr, mach=0.88*dimless)
+        TAS_truth = array([582.1012, 518.7004]) * unit('knots')
+        self.test_field(fc.TAS, TAS_truth, 'KTAS', 'knots')
+        CAS_truth = array([582.1012, 337.977]) * unit('knots')
+        self.test_field(fc.CAS, CAS_truth, 'KCAS', 'knots')
+        EAS_truth = array([582.1012, 317.5222]) * unit('knots')
+        self.test_field(fc.EAS, EAS_truth, 'KEAS', 'knots')
+        mach_truth = array([0.88, 0.88]) * dimless
+        self.test_field(fc.mach, mach_truth, 'mach', 'dimensionless')
+
+    def test_reynolds_number(self):
+        ell = 5.34 * unit('ft')
+        h_geom = 44.5 * unit('km')
+        M_inf = 0.93 * dimless
+        fc = FlightCondition(h_geom, mach=M_inf)
+
+        Re_test = fc.reynolds_number(ell).magnitude
+        Re_truth = 62278
+        self.assertAlmostEqual(Re_test, Re_truth,
+                               delta=1,
+                               msg=f"Reynolds number failed.")
+
+        ell_unit = 'in'
+        Re_by_ell_test = fc.reynolds_number_per_unit_length(ell_unit).magnitude
+        Re_by_ell_truth = 971.88
+        self.assertAlmostEqual(Re_by_ell_test/1e3, Re_by_ell_truth/1e3,
+                               delta=0.01,
+                               msg=f"Reynolds number per length failed.")
+
+    def test_input_bounds(self):
+        """Test that input is properly bounded. """
+        M_inf = 0.44 * dimless
+        h_below_min = (-4.996-0.001) * unit('km')
+        with self.assertRaises(ValueError):
+            FlightCondition(h_below_min, mach=M_inf)
+
+        h_above_max = (81.02+0.01) * unit('km')
+        with self.assertRaises(ValueError):
+            FlightCondition(h_above_max, mach=M_inf)
+
+        # TODO 2022-01-01: determine, encode, and test Mach bounds
 
 
 if __name__ == '__main__':

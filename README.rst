@@ -8,10 +8,10 @@ About
 This module contains commonly-used aerospace utilities for problem solving.
 
     * **Flight Condition**: input altitude to compute common flight condition
-      data.  Easily swap between true airspeed, calibrated airspeed, and
-      equivalent airspeed.  Includes atmospheric data.
+      data.  Easily swap between Mach number, true airspeed, calibrated
+      airspeed, and equivalent airspeed.  Includes atmospheric data.
     * **Atmosphere**: input altitude to compute 1993 International Standard
-      Atmosphere data.  Additional derived quantities also included.
+      Atmosphere data.  Many relevant, derived quantities are included.
 
 
 Author
@@ -25,7 +25,7 @@ Installation
 Install Commands
 ----------------
 
-Install using the *pip* package-management system.  The easiest method is to
+Install using the :code:`pip` package-management system.  The easiest method is to
 open the terminal and run:
 
 .. code-block:: bash
@@ -33,7 +33,7 @@ open the terminal and run:
     pip install aeroutils
 
 Alternatively, manually download the `source code
-<https://github.com/MattCJones/aeroutils>`, unpack, and run:
+<https://github.com/MattCJones/aeroutils>`_, unpack, and run:
 
 .. code-block:: bash
 
@@ -67,49 +67,54 @@ Outputs include:
     * Equivalent airspeed :code:`EAS`
     * Dynamic pressure :code:`q_inf`
     * Reynolds number :code:`reynolds_number(ell)`
-    * Reynolds number per unit length
-      :code:`reynolds_number_by_unit_length(length_unit)`
+    * Reynolds number per-unit-length
+      :code:`reynolds_number_per_unit_length(length_unit)`
     * Atmosphere data :code:`atm` (see :code:`atmosphere` below) 
 
 Usage:
 
 .. code-block:: python
 
-    from aeroutils.flightcondition import FlightCondition
-    from aeroutils.units import *
+    from aeroutils import FlightCondition, unit, dimless
 
     # Compute flight conditions for a scalar or array of altitudes
     altitudes = [0, 10e3, 33.5e3] * unit('ft')
     fc = FlightCondition(altitudes, EAS=300*unit('knots'))
-    print(f"\nAirspeed in multiple formats: {fc}")
-    print(f"Even more data: {fc.tostring()}")
-    print(f"Access atmospheric data (see Atmosphere class): {fc.atm}")
+    print(f"Flight condition data including mach, TAS, CAS, EAS"
+        f"+ atmospheric properties:\n{fc}")
+    print(f"\nEven more data:\n{fc.tostring()}")
 
-    # Or view fc formats individually:")
-    print(f"\nThe Mach number is {fc.mach:.5g}")
-    print(f"The true fc is {fc.TAS:.5g}")
-    print(f"The calibrated fc is {fc.CAS:.5g}")
-    print(f"The equivalent fc is {fc.EAS:.5g}")
+    # Access flight speed formats individually
+    M_inf, U_inf, U_CAS, U_EAS = fc.mach, fc.TAS, fc.CAS, fc.EAS
 
-    # Define flight condition with Mach number, TAS, CAS, or EAS:")
-    fc = FlightCondition(altitudes, mach=0.4535*dimless)
-    fc = FlightCondition(altitudes, TAS=300*unit('knots'))
-    fc = FlightCondition(altitudes, CAS=300*unit('knots'))
-    fc = FlightCondition(altitudes, EAS=300*unit('knots'))
+    # Access atmospheric data alone (see Atmosphere class for options)
+    atm = fc.atm  # access Atmosphere object 'atm'
+    p, T, rho, nu, a = atm.p, atm.T, atm.rho, atm.nu, atm.a
 
-    # Compute flight condition data based on input length scale
-    ell = 5 * unit('ft')
-    print(f"\nThe Reynolds number is {fc.reynolds_number(ell):.5g}")
-    print(f"The Reynolds number per unit length is "
-        f"{fc.reynolds_number_by_unit_length('in'):.5g}")
+    # Input true/calibrated/equivalent airspeed or Mach number
+    fc_TAS = FlightCondition(altitudes, TAS=300*unit('knots'))
+    fc_CAS = FlightCondition(altitudes, CAS=300*unit('knots'))
+    fc_EAS = FlightCondition(altitudes, EAS=300*unit('knots'))
+    fc_mach = FlightCondition(altitudes, mach=0.4535*dimless)
 
-    # Use unit functionality to convert dimensions as desired:")
-    print(f"\nThe dynamic pressure is {fc.q_inf.to('psi'):.5g}")
+    # Specify desired units on input and output
+    altitudes_in_km = [0, 3.048, 10.2108] * unit('km')
+    fc_alt_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
+    U_TAS = fc_alt_units.TAS
+    print(f"\nThe true airspeed in m/s is {U_TAS.to('m/s'):.5g}")
+    print(f"The true airspeed in km/s is {U_TAS.to('km/s'):.5g}")
+
+    # Compute additional derived quantities (see class for all options)
+    print(f"\nThe dynamic pressure in psi is {fc.q_inf.to('psi'):.5g}")
+    ell = 60 * unit('in')  # arbitrary length scale of interest
+    print(f"The Reynolds number is {fc.reynolds_number(ell):.5g}")
+    print(f"The Reynolds number per-unit-length [1/in] is "
+        f"{fc.reynolds_number_per_unit_length('in'):.5g}")
 
 Atmosphere Package
 ------------------------
 
-The code:`atmosphere` package can be used to compute and interact with common
+The :code:`atmosphere` package can be used to compute and interact with common
 standard atmosphere data and derived quantities.
 
 Outputs include:
@@ -131,35 +136,36 @@ Usage:
 
 .. code-block:: python
 
-    from aeroutils.atmosphere import Atmosphere
-    from aeroutils.units import *
+    from aeroutils import Atmosphere, unit
 
     # Compute atmospheric data for a scalar or array of altitudes
-    h = [0.0, 12.0, 33.5] * unit('km')
+    h = [0.0, 12.7, 44.2, 81.0] * unit('km')
     atm = Atmosphere(h)
-    print(f"Abbreviated output: {atm}")
-    print(f"Extended output in Imperial units: "
+    print(f"Abbreviated output:\n{atm}")
+    print(f"Extended output in Imperial units:\n"
         f"{atm.tostring(short_repr=False, imperial_units=False)}")
+    # See also the linspace() function from numpy, e.g.
+    # h = linspace(0, 81.0, 82) * unit('km')
 
     # Access individual properties and convert to desired units: "
-    print(f"\np={atm.p}\nT={atm.T.to('degR')}\nrho={atm.rho.to('kg/m^3')}")
+    p, T, rho, nu, a = atm.p, atm.T, atm.rho, atm.nu, atm.a
+    print(f"\nThe pressure in psi is {p.to('psi'):.5g}")
 
-    # Compute properties such as thermal conductivity, mean free path and
-    # many more!
-    print(f"\nthermal conductivity k={atm.k}"
-        f"\nmean free path = {atm.mean_free_path} and many more!")
-
+    # Compute additional properties such as thermal conductivity,
+    # mean free path, and more (see class for all options)
+    print(f"\nThe thermal conductivity is {atm.k:.5g}"
+        f"\nThe mean free path = {atm.mean_free_path:.5g}")
 License
 =======
 
-aeroutils is licensed under the MIT LICENSE. See the LICENSE document.
+:code:`aeroutils` is licensed under the MIT LICENSE. See the `LICENSE <https://github.com/MattCJones/aeroutils/blob/main/LICENSE>`_ document.
 
 Disclaimer
 =======
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The software is provided "as is", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose and noninfringement. In no event shall the
+authors or copyright holders be liable for any claim, damages or other
+liability, whether in an action of contract, tort or otherwise, arising from,
+out of or in connection with the software or the use or other dealings in the
+software.

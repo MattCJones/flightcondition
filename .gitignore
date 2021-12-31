@@ -1,8 +1,11 @@
-*__pycache__
-TODO*
+archive
 build
 dist
-*.egg-info
-scripts
+do
+do.py
+do.sh
 tags
-archive
+TODO*
+scripts
+*.egg-info
+*__pycache__
