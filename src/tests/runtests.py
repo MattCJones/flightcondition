@@ -209,18 +209,34 @@ class TestFlightCondition(unittest.TestCase):
                                delta=0.01,
                                msg=f"Reynolds number per length failed.")
 
-    def test_input_bounds(self):
-        """Test that input is properly bounded. """
+    def test_input_altitude_bounds(self):
+        """Test that input altitude is properly bounded. Both FlightCondition
+        and Atmosphere are covered in test since embedded Atmosphere object
+        raises error.
+        """
         M_inf = 0.44 * dimless
-        h_below_min = (-4.996-0.001) * unit('km')
+        atm = Atmosphere(0*unit('km'))
+
+        h_below_min = atm._h_min*1.01
         with self.assertRaises(ValueError):
             FlightCondition(h_below_min, mach=M_inf)
 
-        h_above_max = (81.02+0.01) * unit('km')
+        h_above_max = atm._h_max*1.01
         with self.assertRaises(ValueError):
             FlightCondition(h_above_max, mach=M_inf)
 
-        # TODO 2022-01-01: determine, encode, and test Mach bounds
+    def test_mach_bounds(self):
+        """Test that input is properly bounded. """
+        h_geom = 13.37 * unit('km')
+        fc = FlightCondition(h_geom, mach=0.42*dimless)
+
+        M_below_min = fc._mach_min - (0.00001*dimless)
+        with self.assertRaises(ValueError):
+            FlightCondition(h_geom, mach=M_below_min)
+
+        M_above_max = fc._mach_max*1.01
+        with self.assertRaises(ValueError):
+            FlightCondition(h_geom, mach=M_above_max)
 
 
 if __name__ == '__main__':

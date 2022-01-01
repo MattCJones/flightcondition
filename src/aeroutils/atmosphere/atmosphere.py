@@ -167,7 +167,14 @@ class Atmosphere():
 
         """
 
-        self._h = __class__._process_input_altitude(altitude)
+        # Compute altitude bounds
+        self._H_min = Atmo.H_base[0]
+        self._H_max = Atmo.H_base[-1]
+        self._h_min = __class__.h_from_H(self._H_min)
+        self._h_max = __class__.h_from_H(self._H_max)
+
+        # Process altitude input
+        self._h = self._process_input_altitude(altitude)
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)
 
@@ -178,8 +185,7 @@ class Atmosphere():
         """
         return self.tostring(short_repr=True)
 
-    @staticmethod
-    def _process_input_altitude(alt):
+    def _process_input_altitude(self, alt):
         """Check that input is of type Quantity from pint package. Check that
         input is length dimension.  Check bounds.  Format as array even if
         scalar input.
@@ -196,16 +202,10 @@ class Atmosphere():
         if len(shape(h)) > 1:
             raise TypeError("Input must be scalar or 1-D array.")
 
-        H_min = Atmo.H_base[0]
-        H_max = Atmo.H_base[-1]
-
-        h_min = __class__.h_from_H(H_min)
-        h_max = __class__.h_from_H(H_max)
-
-        if (h < h_min).any() or (h > h_max).any():
+        if (h < self._h_min).any() or (self._h_max < h).any():
             raise ValueError(
                 f"Input altitude is out of bounds "
-                f"({h_min:.5g} < h < {h_max:.5g})"
+                f"({self._h_min:.5g} < h < {self._h_max:.5g})"
                 )
 
         return h

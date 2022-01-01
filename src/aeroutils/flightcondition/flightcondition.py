@@ -12,11 +12,11 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import ones, sqrt, shape
+from numpy import atleast_1d, ones, sqrt, shape
 
 from ..atmosphere import Atmosphere
 from ..constants import Physical as Phys
-from ..units import unit, check_dimensioned, to_base_units_wrapper, \
+from ..units import unit, check_dimensioned, dimless, to_base_units_wrapper, \
         check_length_dimensioned, to_base_units_wrapper
 
 
@@ -81,13 +81,14 @@ class FlightCondition:
 
         """
 
-        h_geom = Atmosphere._process_input_altitude(h_geom)
-        h_geom = h_geom[0] if h_geom.size == 1 else h_geom
-        self.h_geom = h_geom
+        # Automatically process altitude through Atmosphere class
+        self.atm = Atmosphere(h_geom)
+        # h_geom = self.atm.h
+        # h_geom = h_geom[0] if h_geom.size == 1 else h_geom
+        self.h_geom = self.atm.h
 
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
-        self.atm = Atmosphere(self.h_geom)
 
         p_inf = self.atm.p
         p_inf_h0 = self._atm0.p
@@ -109,6 +110,7 @@ class FlightCondition:
             self.CAS = self.checkandsize(CAS)
             self.q_c = self.q_c_from_CAS(self.CAS)
             self.mach = self.M_inf_from_q_c(self.q_c)
+            # self.mach = self.M_inf_from_CAS(CAS) # does not work
             self.TAS = self.TAS_from_M_inf(self.mach)
             self.EAS = self.EAS_from_TAS(self.TAS, self.mach)
         elif EAS is not None:
@@ -120,6 +122,71 @@ class FlightCondition:
         else:
             raise TypeError("Input mach, TAS, CAS, or EAS")
         self.q_inf = self.q_inf_from_TAS(self.TAS)
+
+        # Check that computations are valid
+        M = atleast_1d(self.mach)
+        self._mach_min = 0 * dimless
+        self._mach_max = 1 * dimless
+        if (M < self._mach_min).any() or (self._mach_max < M).any():
+            raise ValueError(
+                f"Mach number is out of bounds "
+                f"({self._mach_min:.5g} < mach < {self._mach_max:.5g})"
+                )
+
+    def __repr__(self):
+        """Output string representation of class object. Default for __str__
+        :returns: string output
+
+        """
+        return self.tostring(short_repr=True)
+
+    @staticmethod
+    def isentropic_mach(p_0, p):
+        """Isentropic flow equation for Mach number
+
+        :p_0: stagnation pressure
+        :p: static pressure
+        :returns: Mach number
+
+        """
+        y = Phys.gamma_air
+        M = sqrt((2/(y-1))*((p_0/p + 1)**((y-1)/y) - 1))
+        return M
+
+    @staticmethod
+    def isentropic_stagnation_pressure(M, p):
+        """Isentropic flow equation for stagnation pressure
+
+        :M: Mach number
+        :p: static pressure
+        :returns: stagnation pressure
+
+        """
+        y = Phys.gamma_air
+        p_0 = p*(-1 + (1 + ((y-1)/2)*M**2)**(y/(y-1)))
+        return p_0
+
+    @staticmethod
+    def mach_number(U, a):
+        """Compute Mach number
+
+        :U: airspeed
+        :a: sound speed
+        :returns: Mach number
+
+        """
+        return U/a
+
+    @staticmethod
+    def mach_airspeed(M, a):
+        """Compute airspeed from Mach number
+
+        :M: Mach number
+        :a: sound speed
+        :returns: airspeed
+
+        """
+        return M*a
 
     def checkandsize(self, inpvar):
         """Check that input is correctly typed, then size input array. If
@@ -164,13 +231,6 @@ class FlightCondition:
                         f"{atm_long_str}")
         return repr_str
 
-    def __repr__(self):
-        """Output string representation of class object. Default for __str__
-        :returns: string output
-
-        """
-        return self.tostring(short_repr=True)
-
     @to_base_units_wrapper
     def M_inf_from_TAS(self, TAS):
         """Compute Mach number from true airspeed.
@@ -180,7 +240,7 @@ class FlightCondition:
 
         """
         a_inf = self.atm.a
-        mach = TAS/a_inf
+        mach = __class__.mach_number(U=TAS, a=a_inf)
         return mach
 
     @to_base_units_wrapper
@@ -192,7 +252,7 @@ class FlightCondition:
 
         """
         a_inf = self.atm.a
-        TAS = mach*a_inf
+        TAS = __class__.mach_airspeed(M=mach, a=a_inf)
         return TAS
 
     @to_base_units_wrapper
@@ -241,12 +301,11 @@ class FlightCondition:
 
         """
         y = Phys.gamma_air
-        a_0 = self._atm0.a
-        p_0 = self._atm0.p
-        # Account for compressibility with the isentropic flow equation:
-        # CAS ~= IAS = a_0*sqrt( (2/(y-1))*((q_c/p_0 + 1)**((y-1)/y) - 1 ))
-        # Solve for impact pressure q_c:
-        q_c = p_0*(-1 + (1 + ((y-1)/2)*(CAS/a_0)**2)**(y/(y-1)))
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
+        # Account for compressibility with the isentropic flow equation
+        M_ = __class__.mach_number(U=CAS, a=a_h0)
+        q_c = __class__.isentropic_stagnation_pressure(M=M_, p=p_h0)
         return q_c
 
     @to_base_units_wrapper
@@ -259,10 +318,11 @@ class FlightCondition:
 
         """
         y = Phys.gamma_air
-        a_0 = self._atm0.a
-        p_0 = self._atm0.p
-        # Account for compressibility with the isentropic flow equation:
-        CAS = a_0*sqrt((2/(y-1))*((q_c/p_0 + 1)**((y-1)/y) - 1))
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
+        # Account for compressibility with the isentropic flow equation
+        M_ = __class__.isentropic_mach(p_0=q_c, p=p_h0)
+        CAS = __class__.mach_airspeed(M_, a_h0)
         return CAS
 
     @to_base_units_wrapper
@@ -275,7 +335,8 @@ class FlightCondition:
         """
         y = Phys.gamma_air
         p_inf = self.atm.p
-        mach = sqrt((2/(y-1))*((q_c/p_inf + 1)**((y-1)/y) - 1))
+        # Isentropic flow equation
+        mach = __class__.isentropic_mach(p_0=q_c, p=p_inf)
 
         return mach
 
@@ -289,7 +350,8 @@ class FlightCondition:
         """
         y = Phys.gamma_air
         p_inf = self.atm.p
-        q_c = p_inf*(-1 + (1 + ((y-1)/2)*mach**2)**(y/(y-1)))
+        # Solve for impact pressure from isentropic flow equation:
+        q_c = __class__.isentropic_stagnation_pressure(M=mach, p=p_inf)
         return q_c
 
     @to_base_units_wrapper

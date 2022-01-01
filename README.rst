@@ -155,13 +155,14 @@ Usage:
     # mean free path, and more (see class for all options)
     print(f"\nThe thermal conductivity is {atm.k:.5g}"
         f"\nThe mean free path = {atm.mean_free_path:.5g}")
+
 License
 =======
 
 :code:`aeroutils` is licensed under the MIT LICENSE. See the `LICENSE <https://github.com/MattCJones/aeroutils/blob/main/LICENSE>`_ document.
 
 Disclaimer
-=======
+==========
 The software is provided "as is", without warranty of any kind, express or
 implied, including but not limited to the warranties of merchantability,
 fitness for a particular purpose and noninfringement. In no event shall the
