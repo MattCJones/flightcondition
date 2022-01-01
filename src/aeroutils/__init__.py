@@ -14,4 +14,4 @@ from .atmosphere import Atmosphere
 from .units import *
 
 __author__ = "Matthew C. Jones"
-__version__ = "21.12"
+__version__ = "22.01"
