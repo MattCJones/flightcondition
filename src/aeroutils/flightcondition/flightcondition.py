@@ -70,12 +70,12 @@ class FlightCondition:
             f"{fc.reynolds_number_per_unit_length('in'):.5g}")
     """
 
-    def __init__(self, h_geom, mach=None, TAS=None, CAS=None, EAS=None,):
+    def __init__(self, altitude, mach=None, TAS=None, CAS=None, EAS=None,):
         """Constructor based on altitude and input speed in terms of Mach
         number, TAS, CAS, or EAS.  At least one input speed is required.  All
         inputs must be dimensional unit quantities.
 
-        :h_geom: geometric altitude
+        :altitude: geometric altitude
         :mach: Mach number
         :TAS: true airspeed
         :CAS: calibrated airspeed
@@ -84,10 +84,8 @@ class FlightCondition:
         """
 
         # Automatically process altitude through Atmosphere class
-        self.atm = Atmosphere(h_geom)
-        # h_geom = self.atm.h
-        # h_geom = h_geom[0] if h_geom.size == 1 else h_geom
-        self.h_geom = self.atm.h
+        self.atm = Atmosphere(altitude)
+        self.altitude = self.atm.h
 
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
@@ -199,14 +197,14 @@ class FlightCondition:
 
         """
         check_dimensioned(inpvar)
-        if shape(self.h_geom):  # if h_geom is an array
+        if shape(self.altitude):  # if altitude is an array
             if shape(inpvar):  # if inpvar is an array
-                if inpvar.size > self.h_geom.size:
+                if inpvar.size > self.altitude.size:
                     raise TypeError("Input airspeed array size must be less "
                                     "than or equal to the altitude array "
                                     "size.")
 
-            sizedarr = ones(shape(self.h_geom))*inpvar
+            sizedarr = ones(shape(self.altitude))*inpvar
         else:
             sizedarr = inpvar
 
