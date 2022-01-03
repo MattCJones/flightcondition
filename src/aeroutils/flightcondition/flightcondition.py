@@ -35,9 +35,12 @@ class FlightCondition:
         # Compute flight conditions for a scalar or array of altitudes
         altitudes = [0, 10e3, 33.5e3] * unit('ft')
         fc = FlightCondition(altitudes, EAS=300*unit('knots'))
-        print(f"Flight condition data including mach, TAS, CAS, EAS"
-              f"+ atmospheric properties:\n{fc}")
-        print(f"\nEven more data:\n{fc.tostring()}")
+
+        # Print flight condition data:
+        print(f"{fc}")
+
+        # Print extended output in Imperial units:
+        print(f"\n{fc.tostring(full_output=True, imperial_units=True)}")
 
         # Access flight speed formats individually
         M_inf, U_inf, U_CAS, U_EAS = fc.mach, fc.TAS, fc.CAS, fc.EAS
@@ -54,8 +57,8 @@ class FlightCondition:
 
         # Specify desired units on input and output
         altitudes_in_km = [0, 3.048, 10.2108] * unit('km')
-        fc_alt_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
-        U_TAS = fc_alt_units.TAS
+        fc_other_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
+        U_TAS = fc_other_units.TAS
         print(f"\nThe true airspeed in m/s is {U_TAS.to('m/s'):.5g}")
         print(f"The true airspeed in km/s is {U_TAS.to('km/s'):.5g}")
 
@@ -65,7 +68,6 @@ class FlightCondition:
         print(f"The Reynolds number is {fc.reynolds_number(ell):.5g}")
         print(f"The Reynolds number per-unit-length [1/in] is "
             f"{fc.reynolds_number_per_unit_length('in'):.5g}")
-
     """
 
     def __init__(self, h_geom, mach=None, TAS=None, CAS=None, EAS=None,):
@@ -138,7 +140,7 @@ class FlightCondition:
         :returns: string output
 
         """
-        return self.tostring(short_repr=True)
+        return self.tostring(full_output=False, imperial_units=False)
 
     @staticmethod
     def isentropic_mach(p_0, p):
@@ -210,25 +212,34 @@ class FlightCondition:
 
         return sizedarr
 
-    def tostring(self, short_repr=False):
+    def tostring(self, full_output=False, imperial_units=False):
         """String representation of data structure.
 
-        :short_repr: set to True for limited output
+        :full_output: set to True for full output
+        :imperial_units: set to True for Imperial units
         :returns: string representation
 
         """
-        atm_str = self.atm.tostring(short_repr=True, imperial_units=True)
-        atm_long_str = self.atm.tostring(short_repr=False, imperial_units=True)
-        TAS_str = f"TAS = {self.TAS.to('knots'):8.5g~P}"
-        CAS_str = f"CAS = {self.CAS.to('knots'):8.5g~P}"
-        EAS_str = f"EAS = {self.EAS.to('knots'):8.5g~P}"
+        atm_str = self.atm.tostring(full_output, imperial_units)
+        atm_long_str = self.atm.tostring(full_output, imperial_units)
+
         M_str = f"mach = {self.mach:8.5g~P}"
-        q_str = f"q_inf = {self.q_inf.to('psi'):8.5g~P}"
-        if short_repr:
-            repr_str = f"{TAS_str}\n{CAS_str}\n{EAS_str}\n{atm_str}"
-        else:
+        if imperial_units:
+            TAS_str = f"TAS = {self.TAS.to('ft/s'):8.5g~P}"
+            CAS_str = f"CAS = {self.CAS.to('ft/s'):8.5g~P}"
+            EAS_str = f"EAS = {self.EAS.to('ft/s'):8.5g~P}"
+            q_str = f"q_inf = {self.q_inf.to('lbf/ft^2'):8.5g~P}"
+        else:  # SI units
+            TAS_str = f"TAS = {self.TAS.to('m/s'):8.5g~P}"
+            CAS_str = f"CAS = {self.CAS.to('m/s'):8.5g~P}"
+            EAS_str = f"EAS = {self.EAS.to('m/s'):8.5g~P}"
+            q_str = f"q_inf = {self.q_inf.to('Pa'):8.5g~P}"
+
+        if full_output:
             repr_str = (f"{TAS_str}\n{CAS_str}\n{EAS_str}\n{M_str}\n{q_str}\n"
                         f"{atm_long_str}")
+        else:
+            repr_str = f"{TAS_str}\n{CAS_str}\n{EAS_str}\n{atm_str}"
         return repr_str
 
     @to_base_units_wrapper

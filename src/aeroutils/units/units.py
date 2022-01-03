@@ -21,8 +21,19 @@ dimless = unit('dimensionless')
 
 
 def check_dimensioned(inp):
-    """Check that input is dimensional (type 'Quantity' from pint package). """
-    if not isinstance(inp, unit.Quantity):
+    """Check that input is dimensional (type 'Quantity' from pint package) and
+    *not* from a different unit registry.  """
+
+    if isinstance(inp, unit.Quantity):
+        dummy = 1 * unit('m')
+        # Registry equality check
+        if inp._REGISTRY is not dummy._REGISTRY:
+            msg = ("Cannot operate with {} and {} of different registries."
+                   "For units, try:\n\tfrom aeroutils import unit ")
+            raise ValueError(
+                msg.format(inp.__class__.__name__, dummy.__class__.__name__)
+            )
+    else:
         raise TypeError("Input value is not correctly typed! Use"
                         " dimensional type 'Quantity' from pint package.")
 

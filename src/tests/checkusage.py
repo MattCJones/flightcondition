@@ -18,9 +18,12 @@ from aeroutils import FlightCondition, unit, dimless
 # Compute flight conditions for a scalar or array of altitudes
 altitudes = [0, 10e3, 33.5e3] * unit('ft')
 fc = FlightCondition(altitudes, EAS=300*unit('knots'))
-print(f"Flight condition data including mach, TAS, CAS, EAS"
-      f"+ atmospheric properties:\n{fc}")
-print(f"\nEven more data:\n{fc.tostring()}")
+
+# Print flight condition data:
+print(f"{fc}")
+
+# Print extended output in Imperial units:
+print(f"\n{fc.tostring(full_output=True, imperial_units=True)}")
 
 # Access flight speed formats individually
 M_inf, U_inf, U_CAS, U_EAS = fc.mach, fc.TAS, fc.CAS, fc.EAS
@@ -37,8 +40,8 @@ fc_mach = FlightCondition(altitudes, mach=0.4535*dimless)
 
 # Specify desired units on input and output
 altitudes_in_km = [0, 3.048, 10.2108] * unit('km')
-fc_alt_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
-U_TAS = fc_alt_units.TAS
+fc_other_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
+U_TAS = fc_other_units.TAS
 print(f"\nThe true airspeed in m/s is {U_TAS.to('m/s'):.5g}")
 print(f"The true airspeed in km/s is {U_TAS.to('km/s'):.5g}")
 
@@ -61,9 +64,13 @@ from aeroutils import Atmosphere, unit
 # Compute atmospheric data for a scalar or array of altitudes
 h = [0.0, 12.7, 44.2, 81.0] * unit('km')
 atm = Atmosphere(h)
-print(f"Abbreviated output:\n{atm}")
-print(f"Extended output in Imperial units:\n"
-      f"{atm.tostring(short_repr=False, imperial_units=False)}")
+
+# Print abbreviated output:
+print(f"\n{atm}")
+
+# Print extended output in Imperial units:
+print(f"\n{atm.tostring(full_output=True, imperial_units=True)}")
+
 # See also the linspace() function from numpy, e.g.
 # h = linspace(0, 81.0, 82) * unit('km')
 

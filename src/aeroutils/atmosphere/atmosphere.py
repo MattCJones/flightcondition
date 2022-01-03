@@ -66,9 +66,13 @@ class Atmosphere():
         # Compute atmospheric data for a scalar or array of altitudes
         h = [0.0, 12.7, 44.2, 81.0] * unit('km')
         atm = Atmosphere(h)
-        print(f"Abbreviated output:\n{atm}")
-        print(f"Extended output in Imperial units:\n"
-            f"{atm.tostring(short_repr=False, imperial_units=False)}")
+
+        # Print abbreviated output:
+        print(f"\n{atm}")
+
+        # Print extended output in Imperial units:
+        print(f"\n{atm.tostring(full_output=True, imperial_units=True)}")
+
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
 
@@ -183,7 +187,7 @@ class Atmosphere():
         :returns: string output
 
         """
-        return self.tostring(short_repr=True)
+        return self.tostring(full_output=False, imperial_units=False)
 
     def _process_input_altitude(self, alt):
         """Check that input is of type Quantity from pint package. Check that
@@ -218,10 +222,11 @@ class Atmosphere():
         Kn = self.mean_free_path/ell
         return Kn
 
-    def tostring(self, short_repr=False, imperial_units=False):
+    def tostring(self, full_output=True, imperial_units=False):
         """String representation of data structure.
 
-        :short_repr: set to True for limited output
+        :full_output: set to True for full output
+        :imperial_units: set to True for Imperial units
         :returns: string representation
 
         """
@@ -242,7 +247,7 @@ class Atmosphere():
             h_str = f"h = {self.h.to('km'):8.5g~P}"
             H_str = f"H = {self.H.to('km'):8.5g~P}"
             p_str = f"p = {self.p.to('Pa'):8.5g~P}"
-            T_str = f"T = {self.T.to('degC'):8.5g~P}"
+            T_str = f"T = {self.T.to('degK'):8.5g~P}"
             rho_str = f"rho = {self.rho.to('kg/m^3'):8.5g~P}"
             a_str = f"a = {self.a.to('m/s'):8.5g~P}"
             mu_str = f"mu = {self.mu.to('Pa s'):8.5g~P}"
@@ -250,13 +255,14 @@ class Atmosphere():
             k_str = f"k = {self.k.to('W/m/K'):8.5g~P}"
             g_str = f"g = {self.g.to('m/s^2'):8.5g~P}"
             MFP_str = f"mean_free_path = {self.mean_free_path.to('m'):8.5g~P}"
-        if short_repr:
-            repr_str = (f"{h_str}\n{p_str}\n{T_str}\n{rho_str}\n{a_str}\n"
-                        f"{nu_str}")
-        else:
+
+        if full_output:
             repr_str = (f"{layer_str}\n"f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n"
                         f"{rho_str}\n{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n"
                         f"{g_str}\n{MFP_str}")
+        else:
+            repr_str = (f"{h_str}\n{p_str}\n{T_str}\n{rho_str}\n{a_str}\n"
+                        f"{nu_str}")
         return repr_str
 
     @staticmethod
