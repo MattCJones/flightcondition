@@ -16,7 +16,7 @@ from numpy import array
 from ..units import unit, dimless
 
 
-class Physical():
+class PhysicalConstants():
     """Dimensionalized constants for general physics.
 
     :g: acceleration due to gravity
@@ -36,7 +36,7 @@ class Physical():
     R_earth = 6.356766e3 * unit('km')
 
 
-class Atmosphere():
+class AtmosphereConstants():
     """Dimensionalized constants for atmospheric modeling.
 
     :p_0: sea level ambient pressure

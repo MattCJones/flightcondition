@@ -12,6 +12,7 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
+from inspect import currentframe
 
 from pint import UnitRegistry
 
@@ -39,11 +40,61 @@ def check_dimensioned(inp):
 
 
 def check_length_dimensioned(inp):
-    """Check that input is dimensional type Quantity from pint package."""
+    """Check that input is length dimension type Quantity from pint package."""
     length_dimensionality = (1*unit('ft')).dimensionality
     if not (inp.dimensionality == length_dimensionality):
         raise TypeError("Input value is not correctly typed! Use length"
                         " dimensional unit.")
+
+
+def check_area_dimensioned(inp):
+    """Check that input is area type Quantity from pint package."""
+    area_dimensionality = (1*unit('ft^2')).dimensionality
+    if not (inp.dimensionality == area_dimensionality):
+        raise TypeError("Input value is not correctly typed! Use area"
+                        " dimensional unit.")
+
+
+def name_of_var(var):
+    """Find name of variables using local items.
+
+    :var: dimensioned variable
+    :returns: user-coded name of variable
+
+    """
+    try:
+        local_vars = currentframe().f_back.f_back.f_locals.items()
+        match = [name for name, val in local_vars if val is var]
+    except AttributeError:
+        local_vars = currentframe().f_back.f_locals.items()
+        match = [name for name, val in local_vars if val is var]
+    name = match[0] if match else "unknown"
+    return name
+
+
+def printv(var, to=None, var_name="", *args, **kwargs):
+    """Print name and value of a Pint unit-specified variable.
+    For example,
+
+        distance = 99.9 * unit('m')
+        printv(distance)
+        # prints "distance = 99.9 m"
+
+    *Note*: as of Python 3.8, simply use the f-string syntax, e.g.
+        x=7
+        print(f"{x=}")
+
+    :var: variable to be printed
+    :to: (str), convert to another unit
+    :var_name: overwrite variable name
+    :*args: additional arguments
+    :**kwargs: additional keyword arguments
+    :returns: None
+
+    """
+    formatted_output = (var.to(to) if to is not None else var.to_base_units())
+    var_name = var_name if var_name else name_of_var(var)
+    print(f"{var_name} = {formatted_output:.5g~P}", *args, **kwargs)
 
 
 def to_base_units_wrapper(func):

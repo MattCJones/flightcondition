@@ -15,8 +15,8 @@ from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
 from collections import namedtuple
 from functools import wraps
 
-from ..constants import Physical as Phys
-from ..constants import Atmosphere as Atmo
+from ..constants import PhysicalConstants as Phys
+from ..constants import AtmosphereConstants as Atmo
 from ..units import unit, check_dimensioned, check_length_dimensioned,\
     to_base_units_wrapper
 

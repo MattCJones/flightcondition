@@ -15,8 +15,8 @@ Email: matt.c.jones.aoe@gmail.com
 from numpy import atleast_1d, ones, sqrt, shape
 
 from ..atmosphere import Atmosphere
-from ..constants import Physical as Phys
-from ..units import unit, check_dimensioned, dimless, to_base_units_wrapper, \
+from ..constants import PhysicalConstants as Phys
+from ..units import unit, dimless, check_dimensioned, check_area_dimensioned, \
         check_length_dimensioned, to_base_units_wrapper
 
 
@@ -375,6 +375,40 @@ class FlightCondition:
         a_inf_h0 = self._atm0.a
         EAS = mach*(a_inf_h0*sqrt(self.delta))
         return EAS
+
+    @to_base_units_wrapper
+    def redim_force(self, S_ref):
+        """Factor to redimensionalize force from force coefficient e.g.,
+
+            .. math::
+
+                L & = C_L q_\\infty S_ref
+                  & = C_L \\text{redim_force}
+
+        :S_ref: reference area
+        :returns: redimensionalization factor
+
+        """
+        check_area_dimensioned(S_ref)
+        return self.q_inf * S_ref
+
+    @to_base_units_wrapper
+    def redim_moment(self, S_ref, ell):
+        """Factor to redimensionalize moment from moment coefficient e.g.,
+
+            .. math::
+
+                M & = C_M q_\\infty S_ref ell
+                  & = C_M \\text{redim_moment}
+
+        :S_ref: reference area
+        :ell: reference length
+        :returns: redimensionalization factor
+
+        """
+        check_area_dimensioned(S_ref)
+        check_length_dimensioned(ell)
+        return self.q_inf * S_ref * ell
 
     @to_base_units_wrapper
     def reynolds_number(self, ell):
