@@ -11,7 +11,6 @@ Email: matt.c.jones.aoe@gmail.com
 
 from .flightcondition import FlightCondition
 from .atmosphere import Atmosphere
-from .units import *
+from .units import unit, dimless, printv
 
-__author__ = "Matthew C. Jones"
-__version__ = "22.02"
+from .version import __version__

@@ -1,10 +1,7 @@
 #!/usr/bin/env python
 # Check that "Usage" commands run properly.
 
-import sys
-from pathlib import Path
-package_root_directory = Path(__file__).resolve().parents[1]
-sys.path.append(str(package_root_directory))
+from aeroutils import FlightCondition, unit, dimless
 
 
 ############################################################
@@ -12,8 +9,6 @@ print("="*60)
 print("Checking flightcondition usage:")
 print("="*60)
 ############################################################
-
-from aeroutils import FlightCondition, unit, dimless
 
 # Compute flight conditions for a scalar or array of altitudes
 altitudes = [0, 10e3, 33.5e3] * unit('ft')

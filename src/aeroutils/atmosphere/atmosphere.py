@@ -10,15 +10,29 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
-    zeros_like
-from collections import namedtuple
 from functools import wraps
+from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
+        zeros_like
 
-from ..constants import PhysicalConstants as Phys
-from ..constants import AtmosphereConstants as Atmo
-from ..units import unit, check_dimensioned, check_length_dimensioned,\
-    to_base_units_wrapper
+from aeroutils.constants import PhysicalConstants as Phys
+from aeroutils.constants import AtmosphereConstants as Atmo
+from aeroutils.units import unit
+from aeroutils.units.units import check_dimensioned, check_length_dimensioned,\
+        to_base_units_wrapper
+
+
+def _atleast_1d(arr):
+    """DEPRECATED: My version of numpy.atleast_1d that supports Python 3.7.
+    This function will be deleted in future versions.
+
+    :arr: array
+    :returns: TODO
+
+    """
+    if len(shape(arr)) == 0:  # scalar, non-array
+        return array([arr.magnitude]) * arr.units
+    else:  # already an array
+        return arr
 
 
 def _len1array_to_scalar(func):
@@ -94,7 +108,7 @@ class Atmosphere():
 
             :H_arr: geopotential altitude
             """
-            H_arr = atleast_1d(H_arr)
+            H_arr = _atleast_1d(H_arr)
 
             self._name = [""]*size(H_arr)
             self._H_base = zeros_like(H_arr) * unit('m')
@@ -198,7 +212,7 @@ class Atmosphere():
         :returns: geometric altitude
 
         """
-        h = atleast_1d(alt)
+        h = _atleast_1d(alt)
 
         check_dimensioned(h)
         check_length_dimensioned(h)
@@ -304,13 +318,13 @@ class Atmosphere():
     @_len1array_to_scalar
     def p(self):
         """Air pressure :math:`p`"""
-        H_base = atleast_1d(self.layer.H_base)
-        T_base = atleast_1d(self.layer.T_base)
-        T_grad = atleast_1d(self.layer.T_grad)
-        p_base = atleast_1d(self.layer.p_base)
+        H_base = _atleast_1d(self.layer.H_base)
+        T_base = _atleast_1d(self.layer.T_base)
+        T_grad = _atleast_1d(self.layer.T_grad)
+        p_base = _atleast_1d(self.layer.p_base)
 
-        H = atleast_1d(self.H)
-        T = atleast_1d(self.T)
+        H = _atleast_1d(self.H)
+        T = _atleast_1d(self.T)
         g_0 = Phys.g
         R_air = Phys.R_air
 
@@ -332,9 +346,9 @@ class Atmosphere():
     @_len1array_to_scalar
     def T(self):
         """Ambient air temperature :math:`T`"""
-        T_grad = atleast_1d(self.layer.T_grad)
-        H_base = atleast_1d(self.layer.H_base)
-        T_base = atleast_1d(self.layer.T_base)
+        T_grad = _atleast_1d(self.layer.T_grad)
+        H_base = _atleast_1d(self.layer.H_base)
+        T_base = _atleast_1d(self.layer.T_base)
         T = T_base + T_grad*(self.H - H_base)
         return T
 

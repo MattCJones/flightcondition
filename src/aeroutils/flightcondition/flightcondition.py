@@ -14,9 +14,11 @@ Email: matt.c.jones.aoe@gmail.com
 
 from numpy import atleast_1d, ones, sqrt, shape
 
-from ..atmosphere import Atmosphere
-from ..constants import PhysicalConstants as Phys
-from ..units import unit, dimless, check_dimensioned, check_area_dimensioned, \
+from aeroutils.atmosphere import Atmosphere
+from aeroutils.atmosphere.atmosphere import _atleast_1d  # DEPRECATED
+from aeroutils.constants import PhysicalConstants as Phys
+from aeroutils.units import unit, dimless
+from aeroutils.units.units import check_dimensioned, check_area_dimensioned,\
         check_length_dimensioned, to_base_units_wrapper
 
 
@@ -110,7 +112,6 @@ class FlightCondition:
             self.CAS = self.checkandsize(CAS)
             self.q_c = self.q_c_from_CAS(self.CAS)
             self.mach = self.M_inf_from_q_c(self.q_c)
-            # self.mach = self.M_inf_from_CAS(CAS) # does not work
             self.TAS = self.TAS_from_M_inf(self.mach)
             self.EAS = self.EAS_from_TAS(self.TAS, self.mach)
         elif EAS is not None:
@@ -124,7 +125,7 @@ class FlightCondition:
         self.q_inf = self.q_inf_from_TAS(self.TAS)
 
         # Check that computations are valid
-        M = atleast_1d(self.mach)
+        M = _atleast_1d(self.mach)
         self._mach_min = 0 * dimless
         self._mach_max = 1 * dimless
         if (M < self._mach_min).any() or (self._mach_max < M).any():
@@ -309,7 +310,6 @@ class FlightCondition:
         :returns: impact pressure
 
         """
-        y = Phys.gamma_air
         a_h0 = self._atm0.a
         p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
@@ -326,7 +326,6 @@ class FlightCondition:
         :returns: impact pressure
 
         """
-        y = Phys.gamma_air
         a_h0 = self._atm0.a
         p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
@@ -342,7 +341,6 @@ class FlightCondition:
         :returns: Mach number
 
         """
-        y = Phys.gamma_air
         p_inf = self.atm.p
         # Isentropic flow equation
         mach = __class__.isentropic_mach(p_0=q_c, p=p_inf)
@@ -357,7 +355,6 @@ class FlightCondition:
         :returns: impact pressure
 
         """
-        y = Phys.gamma_air
         p_inf = self.atm.p
         # Solve for impact pressure from isentropic flow equation:
         q_c = __class__.isentropic_stagnation_pressure(M=mach, p=p_inf)

@@ -9,6 +9,6 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from .units import *
+from .units import unit, dimless, printv
 
 __all__ = ['unit', 'dimless', 'printv']

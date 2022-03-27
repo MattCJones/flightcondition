@@ -5,23 +5,25 @@ Setup file for aeroutils.
 
 from setuptools import setup, find_packages
 
-from src.aeroutils import __version__, __author__
+# Safely load __version__ without importing package
+with open("src/aeroutils/version.py") as f:
+    exec(f.read())
 
 if __name__ == "__main__":
     with open('README.rst', 'r') as file:
         long_description_ = file.read()
 
-    print("Packages found:", find_packages(where='src'))
+    print("Packages found:", find_packages(where='src'))  # -v option to see
     setup(
         name='aeroutils',
         version=__version__,
         packages=find_packages(where='src'),
-        package_dir={'aeroutils': 'src/aeroutils'},
+        package_dir={'aeroutils': "src/aeroutils"},
         description="Importable utilities for aerospace problem solving.",
         long_description=long_description_,
         license="MIT License",
         url="https://github.com/MattCJones/aeroutils",
-        author=__author__,
+        author="Matthew C. Jones",
         author_email='matt.c.jones.aoe@gmail.com',
         scripts=None,
         classifiers=[

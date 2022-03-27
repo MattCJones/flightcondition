@@ -5,6 +5,7 @@ do
 do.py
 do.sh
 tags
+CHANGES*
 TODO*
 scripts
 *.egg-info

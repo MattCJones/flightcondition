@@ -14,11 +14,6 @@ import sys
 
 from numpy import array
 
-# Uncomment below for running tests pre-built
-# from pathlib import Path
-# package_root_directory = Path(__file__).resolve().parents[1]/"aeroutils"
-# sys.path.append(str(package_root_directory))
-
 from aeroutils import Atmosphere, FlightCondition, unit, dimless
 
 # Atmospheric ground truth data
@@ -92,7 +87,6 @@ class TestStandardAtm(unittest.TestCase):
 
         def test_field(field_arr, field_truth_arr, field_name, unit_str):
             """Test that output field matches truth data. """
-            N_precision = 6
             ut_print("\nTesting {field_name}")
             for h_geom_truth, field, field_truth in zip(
                     h_geom_truth_arr.to('km').magnitude,
@@ -200,14 +194,14 @@ class TestFlightCondition(unittest.TestCase):
         Re_truth = 62278
         self.assertAlmostEqual(Re_test, Re_truth,
                                delta=1,
-                               msg=f"Reynolds number failed.")
+                               msg="Reynolds number failed.")
 
         ell_unit = 'in'
         Re_by_ell_test = fc.reynolds_number_per_unit_length(ell_unit).magnitude
         Re_by_ell_truth = 971.88
         self.assertAlmostEqual(Re_by_ell_test/1e3, Re_by_ell_truth/1e3,
                                delta=0.01,
-                               msg=f"Reynolds number per length failed.")
+                               msg="Reynolds number per length failed.")
 
     def test_input_altitude_bounds(self):
         """Test that input altitude is properly bounded. Both FlightCondition
