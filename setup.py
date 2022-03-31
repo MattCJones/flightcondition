@@ -19,9 +19,9 @@ if __name__ == "__main__":
         version=__version__,
         packages=find_packages(where='src'),
         package_dir={'flightcondition': "src/flightcondition"},
-        description=("Easily compute *flight condition* data: airspeed "
-                     " (true/calibrated/equivalent/Mach), atmospheric data, "
-                     "and more with built-in unit conversions."),
+        description=("Airspeed conversions (true/calibrated/equivalent/Mach), "
+                     "atmospheric data, and more with built-in unit checking."
+                     ),
         long_description=long_description_,
         license="MIT License",
         url="https://github.com/MattCJones/flightcondition",

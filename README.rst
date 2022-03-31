@@ -5,17 +5,12 @@ Flight Condition
 About
 =====
 
-Easily compute *flight condition* data: airspeed
-(true/calibrated/equivalent/Mach), atmospheric data, and more with built-in
-unit conversions.  Specific sub-modules are:
+Airspeed conversions (true/calibrated/equivalent/Mach), atmospheric data, and
+more with built-in unit checking.  Specific sub-modules include:
 
-    * **Flightcondition**: input altitude to compute common flight condition
-      data.  Easily swap between Mach number, true airspeed, calibrated
-      airspeed, and equivalent airspeed.  Includes atmospheric data.
-    * **Atmosphere**: input altitude to compute 1993 International Standard
-      Atmosphere data.  Many relevant, derived quantities are included.
-    * **Units**: built-in unit-checking and conversion using 
-      `pint <https://pint.readthedocs.io>`_ package.
+* :code:`flightcondition` : input altitude to compute common flight condition data.  Easily swap between Mach number, true airspeed, calibrated airspeed, and equivalent airspeed.  Includes atmospheric data.
+* :code:`atmosphere` : input altitude to compute 1993 International Standard Atmosphere data.  Many relevant, derived quantities are included.
+* :code:`units` : built-in unit-checking and conversion using `pint <https://pint.readthedocs.io>`_ package.
 
 See examples below for usage!.
 
@@ -49,6 +44,7 @@ Dependencies
 ------------
 
 * `numpy <https://numpy.org>`_: package for scientific computing.
+
 * `pint <https://pint.readthedocs.io>`_: package for dealing with units.
 
 Usage
@@ -70,15 +66,14 @@ common flight condition data.
 
 Outputs include:
 
-    * Mach number :code:`mach`
-    * True airspeed :code:`TAS`
-    * Calibrated airspeed :code:`CAS`
-    * Equivalent airspeed :code:`EAS`
-    * Dynamic pressure :code:`q_inf`
-    * Reynolds number :code:`reynolds_number(ell)`
-    * Reynolds number per-unit-length
-      :code:`reynolds_number_per_unit_length(length_unit)`
-    * Atmosphere data :code:`atm` (see :code:`atmosphere` below) 
+* Mach number :code:`mach`
+* True airspeed :code:`TAS`
+* Calibrated airspeed :code:`CAS`
+* Equivalent airspeed :code:`EAS`
+* Dynamic pressure :code:`q_inf`
+* Reynolds number :code:`reynolds_number(ell)`
+* Reynolds number per-unit-length :code:`reynolds_number_per_unit_length(length_unit)`
+* Atmosphere data :code:`atm` (see :code:`atmosphere` below) 
 
 Usage:
 
@@ -131,18 +126,18 @@ standard atmosphere data and derived quantities.
 
 Outputs include:
 
-    * Pressure :code:`p`
-    * Temperature :code:`T`
-    * Density :code:`rho`
-    * Sound speed :code:`a`
-    * Dynamic viscosity :code:`mu`
-    * Kinematic viscosity :code:`nu`
-    * Thermal conductivity :code:`k`
-    * Layer name :code:`layer.name`
-    * Geometric altitude :code:`h`
-    * Geopotential altitude :code:`H`
-    * Acceleration due to gravity :code:`g`
-    * Mean free path :code:`mean_free_path`
+* Pressure :code:`p`
+* Temperature :code:`T`
+* Density :code:`rho`
+* Sound speed :code:`a`
+* Dynamic viscosity :code:`mu`
+* Kinematic viscosity :code:`nu`
+* Thermal conductivity :code:`k`
+* Layer name :code:`layer.name`
+* Geometric altitude :code:`h`
+* Geopotential altitude :code:`H`
+* Acceleration due to gravity :code:`g`
+* Mean free path :code:`mean_free_path`
 
 Usage:
 
