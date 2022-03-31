@@ -61,7 +61,7 @@ or more explicitly as shown in the following examples.
 Flight Condition
 ----------------
 
-The :code:`flightcondition` package can be used to compute and interact with
+The :code:`Flightcondition` class can be used to compute and interact with
 common flight condition data.
 
 Outputs include:
@@ -121,7 +121,7 @@ Usage:
 Atmosphere
 ----------
 
-The :code:`atmosphere` package can be used to compute and interact with common
+The :code:`Atmosphere` class can be used to compute and interact with common
 standard atmosphere data and derived quantities.
 
 Outputs include:
@@ -166,6 +166,33 @@ Usage:
     # mean free path, and more (see class for all options)
     print(f"\nThe thermal conductivity is {atm.k:.5g}"
         f"\nThe mean free path = {atm.mean_free_path:.5g}")
+
+Units
+-----
+
+Conveniently input, output, and convert units using `pint
+<https://pint.readthedocs.io>`_ units.
+
+.. code-block:: python
+
+    from flightcondition import unit, printv
+
+    h = 33 * unit('km')
+    print(h.to('kft'))
+    # >>> 108.26771653543307 kft
+    printv(h, to='kft')
+    # >>> h = 108.27 kft
+
+    U_inf = 20 * unit('knots')
+    rho_inf = 1.225 * unit('kg/m^3')
+    q_inf = 0.5*rho_inf*U_inf**2
+    printv(q_inf, to='psi')
+    # >>> q_inf = 0.0094042 psi
+
+Note that `pint <https://pint.readthedocs.io>`_ does not support conflicting
+unit registries so avoid interactions between :code:`flightcondition.unit` and
+a separate :code:`pint.UnitRegistry`.
+
 
 License
 =======
