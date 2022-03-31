@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """
-Setup file for aeroutils.
+Setup file for flightcondition.
 """
 
 from setuptools import setup, find_packages
 
 # Safely load __version__ without importing package
-with open("src/aeroutils/version.py") as f:
+with open("src/flightcondition/version.py") as f:
     exec(f.read())
 
 if __name__ == "__main__":
@@ -15,14 +15,16 @@ if __name__ == "__main__":
 
     print("Packages found:", find_packages(where='src'))  # -v option to see
     setup(
-        name='aeroutils',
+        name='flightcondition',
         version=__version__,
         packages=find_packages(where='src'),
-        package_dir={'aeroutils': "src/aeroutils"},
-        description="Importable utilities for aerospace problem solving.",
+        package_dir={'flightcondition': "src/flightcondition"},
+        description=("Easily compute *flight condition* data: airspeed "
+                     " (true/calibrated/equivalent/Mach), atmospheric data, "
+                     "and more with built-in unit conversions."),
         long_description=long_description_,
         license="MIT License",
-        url="https://github.com/MattCJones/aeroutils",
+        url="https://github.com/MattCJones/flightcondition",
         author="Matthew C. Jones",
         author_email='matt.c.jones.aoe@gmail.com',
         scripts=None,
@@ -38,6 +40,6 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             ],
-        keywords="utility aerospace engineering design problem solving",
+        keywords="utility aerospace engineering design",
         install_requires=('pint', 'numpy'),
     )

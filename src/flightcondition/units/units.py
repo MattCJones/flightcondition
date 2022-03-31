@@ -30,7 +30,7 @@ def check_dimensioned(inp):
         # Registry equality check
         if inp._REGISTRY is not dummy._REGISTRY:
             msg = ("Cannot operate with {} and {} of different registries."
-                   "For units, try:\n\tfrom aeroutils import unit ")
+                   "For units, try:\n\tfrom flightcondition import unit ")
             raise ValueError(
                 msg.format(inp.__class__.__name__, dummy.__class__.__name__)
             )

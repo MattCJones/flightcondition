@@ -1,17 +1,23 @@
-*******************
-Aerospace Utilities
-*******************
+****************
+Flight Condition
+****************
 
 About
 =====
 
-This module contains commonly-used aerospace utilities for problem solving.
+Easily compute *flight condition* data: airspeed
+(true/calibrated/equivalent/Mach), atmospheric data, and more with built-in
+unit conversions.  Specific sub-modules are:
 
-    * **Flight Condition**: input altitude to compute common flight condition
+    * **Flightcondition**: input altitude to compute common flight condition
       data.  Easily swap between Mach number, true airspeed, calibrated
       airspeed, and equivalent airspeed.  Includes atmospheric data.
     * **Atmosphere**: input altitude to compute 1993 International Standard
       Atmosphere data.  Many relevant, derived quantities are included.
+    * **Units**: built-in unit-checking and conversion using 
+      `pint <https://pint.readthedocs.io>`_ package.
+
+See examples below for usage!.
 
 
 Author
@@ -25,36 +31,39 @@ Installation
 Install Commands
 ----------------
 
-Install using the :code:`pip` package-management system.  The easiest method is to
-open the terminal and run:
+Install using the :code:`pip` package-management system.  The easiest method is
+to open the terminal and run:
 
 .. code-block:: bash
 
-    pip install aeroutils
+    pip install flightcondition
 
 Alternatively, manually download the `source code
-<https://github.com/MattCJones/aeroutils>`_, unpack, and run:
+<https://github.com/MattCJones/flightcondition>`_, unpack, and run:
 
 .. code-block:: bash
 
-    pip install <path/to/aeroutils>
+    pip install <path/to/flightcondition>
 
 Dependencies
 ------------
 
-* `numpy <https://numpy.org>`_: widely-used package for scientific computing.
+* `numpy <https://numpy.org>`_: package for scientific computing.
 * `pint <https://pint.readthedocs.io>`_: package for dealing with units.
 
 Usage
 =====
-In a Python script or an ipython notebook, import all utilities with:
+In a Python script or an ipython notebook, import all utilities with,
 
 .. code-block:: python
 
-    from aeroutils import *
+    from flightcondition import *
 
-Flight Condition Package
-------------------------
+or more explicitly as shown in the following examples.
+
+
+Flight Condition
+----------------
 
 The :code:`flightcondition` package can be used to compute and interact with
 common flight condition data.
@@ -75,7 +84,7 @@ Usage:
 
 .. code-block:: python
 
-    from aeroutils import FlightCondition, unit, dimless
+    from flightcondition import FlightCondition, unit, dimless
 
     # Compute flight conditions for a scalar or array of altitudes
     altitudes = [0, 10e3, 33.5e3] * unit('ft')
@@ -114,8 +123,8 @@ Usage:
     print(f"The Reynolds number per-unit-length [1/in] is "
         f"{fc.reynolds_number_per_unit_length('in'):.5g}")
 
-Atmosphere Package
-------------------------
+Atmosphere
+----------
 
 The :code:`atmosphere` package can be used to compute and interact with common
 standard atmosphere data and derived quantities.
@@ -139,7 +148,7 @@ Usage:
 
 .. code-block:: python
 
-    from aeroutils import Atmosphere, unit
+    from flightcondition import Atmosphere, unit
 
     # Compute atmospheric data for a scalar or array of altitudes
     h = [0.0, 12.7, 44.2, 81.0] * unit('km')
@@ -166,7 +175,7 @@ Usage:
 License
 =======
 
-:code:`aeroutils` is licensed under the MIT LICENSE. See the `LICENSE <https://github.com/MattCJones/aeroutils/blob/main/LICENSE>`_ document.
+:code:`flightcondition` is licensed under the MIT LICENSE. See the `LICENSE <https://github.com/MattCJones/flightcondition/blob/main/LICENSE>`_ document.
 
 Disclaimer
 ==========

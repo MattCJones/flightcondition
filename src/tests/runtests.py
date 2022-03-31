@@ -14,7 +14,7 @@ import sys
 
 from numpy import array
 
-from aeroutils import Atmosphere, FlightCondition, unit, dimless
+from flightcondition import Atmosphere, FlightCondition, unit, dimless
 
 # Atmospheric ground truth data
 h_geom_truth_arr = [

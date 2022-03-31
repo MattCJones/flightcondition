@@ -3,7 +3,7 @@
 (CAS), and equivalent airspeed (EAS) for given altitude(s).  Additional flight
 condition data and atmospheric data is computed.
 
-Dependencies: numpy, pint, scipy
+Dependencies: numpy, pint
 
 Author: Matthew C. Jones
 Email: matt.c.jones.aoe@gmail.com
@@ -14,12 +14,12 @@ Email: matt.c.jones.aoe@gmail.com
 
 from numpy import atleast_1d, ones, sqrt, shape
 
-from aeroutils.atmosphere import Atmosphere
-from aeroutils.atmosphere.atmosphere import _atleast_1d  # DEPRECATED
-from aeroutils.constants import PhysicalConstants as Phys
-from aeroutils.units import unit, dimless
-from aeroutils.units.units import check_dimensioned, check_area_dimensioned,\
-        check_length_dimensioned, to_base_units_wrapper
+from flightcondition.atmosphere import Atmosphere
+from flightcondition.atmosphere.atmosphere import _atleast_1d  # DEPRECATED
+from flightcondition.constants import PhysicalConstants as Phys
+from flightcondition.units import unit, dimless
+from flightcondition.units.units import check_dimensioned,\
+    check_area_dimensioned, check_length_dimensioned, to_base_units_wrapper
 
 
 class FlightCondition:
@@ -32,7 +32,7 @@ class FlightCondition:
 
     Usage:
 
-        from aeroutils import FlightCondition, unit, dimless
+        from flightcondition import FlightCondition, unit, dimless
 
         # Compute flight conditions for a scalar or array of altitudes
         altitudes = [0, 10e3, 33.5e3] * unit('ft')

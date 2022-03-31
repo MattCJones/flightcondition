@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Check that "Usage" commands run properly.
 
-from aeroutils import FlightCondition, unit, dimless
+from flightcondition import FlightCondition, unit, dimless
 
 
 ############################################################
@@ -54,7 +54,7 @@ print("Checking atmosphere usage:")
 print("="*60)
 ############################################################
 
-from aeroutils import Atmosphere, unit
+from flightcondition import Atmosphere, unit
 
 # Compute atmospheric data for a scalar or array of altitudes
 h = [0.0, 12.7, 44.2, 81.0] * unit('km')

@@ -13,7 +13,7 @@ Email: matt.c.jones.aoe@gmail.com
 
 from numpy import array
 
-from aeroutils.units import unit, dimless
+from flightcondition.units import unit, dimless
 
 
 class PhysicalConstants():

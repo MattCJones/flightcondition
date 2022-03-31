@@ -14,11 +14,11 @@ from functools import wraps
 from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
         zeros_like
 
-from aeroutils.constants import PhysicalConstants as Phys
-from aeroutils.constants import AtmosphereConstants as Atmo
-from aeroutils.units import unit
-from aeroutils.units.units import check_dimensioned, check_length_dimensioned,\
-        to_base_units_wrapper
+from flightcondition.constants import PhysicalConstants as Phys
+from flightcondition.constants import AtmosphereConstants as Atmo
+from flightcondition.units import unit
+from flightcondition.units.units import check_dimensioned,\
+    check_length_dimensioned, to_base_units_wrapper
 
 
 def _atleast_1d(arr):
@@ -75,7 +75,7 @@ class Atmosphere():
 
     Usage:
 
-        from aeroutils import Atmosphere, unit
+        from flightcondition import Atmosphere, unit
 
         # Compute atmospheric data for a scalar or array of altitudes
         h = [0.0, 12.7, 44.2, 81.0] * unit('km')
