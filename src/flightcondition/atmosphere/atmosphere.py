@@ -18,7 +18,8 @@ from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
 from flightcondition.units import unit
 from flightcondition.units.units import check_dimensioned,\
-    check_length_dimensioned, to_base_units_wrapper
+    check_US_length_units, check_length_dimensioned,\
+    to_base_units_wrapper
 
 
 def _atleast_1d(arr):
@@ -84,8 +85,8 @@ class Atmosphere():
         # Print abbreviated output:
         print(f"\n{atm}")
 
-        # Print extended output in Imperial units:
-        print(f"\n{atm.tostring(full_output=True, imperial_units=True)}")
+        # Print extended output in US units:
+        print(f"\n{atm.tostring(full_output=True, US_units=True)}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
@@ -196,12 +197,12 @@ class Atmosphere():
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)
 
-    def __repr__(self):
+    def __str__(self):
         """Output string representation of class object. Default for __str__
         :returns: string output
 
         """
-        return self.tostring(full_output=False, imperial_units=False)
+        return self.tostring(full_output=False)
 
     def _process_input_altitude(self, alt):
         """Check that input is of type Quantity from pint package. Check that
@@ -212,7 +213,8 @@ class Atmosphere():
         :returns: geometric altitude
 
         """
-        h = _atleast_1d(alt)
+        tofloat = 1.0
+        h = _atleast_1d(alt) * tofloat
 
         check_dimensioned(h)
         check_length_dimensioned(h)
@@ -226,6 +228,10 @@ class Atmosphere():
                 f"({self._h_min:.5g} < h < {self._h_max:.5g})"
                 )
 
+        self.US_units = check_US_length_units(h)
+        if self.US_units:
+            unit.default_system = 'US'  # 'US', 'imperial'
+
         return h
 
     @to_base_units_wrapper
@@ -236,16 +242,17 @@ class Atmosphere():
         Kn = self.mean_free_path/ell
         return Kn
 
-    def tostring(self, full_output=True, imperial_units=False):
+    def tostring(self, full_output=True, US_units=None):
         """String representation of data structure.
 
         :full_output: set to True for full output
-        :imperial_units: set to True for Imperial units
+        :US_units: set to True for US units and False for SI
         :returns: string representation
 
         """
+        US_units = self.US_units if US_units is None else US_units
         layer_str = f"layer = {self.layer.name}"
-        if imperial_units:
+        if US_units:
             h_str = f"h = {self.h.to('kft'):8.5g~P}"
             H_str = f"H = {self.H.to('kft'):8.5g~P}"
             p_str = f"p = {self.p.to('lbf/ft^2'):8.5g~P}"
@@ -271,7 +278,7 @@ class Atmosphere():
             MFP_str = f"mean_free_path = {self.mean_free_path.to('m'):8.5g~P}"
 
         if full_output:
-            repr_str = (f"{layer_str}\n"f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n"
+            repr_str = (f"{h_str}\n{H_str}\n{layer_str}\n{p_str}\n{T_str}\n"
                         f"{rho_str}\n{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n"
                         f"{g_str}\n{MFP_str}")
         else:

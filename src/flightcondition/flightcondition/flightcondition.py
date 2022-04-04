@@ -18,8 +18,9 @@ from flightcondition.atmosphere import Atmosphere
 from flightcondition.atmosphere.atmosphere import _atleast_1d  # DEPRECATED
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.units import unit, dimless
-from flightcondition.units.units import check_dimensioned,\
-    check_area_dimensioned, check_length_dimensioned, to_base_units_wrapper
+from flightcondition.units.units import check_area_dimensioned,\
+    check_dimensioned, check_length_dimensioned, to_base_units_wrapper
+    
 
 
 class FlightCondition:
@@ -35,14 +36,14 @@ class FlightCondition:
         from flightcondition import FlightCondition, unit, dimless
 
         # Compute flight conditions for a scalar or array of altitudes
-        altitudes = [0, 10e3, 33.5e3] * unit('ft')
+        altitudes = [0, 10, 33.5] * unit('kft')
         fc = FlightCondition(altitudes, EAS=300*unit('knots'))
 
         # Print flight condition data:
         print(f"{fc}")
 
-        # Print extended output in Imperial units:
-        print(f"\n{fc.tostring(full_output=True, imperial_units=True)}")
+        # Print extended output:
+        print(f"\n{fc.tostring(full_output=True)}")
 
         # Access flight speed formats individually
         M_inf, U_inf, U_CAS, U_EAS = fc.mach, fc.TAS, fc.CAS, fc.EAS
@@ -70,6 +71,7 @@ class FlightCondition:
         print(f"The Reynolds number is {fc.reynolds_number(ell):.5g}")
         print(f"The Reynolds number per-unit-length [1/in] is "
             f"{fc.reynolds_number_per_unit_length('in'):.5g}")
+
     """
 
     def __init__(self, altitude, mach=None, TAS=None, CAS=None, EAS=None,):
@@ -88,6 +90,7 @@ class FlightCondition:
         # Automatically process altitude through Atmosphere class
         self.atm = Atmosphere(altitude)
         self.altitude = self.atm.h
+        self.US_units = self.atm.US_units
 
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
@@ -134,12 +137,12 @@ class FlightCondition:
                 f"({self._mach_min:.5g} < mach < {self._mach_max:.5g})"
                 )
 
-    def __repr__(self):
-        """Output string representation of class object. Default for __str__
-        :returns: string output
+    def __str__(self):
+        """Output string representation of class object.
+        :returns: full string output
 
         """
-        return self.tostring(full_output=False, imperial_units=False)
+        return self.tostring(full_output=False)
 
     @staticmethod
     def isentropic_mach(p_0, p):
@@ -211,22 +214,31 @@ class FlightCondition:
 
         return sizedarr
 
-    def tostring(self, full_output=False, imperial_units=False):
+    def print(self, *args, **kwargs):
+        """Print tostring() function to stdout
+        """
+        print(self.tostring(*args, **kwargs))
+
+    def tostring(self, full_output=True, US_units=None):
         """String representation of data structure.
 
         :full_output: set to True for full output
-        :imperial_units: set to True for Imperial units
+        :US_units: set to True for US units and False for SI
         :returns: string representation
 
         """
-        atm_str = self.atm.tostring(full_output, imperial_units)
-        atm_long_str = self.atm.tostring(full_output, imperial_units)
+        US_units = self.US_units if US_units is None else US_units
+        atm_str = self.atm.tostring(full_output, US_units)
 
+        unit_str = "US" if US_units else "SI"
+        head_str = f"Flight Condition ({unit_str} units)"
+        line_str = "="*len(head_str)
         M_str = f"mach = {self.mach:8.5g~P}"
-        if imperial_units:
-            TAS_str = f"TAS = {self.TAS.to('ft/s'):8.5g~P}"
-            CAS_str = f"CAS = {self.CAS.to('ft/s'):8.5g~P}"
-            EAS_str = f"EAS = {self.EAS.to('ft/s'):8.5g~P}"
+
+        if US_units:
+            TAS_str = f"TAS = {self.TAS.to('knots'):8.5g~P}"
+            CAS_str = f"CAS = {self.CAS.to('knots'):8.5g~P}"
+            EAS_str = f"EAS = {self.EAS.to('knots'):8.5g~P}"
             q_str = f"q_inf = {self.q_inf.to('lbf/ft^2'):8.5g~P}"
         else:  # SI units
             TAS_str = f"TAS = {self.TAS.to('m/s'):8.5g~P}"
@@ -235,10 +247,17 @@ class FlightCondition:
             q_str = f"q_inf = {self.q_inf.to('Pa'):8.5g~P}"
 
         if full_output:
-            repr_str = (f"{TAS_str}\n{CAS_str}\n{EAS_str}\n{M_str}\n{q_str}\n"
-                        f"{atm_long_str}")
+            repr_str = (f"{line_str}\n{head_str}\n{line_str}\n"
+                        "---  Speed Quantities   ---\n"
+                        f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n{q_str}\n"
+                        "--- Altitude Quantities ---\n"
+                        f"{atm_str}")
         else:
-            repr_str = f"{TAS_str}\n{CAS_str}\n{EAS_str}\n{atm_str}"
+            repr_str = (f"{line_str}\n{head_str}\n{line_str}\n"
+                        "---  Speed Quantities   ---\n"
+                        f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n"
+                        "--- Altitude Quantities ---\n"
+                        f"{atm_str}")
         return repr_str
 
     @to_base_units_wrapper

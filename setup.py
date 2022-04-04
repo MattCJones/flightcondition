@@ -41,5 +41,6 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.9",
             ],
         keywords="utility aerospace engineering design",
+        setup_requires=('flake8'),
         install_requires=('pint', 'numpy'),
     )

@@ -1,24 +1,23 @@
 #!/usr/bin/env python
 # Check that "Usage" commands run properly.
 
-from flightcondition import FlightCondition, unit, dimless
-
-
 ############################################################
 print("="*60)
 print("Checking flightcondition usage:")
 print("="*60)
 ############################################################
 
+from flightcondition import FlightCondition, unit, dimless
+
 # Compute flight conditions for a scalar or array of altitudes
-altitudes = [0, 10e3, 33.5e3] * unit('ft')
+altitudes = [0, 10, 33.5] * unit('kft')
 fc = FlightCondition(altitudes, EAS=300*unit('knots'))
 
 # Print flight condition data:
 print(f"{fc}")
 
-# Print extended output in Imperial units:
-print(f"\n{fc.tostring(full_output=True, imperial_units=True)}")
+# Print extended output:
+print(f"\n{fc.tostring(full_output=True)}")
 
 # Access flight speed formats individually
 M_inf, U_inf, U_CAS, U_EAS = fc.mach, fc.TAS, fc.CAS, fc.EAS
@@ -63,8 +62,8 @@ atm = Atmosphere(h)
 # Print abbreviated output:
 print(f"\n{atm}")
 
-# Print extended output in Imperial units:
-print(f"\n{atm.tostring(full_output=True, imperial_units=True)}")
+# Print extended output in US units:
+print(f"\n{atm.tostring(full_output=True, US_units=True)}")
 
 # See also the linspace() function from numpy, e.g.
 # h = linspace(0, 81.0, 82) * unit('km')

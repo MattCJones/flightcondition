@@ -16,10 +16,13 @@ from inspect import currentframe
 
 from pint import UnitRegistry
 
-unit = UnitRegistry(system='mks')
+unit = UnitRegistry(system='SI')
 unit.default_format = '~P'
 dimless = unit('dimensionless')
 
+_US_length_units = ('ft', 'feet', 'foot', 'kft', 'kilofoot', 'kilofeet'
+                          'fts', 'feets', 'foots', 'kfts', 'kilofoots',
+                          'kilofeets', 'mi', 'mile', 'miles')
 
 def check_dimensioned(inp):
     """Check that input is dimensional (type 'Quantity' from pint package) and
@@ -45,6 +48,16 @@ def check_length_dimensioned(inp):
     if not (inp.dimensionality == length_dimensionality):
         raise TypeError("Input value is not correctly typed! Use length"
                         " dimensional unit.")
+
+
+def check_US_length_units(ell):
+    """Check if length unit type is an US unit
+
+    :ell: length unit of type Quantity from pint package.
+    :returns: True if US unit else False
+
+    """
+    return ell.units in _US_length_units
 
 
 def check_area_dimensioned(inp):
