@@ -12,7 +12,7 @@ more with built-in unit checking.  Specific sub-modules include:
 * :code:`atmosphere` : input altitude to compute 1993 International Standard Atmosphere data.  Many relevant, derived quantities are included.
 * :code:`units` : built-in unit-checking and conversion using `pint <https://pint.readthedocs.io>`_ package.
 
-See examples below for usage!.
+See examples below for usage!
 
 
 Author

@@ -16,8 +16,7 @@ from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
-from flightcondition.units import unit
-from flightcondition.units.units import check_dimensioned,\
+from flightcondition.units import unit, check_dimensioned,\
     check_US_length_units, check_length_dimensioned,\
     to_base_units_wrapper
 

@@ -14,13 +14,10 @@ Email: matt.c.jones.aoe@gmail.com
 
 from numpy import atleast_1d, ones, sqrt, shape
 
-from flightcondition.atmosphere import Atmosphere
-from flightcondition.atmosphere.atmosphere import _atleast_1d  # DEPRECATED
+from flightcondition.atmosphere import Atmosphere, _atleast_1d  # DEPRECATED
 from flightcondition.constants import PhysicalConstants as Phys
-from flightcondition.units import unit, dimless
-from flightcondition.units.units import check_area_dimensioned,\
+from flightcondition.units import unit, dimless, check_area_dimensioned,\
     check_dimensioned, check_length_dimensioned, to_base_units_wrapper
-    
 
 
 class FlightCondition:
