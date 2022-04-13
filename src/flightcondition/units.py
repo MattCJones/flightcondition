@@ -26,6 +26,7 @@ _US_length_units = ('ft', 'feet', 'foot', 'kft', 'kilofoot', 'kilofeet'
                           'fts', 'feets', 'foots', 'kfts', 'kilofoots',
                           'kilofeets', 'mi', 'mile', 'miles')
 
+
 def check_dimensioned(inp):
     """Check that input is dimensional (type 'Quantity' from pint package) and
     *not* from a different unit registry.  """

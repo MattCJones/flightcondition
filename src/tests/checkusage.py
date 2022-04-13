@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # Check that "Usage" commands run properly.
 
+# flake8: noqa F401
+
 ############################################################
 print("="*60)
 print("Checking flightcondition usage:")

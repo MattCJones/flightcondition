@@ -64,7 +64,7 @@ class AtmosphereConstants():
         "Mesosphere",
         "Mesosphere",
         "Mesopause",
-        ])
+    ])
 
     # Layer base geopotential heights
     H_base = array([
@@ -77,7 +77,7 @@ class AtmosphereConstants():
         51.0,
         71.0,
         80.0
-        ]) * unit('km')
+    ]) * unit('km')
 
     # Layer temperature gradients
     T_grad = array([
@@ -90,7 +90,7 @@ class AtmosphereConstants():
         -2.8,
         -2.0,
         -2.0
-        ]) * 1e-3 * unit('K/m')
+    ]) * 1e-3 * unit('K/m')
 
     # Layer base temperatures
     T_base = array([
@@ -103,7 +103,7 @@ class AtmosphereConstants():
         270.65,
         214.65,
         196.65,
-        ]) * unit('K')
+    ]) * unit('K')
 
     # Layer base pressures
     p_base = array([
@@ -116,4 +116,4 @@ class AtmosphereConstants():
         6.69384e+1,
         3.95639e+0,
         8.86272e-1,
-        ]) * unit('Pa')
+    ]) * unit('Pa')

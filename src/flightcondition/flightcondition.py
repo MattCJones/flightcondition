@@ -12,7 +12,7 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import atleast_1d, ones, sqrt, shape
+from numpy import ones, sqrt, shape
 
 from flightcondition.atmosphere import Atmosphere, _atleast_1d  # DEPRECATED
 from flightcondition.constants import PhysicalConstants as Phys
@@ -132,7 +132,7 @@ class FlightCondition:
             raise ValueError(
                 f"Mach number is out of bounds "
                 f"({self._mach_min:.5g} < mach < {self._mach_max:.5g})"
-                )
+            )
 
     def __str__(self):
         """Output string representation of class object.

@@ -11,8 +11,8 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-from numpy import atleast_1d, array, exp, ndarray, pi, shape, size, sqrt,\
-        zeros_like
+from numpy import array, exp, ndarray, pi, shape, size, sqrt,\
+    zeros_like
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
@@ -225,7 +225,7 @@ class Atmosphere():
             raise ValueError(
                 f"Input altitude is out of bounds "
                 f"({self._h_min:.5g} < h < {self._h_max:.5g})"
-                )
+            )
 
         self.US_units = check_US_length_units(h)
         if self.US_units:
@@ -342,8 +342,8 @@ class Atmosphere():
 
         s = T_grad != 0
         p[s] = p_base[s]*(
-                1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
-                )**((1/T_grad[s])*(-g_0/R_air))
+            1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
+        )**((1/T_grad[s])*(-g_0/R_air))
 
         return p
 
