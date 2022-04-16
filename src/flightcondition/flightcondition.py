@@ -21,7 +21,6 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
 
 
 class FlightCondition:
-
     """Easily convert between Mach number, true airspeed (TAS), calibrated
     airspeed (CAS), and equivalent airspeed (EAS) for given altitude(s).
     Additional flight condition data and atmospheric data is computed.
@@ -76,11 +75,12 @@ class FlightCondition:
         number, TAS, CAS, or EAS.  At least one input speed is required.  All
         inputs must be dimensional unit quantities.
 
-        :altitude: geometric altitude
-        :mach: Mach number
-        :TAS: true airspeed
-        :CAS: calibrated airspeed
-        :EAS: equivalent airspeed
+        Args:
+            altitude (length): geometric altitude
+            mach (dimless): Mach number
+            TAS (speed): true airspeed
+            CAS (speed): calibrated airspeed
+            EAS (speed): equivalent airspeed
 
         """
 
@@ -136,7 +136,9 @@ class FlightCondition:
 
     def __str__(self):
         """Output string representation of class object.
-        :returns: full string output
+
+        Returns:
+            str: full string output
 
         """
         return self.tostring(full_output=False)
@@ -145,9 +147,12 @@ class FlightCondition:
     def isentropic_mach(p_0, p):
         """Isentropic flow equation for Mach number
 
-        :p_0: stagnation pressure
-        :p: static pressure
-        :returns: Mach number
+        Args:
+            p_0 (pressure): stagnation pressure
+            p (pressure): static pressure
+
+        Returns:
+            dimless: Mach number
 
         """
         y = Phys.gamma_air
@@ -158,9 +163,12 @@ class FlightCondition:
     def isentropic_stagnation_pressure(M, p):
         """Isentropic flow equation for stagnation pressure
 
-        :M: Mach number
-        :p: static pressure
-        :returns: stagnation pressure
+        Args:
+            M (dimless): Mach number
+            p (pressure): static pressure
+
+        Returns:
+            (pressure): stagnation pressure
 
         """
         y = Phys.gamma_air
@@ -171,9 +179,12 @@ class FlightCondition:
     def mach_number(U, a):
         """Compute Mach number
 
-        :U: airspeed
-        :a: sound speed
-        :returns: Mach number
+        Args:
+            U (speed): airspeed
+            a (speed): sound speed
+
+        Returns:
+            (dimless): Mach number
 
         """
         return U/a
@@ -182,9 +193,12 @@ class FlightCondition:
     def mach_airspeed(M, a):
         """Compute airspeed from Mach number
 
-        :M: Mach number
-        :a: sound speed
-        :returns: airspeed
+        Args:
+            M (dimless): Mach number
+            a (speed): sound speed
+
+        Returns:
+            speed: airspeed
 
         """
         return M*a
@@ -193,8 +207,11 @@ class FlightCondition:
         """Check that input is correctly typed, then size input array. If
         scalar, leave as scalar.
 
-        :inpvar: input array (or scalar)
-        :returns: sized array (or scalar)
+        Args:
+            inpvar (object): input array (or scalar)
+
+        Returns:
+            object: sized array (or scalar)
 
         """
         check_dimensioned(inpvar)
@@ -212,16 +229,18 @@ class FlightCondition:
         return sizedarr
 
     def print(self, *args, **kwargs):
-        """Print tostring() function to stdout
-        """
+        """Print tostring() function to stdout. """
         print(self.tostring(*args, **kwargs))
 
     def tostring(self, full_output=True, US_units=None):
         """String representation of data structure.
 
-        :full_output: set to True for full output
-        :US_units: set to True for US units and False for SI
-        :returns: string representation
+        Args:
+            full_output (bool): set to True for full output
+            US_units (bool): set to True for US units and False for SI
+
+        Returns:
+            str: string representation
 
         """
         US_units = self.US_units if US_units is None else US_units
@@ -261,8 +280,11 @@ class FlightCondition:
     def M_inf_from_TAS(self, TAS):
         """Compute Mach number from true airspeed.
 
-        :TAS: true airspeed
-        :returns: Mach number
+        Args:
+            TAS (speed): true airspeed
+
+        Returns:
+            dimless: Mach number
 
         """
         a_inf = self.atm.a
@@ -273,8 +295,11 @@ class FlightCondition:
     def TAS_from_M_inf(self, mach):
         """Compute true airspeed from Mach number.
 
-        :mach: Mach number
-        :returns: true airspeed
+        Args:
+            mach (dimless): Mach number
+
+        Returns:
+            speed: true airspeed
 
         """
         a_inf = self.atm.a
@@ -285,8 +310,11 @@ class FlightCondition:
     def M_inf_from_EAS(self, EAS):
         """Computer Mach number from equivalent airspeed.
 
-        :EAS: equivalent airspeed
-        :returns: Mach number
+        Args:
+            EAS (speed): equivalent airspeed
+
+        Returns:
+            dimless: Mach number
 
         """
         a_inf_h0 = self._atm0.a
@@ -297,8 +325,11 @@ class FlightCondition:
     def EAS_from_M_inf(self, mach):
         """Computer Mach number from equivalent airspeed.
 
-        :mach: Mach number
-        :returns: equivalent airspeed
+        Args:
+            mach (dimless): Mach number
+
+        Returns:
+            speed: equivalent airspeed
 
         """
         a_inf_h0 = self._atm0.a
@@ -309,8 +340,11 @@ class FlightCondition:
     def q_inf_from_TAS(self, TAS):
         """Compute dynamic pressure from true airspeed.
 
-        :TAS: true airspeed
-        :returns: dynamic pressure
+        Args:
+            TAS (speed): true airspeed
+
+        Returns:
+            pressure: dynamic pressure
 
         """
         rho_inf = self.atm.rho
@@ -322,8 +356,11 @@ class FlightCondition:
         """Compute impact pressure from calibrated airspeed (accounting for
            compressibility).
 
-        :CAS: calibrated airspeed
-        :returns: impact pressure
+        Args:
+            CAS (speed): calibrated airspeed
+
+        Returns:
+            pressure: impact pressure
 
         """
         a_h0 = self._atm0.a
@@ -338,8 +375,11 @@ class FlightCondition:
         """Compute calibrated airspeed from impact pressure (accounting for
            compressibility).
 
-        :CAS: calibrated airspeed
-        :returns: impact pressure
+        Args:
+            CAS (speed): calibrated airspeed
+
+        Returns:
+            pressure: impact pressure
 
         """
         a_h0 = self._atm0.a
@@ -353,8 +393,11 @@ class FlightCondition:
     def M_inf_from_q_c(self, q_c):
         """Compute Mach number from impact pressure.
 
-        :q_c: impact pressure
-        :returns: Mach number
+        Args:
+            q_c (pressure): impact pressure
+
+        Returns:
+            dimless: Mach number
 
         """
         p_inf = self.atm.p
@@ -380,9 +423,12 @@ class FlightCondition:
     def EAS_from_TAS(self, TAS, mach):
         """Convert airspeed to true calibrated airspeed.
 
-        :TAS: true airspeed
-        :mach: Mach number
-        :returns: equivalent airspeed
+        Args:
+            TAS (speed): true airspeed
+            mach (dimless): Mach number
+
+        Returns:
+            speed: equivalent airspeed
 
         """
         a_inf_h0 = self._atm0.a
@@ -398,8 +444,11 @@ class FlightCondition:
                 L & = C_L q_\\infty S_ref
                   & = C_L \\text{redim_force}
 
-        :S_ref: reference area
-        :returns: redimensionalization factor
+        Args:
+            S_ref (area): reference area
+
+        Returns:
+            (force): redimensionalization factor
 
         """
         check_area_dimensioned(S_ref)
@@ -414,9 +463,12 @@ class FlightCondition:
                 M & = C_M q_\\infty S_ref ell
                   & = C_M \\text{redim_moment}
 
-        :S_ref: reference area
-        :ell: reference length
-        :returns: redimensionalization factor
+        Args:
+            S_ref (area): reference area
+            ell (length): reference length
+
+        Returns:
+            (moment): redimensionalization factor
 
         """
         check_area_dimensioned(S_ref)
@@ -427,8 +479,11 @@ class FlightCondition:
     def reynolds_number(self, ell):
         """Compute Reynolds number for the flight condition.
 
-        :ell: length scale
-        :returns: Reynolds number
+        Args:
+            ell (length): length scale
+
+        Returns:
+            dimless: Reynolds number
 
         """
         nu = self.atm.nu
@@ -464,9 +519,12 @@ class FlightCondition:
         In this case, it is helpful to compute Reynolds number per-unit-length
         in inches (length_unit='in').
 
+        Args:
+            length_unit (length): desired length unit as string, ('in', 'mm',
+                'cm')
 
-        :length_unit: desired length unit as string, ('in', 'mm', 'cm')
-        :returns: Reynolds number
+        Returns:
+            dimless: Reynolds number
 
         """
         nu_inf = self.atm.nu

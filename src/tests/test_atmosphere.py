@@ -59,7 +59,9 @@ nu_inf_truth_arr = [
 @pytest.fixture
 def atm():
     """Fixture to compute atmospheric properties just once before tests.
-    :returns: Atmosphere object
+
+    Returns:
+        Atmosphere object
 
     """
     return Atmosphere(h_geom_truth_arr)

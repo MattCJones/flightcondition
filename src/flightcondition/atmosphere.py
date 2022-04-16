@@ -25,10 +25,14 @@ def _atleast_1d(arr):
     """DEPRECATED: My version of numpy.atleast_1d that supports Python 3.7.
     This function will be deleted in future versions.
 
-    :arr: array
-    :returns: TODO
+    Args:
+        arr (object): array or scalar input
+
+    Returns:
+        np.array: numpy array with at least one element
 
     """
+
     if len(shape(arr)) == 0:  # scalar, non-array
         return array([arr.magnitude]) * arr.units
     else:  # already an array
@@ -36,7 +40,15 @@ def _atleast_1d(arr):
 
 
 def _len1array_to_scalar(func):
-    """Decorator to output scalar if array is length 1."""
+    """Decorator to output scalar if array is length 1.
+
+    Args:
+        func (object): function to wrap
+
+    Returns:
+        object: scalar or array
+
+    """
 
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -51,9 +63,11 @@ def _len1array_to_scalar(func):
 def _formatarr(unitstr):
     """Decorator to format arrays from base atmospheric model.
 
-    :arr: input array from base atmospheric model
-    :unitstr: unit string
-    :returns: dimensionalized, formatted array
+    Args:
+        unitstr (str): unit string
+
+    Returns:
+        callable: function after wrapped operations complete
 
     """
     def inner_decorator(func):
@@ -68,8 +82,8 @@ def _formatarr(unitstr):
     return inner_decorator
 
 
-class Atmosphere():
 
+class Atmosphere():
     """Compute quantities from International Civil Aviation Organization (ICAO)
     1993, which extends the US 1976 Standard Atmospheric Model to 80 km.
 
@@ -98,6 +112,7 @@ class Atmosphere():
         # mean free path, and more (see class for all options)
         print(f"\nThe thermal conductivity is {atm.k:.5g}"
             f"\nThe mean free path = {atm.mean_free_path:.5g}")
+
     """
 
     class Layer():
@@ -106,7 +121,9 @@ class Atmosphere():
         def __init__(self, H_arr):
             """Initialize Layer nested class.
 
-            :H_arr: geopotential altitude
+            Args:
+                H_arr (length): geopotential altitude
+
             """
             H_arr = _atleast_1d(H_arr)
 
@@ -128,8 +145,11 @@ class Atmosphere():
         def _layer_idx(H):
             """Find index for layer data.
 
-            :H_arr: geopotential altitude
-            :returns: index
+            Args:
+                H_arr (length): geopotential altitude
+
+            Returns:
+                int: index of layer
 
             """
             idx = None
@@ -181,7 +201,8 @@ class Atmosphere():
         """Input altitude - object contains the corresponding atmospheric
         quantities.
 
-        :altitude: geometric altitude input in pint dimensional units
+        Args:
+            altitude (length): geometric altitude
 
         """
 
@@ -198,7 +219,9 @@ class Atmosphere():
 
     def __str__(self):
         """Output string representation of class object. Default for __str__
-        :returns: string output
+
+        Returns:
+            str: string output
 
         """
         return self.tostring(full_output=False)
@@ -208,8 +231,11 @@ class Atmosphere():
         input is length dimension.  Check bounds.  Format as array even if
         scalar input.
 
-        :alt: input scalar or array of altitudes
-        :returns: geometric altitude
+        Args:
+            alt (length): input scalar or array of altitudes
+
+        Returns:
+            length: geometric altitude
 
         """
         tofloat = 1.0
@@ -236,7 +262,13 @@ class Atmosphere():
     @to_base_units_wrapper
     def knudsen_number(self, ell):
         """Compute the Knudsen number :math:`K_n`
-        :returns: Knudsen number
+
+        Args:
+            ell (length): length scale
+
+        Returns:
+            dimless: Knudsen number
+
         """
         Kn = self.mean_free_path/ell
         return Kn
@@ -244,9 +276,12 @@ class Atmosphere():
     def tostring(self, full_output=True, US_units=None):
         """String representation of data structure.
 
-        :full_output: set to True for full output
-        :US_units: set to True for US units and False for SI
-        :returns: string representation
+        Args:
+            full_output (bool): set to True for full output
+            US_units (bool): set to True for US units and False for SI
+
+        Returns:
+            str: string representation of class object
 
         """
         US_units = self.US_units if US_units is None else US_units
@@ -290,6 +325,13 @@ class Atmosphere():
         """Convert geometric to geopotential altitude.
 
         :math:`H = \\frac{R_{earth} h}{R_{earth} + h}`
+
+        Args:
+            h (length): geometric altitude
+
+        Returns:
+            length: geopotential altitude
+
         """
         R_earth = Phys.R_earth
         H = R_earth*h/(R_earth + h)
@@ -300,6 +342,13 @@ class Atmosphere():
         """Convert geopotential to geometric altitude.
 
         :math:`h = \\frac{R_{earth} H}{R_{earth} - H}`
+
+        Args:
+            H (length): geopotential altitude
+
+        Returns:
+            length: geometric altitude
+
         """
         R_earth = Phys.R_earth
         h = R_earth*H/(R_earth - H)
