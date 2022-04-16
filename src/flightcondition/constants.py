@@ -20,14 +20,14 @@ class PhysicalConstants():
     """Dimensionalized constants for general physics.
 
     Attributes:
-        g (acceleration): acceleration due to gravity
-        R (energy/temperature/mol): universal gas constant
-        R_air (energy/temperature/mass): gas constant for air
-        gamma_air (dimless): ratio of specific heats for air
-        collision_diam_air (length): effective collision diameter of an air
+        g (acceleration): Acceleration due to gravity
+        R (energy/temperature/mol): Universal gas constant
+        R_air (energy/temperature/mass): Gas constant for air
+        gamma_air (dimless): Ratio of specific heats for air
+        collision_diam_air (length): Effective collision diameter of an air
             molecule
         N_A (1/mol): Avogadro's constant
-        R_earth (length): radius of Earth
+        R_earth (length): Radius of Earth
 
     """
     g = 9.80665 * unit('m/s^2')
@@ -43,10 +43,10 @@ class AtmosphereConstants():
     """Dimensionalized constants for atmospheric modeling.
 
     Attributes:
-        p_0 (pressure): sea level ambient pressure
-        T_ice (temperature): sea level ice point temperature
-        T_0 (temperature): sea level ambient temperature
-        rho_0 (density): sea level ambient density
+        p_0 (pressure): Sea level ambient pressure
+        T_ice (temperature): Sea level ice point temperature
+        T_0 (temperature): Sea level ambient temperature
+        rho_0 (density): Sea level ambient density
         S (temperature): Sutherland's empirical constant in equation for
             dynamic viscosity
         beta_s (mass/length/time/temperature^0.5): Sutherland's empirical

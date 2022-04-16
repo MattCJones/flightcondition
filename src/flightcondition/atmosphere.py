@@ -26,10 +26,10 @@ def _atleast_1d(arr):
     This function will be deleted in future versions.
 
     Args:
-        arr (object): array or scalar input
+        arr (object): Array or scalar input
 
     Returns:
-        np.array: numpy array with at least one element
+        np.array: Numpy array with at least one element
 
     """
 
@@ -43,10 +43,10 @@ def _len1array_to_scalar(func):
     """Decorator to output scalar if array is length 1.
 
     Args:
-        func (object): function to wrap
+        func (object): Function to wrap
 
     Returns:
-        object: scalar or array
+        object: Scalar or array
 
     """
 
@@ -64,10 +64,10 @@ def _formatarr(unitstr):
     """Decorator to format arrays from base atmospheric model.
 
     Args:
-        unitstr (str): unit string
+        unitstr (str): Unit string
 
     Returns:
-        callable: function after wrapped operations complete
+        callable: Function after wrapped operations complete
 
     """
     def inner_decorator(func):
@@ -121,7 +121,7 @@ class Atmosphere():
             """Initialize Layer nested class.
 
             Args:
-                H_arr (length): geopotential altitude
+                H_arr (length): Geopotential altitude
 
             """
             H_arr = _atleast_1d(H_arr)
@@ -145,10 +145,10 @@ class Atmosphere():
             """Find index for layer data.
 
             Args:
-                H_arr (length): geopotential altitude
+                H_arr (length): Geopotential altitude
 
             Returns:
-                int: index of layer
+                int: Index of layer
 
             """
             idx = None
@@ -201,7 +201,7 @@ class Atmosphere():
         quantities.
 
         Args:
-            altitude (length): geometric altitude
+            altitude (length): Geometric altitude
 
         """
 
@@ -220,7 +220,7 @@ class Atmosphere():
         """Output string representation of class object. Default for __str__
 
         Returns:
-            str: string output
+            str: String output
 
         """
         return self.tostring(full_output=False)
@@ -231,10 +231,10 @@ class Atmosphere():
         scalar input.
 
         Args:
-            alt (length): input scalar or array of altitudes
+            alt (length): Input scalar or array of altitudes
 
         Returns:
-            length: geometric altitude
+            length: Geometric altitude
 
         """
         tofloat = 1.0
@@ -263,7 +263,7 @@ class Atmosphere():
         """Compute the Knudsen number :math:`K_n`
 
         Args:
-            ell (length): length scale
+            ell (length): Length scale
 
         Returns:
             dimless: Knudsen number
@@ -276,11 +276,11 @@ class Atmosphere():
         """String representation of data structure.
 
         Args:
-            full_output (bool): set to True for full output
-            US_units (bool): set to True for US units and False for SI
+            full_output (bool): Set to True for full output
+            US_units (bool): Set to True for US units and False for SI
 
         Returns:
-            str: string representation of class object
+            str: String representation of class object
 
         """
         US_units = self.US_units if US_units is None else US_units
@@ -326,10 +326,10 @@ class Atmosphere():
         :math:`H = \\frac{R_{earth} h}{R_{earth} + h}`
 
         Args:
-            h (length): geometric altitude
+            h (length): Geometric altitude
 
         Returns:
-            length: geopotential altitude
+            length: Geopotential altitude
 
         """
         R_earth = Phys.R_earth
@@ -343,10 +343,10 @@ class Atmosphere():
         :math:`h = \\frac{R_{earth} H}{R_{earth} - H}`
 
         Args:
-            H (length): geopotential altitude
+            H (length): Geopotential altitude
 
         Returns:
-            length: geometric altitude
+            length: Geometric altitude
 
         """
         R_earth = Phys.R_earth

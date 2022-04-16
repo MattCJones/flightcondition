@@ -32,7 +32,7 @@ def check_dimensioned(inp):
     *not* from a different unit registry.
 
     Args:
-        inp (object): object to assert as dimensional type
+        inp (object): Object to assert as dimensional type
 
     """
     if isinstance(inp, unit.Quantity):
@@ -53,7 +53,7 @@ def check_length_dimensioned(inp):
     """Check that input is length dimension type Quantity from pint package.
 
     Args:
-        inp (object): object to assert as length dimensional type
+        inp (object): Object to assert as length dimensional type
 
     """
     length_dimensionality = (1*unit('ft')).dimensionality
@@ -66,7 +66,7 @@ def check_US_length_units(ell):
     """Check if length unit type is an US unit
 
     Args:
-        ell (length): length unit of type Quantity from pint package.
+        ell (length): Length unit of type Quantity from pint package.
 
     Returns:
         bool: True if US unit else False
@@ -79,7 +79,7 @@ def check_area_dimensioned(inp):
     """Check that input is area type Quantity from pint package.
 
     Args:
-        inp (object): object to assert as area dimensional type
+        inp (object): Object to assert as area dimensional type
 
     """
     area_dimensionality = (1*unit('ft^2')).dimensionality
@@ -92,10 +92,10 @@ def name_of_var(var):
     """Find name of variables using local items.
 
     Args:
-        var (unit): dimensioned variable
+        var (unit): Dimensioned variable
 
     Returns:
-        str: user-coded name of variable
+        str: User-coded name of variable
 
     """
     try:
@@ -116,18 +116,18 @@ def printv(var, to=None, name="", prec=".5g", fmt="~P", *args, **kwargs):
         printv(distance)
         # prints "distance = 99.9 m"
 
-    *Note*: as of Python 3.8, simply use the f-string syntax, e.g.
+    *Note*: As of Python 3.8, simply use the f-string syntax, e.g.
         x=7
         print(f"{x=}")
 
     Args:
-        var (unit): variable to be printed
-        to (str): convert to another unit
-        name (str): overwrite variable name
-        prec (str): precision formatter
-        fmt (str): additional formatter for pretty print or lack thereof
-        *args: additional arguments
-        **kwargs: additional keyword arguments
+        var (unit): Variable to be printed
+        to (str): Convert to another unit
+        name (str): Overwrite variable name
+        prec (str): Precision formatter
+        fmt (str): Additional formatter for pretty print or lack thereof
+        *args: Additional arguments
+        **kwargs: Additional keyword arguments
 
     """
     if isinstance(var, unit.Quantity):
@@ -142,10 +142,10 @@ def to_base_units_wrapper(func):
     """Function decorator to convert output variable units to base units.
 
     Args:
-        func (callable): function to wrap
+        func (callable): Function to wrap
 
     Returns:
-        callable: called, wrapped function
+        callable: Called, wrapped function
 
     """
     @wraps(func)
