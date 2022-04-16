@@ -19,13 +19,16 @@ from flightcondition.units import unit, dimless
 class PhysicalConstants():
     """Dimensionalized constants for general physics.
 
-    :g: acceleration due to gravity
-    :R: universal gas constant
-    :R_air: gas constant for air
-    :gamma_air: ratio of specific heats for air
-    :collision_diam_air: effective collision diameter of an air molecule
-    :N_A: Avogadro's constant
-    :R_earth: radius of Earth
+    Attributes:
+        g (acceleration): acceleration due to gravity
+        R (energy/temperature/mol): universal gas constant
+        R_air (energy/temperature/mass): gas constant for air
+        gamma_air (dimless): ratio of specific heats for air
+        collision_diam_air (length): effective collision diameter of an air
+            molecule
+        N_A (1/mol): Avogadro's constant
+        R_earth (length): radius of Earth
+
     """
     g = 9.80665 * unit('m/s^2')
     R = 8.31432 * unit('N m / (mol K)')
@@ -39,12 +42,16 @@ class PhysicalConstants():
 class AtmosphereConstants():
     """Dimensionalized constants for atmospheric modeling.
 
-    :p_0: sea level ambient pressure
-    :T_ice: sea level ice point temperature
-    :T_0: sea level ambient temperature
-    :rho_0: sea level ambient density
-    :S: Sutherland's empirical constant in equation for dynamic viscosity
-    :beta_s: Sutherland's empirical constant in equation for dynamic viscosity
+    Attributes:
+        p_0 (pressure): sea level ambient pressure
+        T_ice (temperature): sea level ice point temperature
+        T_0 (temperature): sea level ambient temperature
+        rho_0 (density): sea level ambient density
+        S (temperature): Sutherland's empirical constant in equation for
+            dynamic viscosity
+        beta_s (mass/length/time/temperature^0.5): Sutherland's empirical
+            constant in equation for dynamic viscosity
+
     """
 
     # Sea level
