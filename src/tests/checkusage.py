@@ -77,4 +77,4 @@ print(f"\nThe pressure in psi is {p.to('psi'):.5g}")
 # Compute additional properties such as thermal conductivity,
 # mean free path, and more (see class for all options)
 print(f"\nThe thermal conductivity is {atm.k:.5g}"
-      f"\nThe mean free path = {atm.mean_free_path:.5g}")
+      f"\nThe mean free path = {atm.MFP:.5g}")

@@ -19,9 +19,11 @@ reltol = 0.0001
 def myapprox(test_arg):
     """Appoximate value of testarg to specified relative tolerance.
 
-    :test_arg: TODO
-    :returns: approximation of argument
+    Args:
+        test_arg: argument to approximate
 
+    Returns:
+        approximation of argument
     """
     return pytest.approx(test_arg, rel=reltol)
 
@@ -29,8 +31,8 @@ def myapprox(test_arg):
 def assert_field(field_arr, field_truth_arr):
     """Test that output field matches truth data.
 
-    :field_arr: field array of type pint.Quantity
-
+    Args:
+        field_arr: field array of type pint.Quantity
     """
     assert (
            field_arr.to_base_units().magnitude

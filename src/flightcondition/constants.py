@@ -28,7 +28,6 @@ class PhysicalConstants():
             molecule
         N_A (1/mol): Avogadro's constant
         R_earth (length): Radius of Earth
-
     """
     g = 9.80665 * unit('m/s^2')
     R = 8.31432 * unit('N m / (mol K)')
@@ -51,7 +50,6 @@ class AtmosphereConstants():
             dynamic viscosity
         beta_s (mass/length/time/temperature^0.5): Sutherland's empirical
             constant in equation for dynamic viscosity
-
     """
 
     # Sea level

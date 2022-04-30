@@ -137,7 +137,7 @@ Outputs include:
 * Geometric altitude :code:`h`
 * Geopotential altitude :code:`H`
 * Acceleration due to gravity :code:`g`
-* Mean free path :code:`mean_free_path`
+* Mean free path :code:`MFP`
 
 Usage:
 
@@ -165,7 +165,7 @@ Usage:
     # Compute additional properties such as thermal conductivity,
     # mean free path, and more (see class for all options)
     print(f"\nThe thermal conductivity is {atm.k:.5g}"
-        f"\nThe mean free path = {atm.mean_free_path:.5g}")
+        f"\nThe mean free path = {atm.MFP:.5g}")
 
 Units
 -----
@@ -193,6 +193,18 @@ Note that `pint <https://pint.readthedocs.io>`_ does not support conflicting
 unit registries so avoid interactions between :code:`flightcondition.unit` and
 a separate :code:`pint.UnitRegistry`.
 
+Command Line Interface
+----------------------
+It is also possible to compute flight conditions from the command line for
+convenience but with limited functionality.  Run :code:`flightcondition -h` for
+help.
+
+An example call is provided for the flight condition of 233
+knots-equivalent-airspeed at 23 kilo-feet:
+
+.. code-block:: bash
+
+    flightcondition --alt 23 kft --EAS 233 kt
 
 License
 =======

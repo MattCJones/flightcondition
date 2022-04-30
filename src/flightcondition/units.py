@@ -70,7 +70,6 @@ def check_US_length_units(ell):
 
     Returns:
         bool: True if US unit else False
-
     """
     return ell.units in _US_length_units
 
@@ -96,7 +95,6 @@ def name_of_var(var):
 
     Returns:
         str: User-coded name of variable
-
     """
     try:
         local_vars = currentframe().f_back.f_back.f_locals.items()
@@ -146,7 +144,6 @@ def to_base_units_wrapper(func):
 
     Returns:
         callable: Called, wrapped function
-
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
