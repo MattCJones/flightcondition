@@ -11,7 +11,7 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-from numpy import array, exp, ndarray, pi, shape, size, sqrt,\
+from numpy import array, exp, ndarray, pi, shape, size, str_, sqrt,\
     zeros_like
 
 from flightcondition.constants import PhysicalConstants as Phys
@@ -323,29 +323,29 @@ class Atmosphere():
         """
         US_units = self.US_units if US_units is None else US_units
         if US_units:
-            h_str   = f"h     = {self.h.to('kft'):8.5g~P}"
-            H_str   = f"H     = {self.H.to('kft'):8.5g~P}"
-            p_str   = f"p     = {self.p.to('lbf/ft^2'):8.5g~P}"
-            T_str   = f"T     = {self.T.to('degR'):8.5g~P}"
-            rho_str = f"rho   = {self.rho.to('slug/ft^3'):8.5g~P}"
-            a_str   = f"a     = {self.a.to('ft/s'):8.5g~P}"
-            mu_str  = f"mu    = {self.mu.to('lbf/ft^2 s'):8.5g~P}"
-            nu_str  = f"nu    = {self.nu.to('ft^2/s'):8.5g~P}"
-            k_str   = f"k     = {self.k.to('slug ft/s^3/degR'):8.5g~P}"
-            g_str   = f"g     = {self.g.to('ft/s^2'):8.5g~P}"
-            MFP_str = f"MFP   = {self.MFP.to('ft'):8.5g~P}"
+            h_str   = f"h     = {self.h.to('kft'):10.5g~P}"
+            H_str   = f"H     = {self.H.to('kft'):10.5g~P}"
+            p_str   = f"p     = {self.p.to('lbf/ft^2'):10.5g~P}"
+            T_str   = f"T     = {self.T.to('degR'):10.5g~P}"
+            rho_str = f"rho   = {self.rho.to('slug/ft^3'):10.4e~P}"
+            a_str   = f"a     = {self.a.to('ft/s'):10.5g~P}"
+            mu_str  = f"mu    = {self.mu.to('lbf/ft^2 s'):10.4e~P}"
+            nu_str  = f"nu    = {self.nu.to('ft^2/s'):10.4e~P}"
+            k_str   = f"k     = {self.k.to('slug ft/s^3/degR'):10.4e~P}"
+            g_str   = f"g     = {self.g.to('ft/s^2'):10.5g~P}"
+            MFP_str = f"MFP   = {self.MFP.to('ft'):10.4e~P}"
         else:  # SI units
-            h_str   = f"h     = {self.h.to('km'):8.5g~P}"
-            H_str   = f"H     = {self.H.to('km'):8.5g~P}"
-            p_str   = f"p     = {self.p.to('Pa'):8.5g~P}"
-            T_str   = f"T     = {self.T.to('degK'):8.5g~P}"
-            rho_str = f"rho   = {self.rho.to('kg/m^3'):8.5g~P}"
-            a_str   = f"a     = {self.a.to('m/s'):8.5g~P}"
-            mu_str  = f"mu    = {self.mu.to('Pa s'):8.5g~P}"
-            nu_str  = f"nu    = {self.nu.to('m^2/s'):8.5g~P}"
-            k_str   = f"k     = {self.k.to('W/m/K'):8.5g~P}"
-            g_str   = f"g     = {self.g.to('m/s^2'):8.5g~P}"
-            MFP_str = f"MFP   = {self.MFP.to('m'):8.5g~P}"
+            h_str   = f"h     = {self.h.to('km'):10.5g~P}"
+            H_str   = f"H     = {self.H.to('km'):10.5g~P}"
+            p_str   = f"p     = {self.p.to('Pa'):10.5g~P}"
+            T_str   = f"T     = {self.T.to('degK'):10.5g~P}"
+            rho_str = f"rho   = {self.rho.to('kg/m^3'):10.4e~P}"
+            a_str   = f"a     = {self.a.to('m/s'):10.5g~P}"
+            mu_str  = f"mu    = {self.mu.to('Pa s'):10.4e~P}"
+            nu_str  = f"nu    = {self.nu.to('m^2/s'):10.4e~P}"
+            k_str   = f"k     = {self.k.to('W/m/K'):10.4e~P}"
+            g_str   = f"g     = {self.g.to('m/s^2'):10.5g~P}"
+            MFP_str = f"MFP   = {self.MFP.to('m'):10.4e~P}"
 
         # Insert longer variable name into output
         max_chars = max([len(v) for v in self.varnames.values()])
@@ -362,8 +362,15 @@ class Atmosphere():
         MFP_str = f"{self.varnames['MFP']:{max_chars}s} {MFP_str}"
 
         if full_output:
+            print("DEBUG", self.layer.name, type(self.layer.name), shape(self.layer.name))
+            if type(self.layer.name) is str_:  # singular string
+                trunc_layer_name = self.layer.name
+            else:
+                trunc_layer_name = " ".join([
+                    "[" + f"{s[:10]}" for s in self.layer.name + "]"
+                ])
             layer_str = (f"{'atmospheric_layer ':{max_chars}} name  = "
-                         f"{self.layer.name}")
+                         f"{trunc_layer_name}")
 
             repr_str = (f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n{rho_str}\n"
                         f"{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n{g_str}\n"

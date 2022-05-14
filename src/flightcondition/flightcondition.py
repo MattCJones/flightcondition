@@ -237,12 +237,14 @@ class FlightCondition:
         if default_dim is not None:
             inpvar *= default_dim
         check_dimensioned(inpvar)
+        # Require altitude and speed arrays to be equal or singular speed array
+        wrongsize_msg = ("Input arrays for altitude and airspeed must either "
+                         "equal in size or one must be singular.")
         if shape(self.h):  # if altitude is an array
             if shape(inpvar):  # if inpvar is an array
-                if inpvar.size > self.h.size:
-                    raise TypeError("Input airspeed array size must be less "
-                                    "than or equal to the altitude array "
-                                    "size.")
+                if not inpvar.size == self.h.size:
+                    if not inpvar.size == 1 and not self.h.size == 1:
+                        raise TypeError(wrongsize_msg)
 
             sizedarr = ones(shape(self.h))*inpvar
         else:
@@ -270,21 +272,21 @@ class FlightCondition:
         unit_str = "US" if US_units else "SI"
         ext_str = "extended" if full_output else "abbreviated"
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
-        line_str = "====================================================="
-        spee_hdr = "----------------  Speed Quantities   ----------------"
-        alti_hdr = "---------------- Altitude Quantities ----------------"
-        M_str = f"M_inf = {self.M_inf:8.5g~P}"
+        line_str = "======================================================="
+        spee_hdr = "-----------------  Speed Quantities   -----------------"
+        alti_hdr = "----------------- Altitude Quantities -----------------"
+        M_str = f"M_inf = {self.M_inf:10.5g~P}"
 
         if US_units:
-            TAS_str = f"TAS   = {self.TAS.to('knots'):8.5g~P}"
-            CAS_str = f"CAS   = {self.CAS.to('knots'):8.5g~P}"
-            EAS_str = f"EAS   = {self.EAS.to('knots'):8.5g~P}"
-            q_str   = f"q_inf = {self.q_inf.to('lbf/ft^2'):8.5g~P}"
+            TAS_str = f"TAS   = {self.TAS.to('knots'):10.5g~P}"
+            CAS_str = f"CAS   = {self.CAS.to('knots'):10.5g~P}"
+            EAS_str = f"EAS   = {self.EAS.to('knots'):10.5g~P}"
+            q_str   = f"q_inf = {self.q_inf.to('lbf/ft^2'):10.5g~P}"
         else:  # SI units
-            TAS_str = f"TAS   = {self.TAS.to('m/s'):8.5g~P}"
-            CAS_str = f"CAS   = {self.CAS.to('m/s'):8.5g~P}"
-            EAS_str = f"EAS   = {self.EAS.to('m/s'):8.5g~P}"
-            q_str   = f"q_inf = {self.q_inf.to('Pa'):8.5g~P}"
+            TAS_str = f"TAS   = {self.TAS.to('m/s'):10.5g~P}"
+            CAS_str = f"CAS   = {self.CAS.to('m/s'):10.5g~P}"
+            EAS_str = f"EAS   = {self.EAS.to('m/s'):10.5g~P}"
+            q_str   = f"q_inf = {self.q_inf.to('Pa'):10.5g~P}"
 
         # Insert longer variable name into output
         max_chars = max([
