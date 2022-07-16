@@ -142,18 +142,17 @@ class FlightCondition:
     All inputs must be dimensional unit quantities.
 
     Usage:
-
         from flightcondition import FlightCondition, unit, dimless
 
         # Compute flight conditions for a scalar or array of altitudes
         altitudes = [0, 10, 33.5] * unit('kft')
         fc = FlightCondition(altitudes, EAS=300*unit('knots'))
 
-        # Print flight condition data:
+        # Print all flight condition data:
         print(f"{fc}")
 
-        # Print extended output:
-        print(f"\n{fc.tostring(full_output=True)}")
+        # Print while specifying abbreviated output in SI units:
+        print(f"\n{fc.tostring(full_output=False, US_units=False)}")
 
         # Access flight speed formats individually
         M = fc.speed.M
@@ -171,17 +170,19 @@ class FlightCondition:
 
         # Specify desired units on input and output
         altitudes_in_km = [0, 3.048, 10.2108] * unit('km')
-        fc_other_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'))
-        U_TAS = fc_other_units.TAS
+        lengthscale = 60 * unit('in')  # arbitrary length scale of interest
+        fc_other_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'),
+                                        ell=lengthscale)
+        U_TAS = fc_other_units.speed.TAS
         print(f"\nThe true airspeed in m/s is {U_TAS.to('m/s'):.5g}")
         print(f"The true airspeed in km/s is {U_TAS.to('km/s'):.5g}")
 
         # Compute additional derived quantities (see class for all options)
-        print(f"\nThe dynamic pressure in psi is {fc.q_inf.to('psi'):.5g}")
-        ell = 60 * unit('in')  # arbitrary length scale of interest
+        print(f"\nThe dynamic pressure in psi is "
+            f"{fc.speed.q_inf.to('psi'):.5g}")
         print(f"The Reynolds number is {fc.length.Re:.5g}")
         print(f"The Reynolds number per-unit-length [1/in] is "
-            f"{fc.length.Re_by_ell('in'):.5g}")
+            f"{fc.length.Re_by_ell.to('1/in'):.5g}")
     """
 
     def __init__(
@@ -273,7 +274,7 @@ class FlightCondition:
 
             # If altitude is 0, but length scale is input, determine if US
             # units based on the input length scale
-            if self.altitude.h.magnitude == 0:
+            if self.altitude.h.magnitude.all() == 0:
                 self.US_units = check_US_length_units(ell)
 
         # Assign lengths scale and compute quantities

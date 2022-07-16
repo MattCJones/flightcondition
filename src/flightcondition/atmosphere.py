@@ -123,18 +123,17 @@ class Atmosphere(DimensionalData):
     1993, which extends the US 1976 Standard Atmospheric Model to 80 km.
 
     Usage:
-
         from flightcondition import Atmosphere, unit
 
         # Compute atmospheric data for a scalar or array of altitudes
         h = [0.0, 12.7, 44.2, 81.0] * unit('km')
         atm = Atmosphere(h)
 
-        # Print abbreviated output:
+        # Print all atmospheric quantities:
         print(f"\n{atm}")
 
-        # Print extended output in US units:
-        print(f"\n{atm.tostring(full_output=True, US_units=True)}")
+        # Print while specifying abbreviated output in US units:
+        print(f"\n{atm.tostring(full_output=False, US_units=True)}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
@@ -147,7 +146,6 @@ class Atmosphere(DimensionalData):
         # mean free path, and more (see class for all options)
         print(f"\nThe thermal conductivity is {atm.k:.5g}"
             f"\nThe mean free path = {atm.MFP:.5g}")
-
     """
 
     varnames = {
@@ -364,9 +362,9 @@ class Atmosphere(DimensionalData):
             if type(self.layer.name) is str_:  # singular string
                 trunc_layer_name = self.layer.name
             else:
-                trunc_layer_name = " ".join([
-                    "[" + f"{s[:10]}" for s in self.layer.name + "]"
-                ])
+                trunc_layer_name = "[" + " ".join([
+                    f"{s[:10]}" for s in self.layer.name
+                ]) + "]"
             layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name   = "
                          f"{trunc_layer_name}")
 
