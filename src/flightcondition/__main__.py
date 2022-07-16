@@ -38,7 +38,7 @@ def _parse_args(args_arr):
         default=[0, 'kft'],
         help="altitude and lenght unit, default='0 kft'")
     parser.add_argument(
-        '--M_inf', dest='M_inf', metavar='', nargs=None, type=float,
+        '--Mach', dest='M', metavar='', nargs=None, type=float,
         default=None, help="Mach number")
     parser.add_argument(
         '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
@@ -49,6 +49,9 @@ def _parse_args(args_arr):
     parser.add_argument(
         '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
         help="equivalent airspeed and speed unit, e.g. '150 knots'")
+    parser.add_argument(
+        '--ell', dest='ell', metavar='', nargs=2, type=str, default=None,
+        help="length scale, e.g. '10 ft'")
 
     args = parser.parse_args(args_arr)
 
@@ -73,12 +76,13 @@ def main():
     args_arr = sys.argv[1:] if len(sys.argv) > 1 else None
     args = _parse_args(args_arr)
     h_ = _dimension(args.altitude)
-    M_inf_ = None if args.M_inf is None else args.M_inf
+    M_ = None if args.M is None else args.M
     TAS_ = None if args.TAS is None else _dimension(args.TAS)
     CAS_ = None if args.CAS is None else _dimension(args.CAS)
     EAS_ = None if args.EAS is None else _dimension(args.EAS)
-    fc = FlightCondition(h=h_, M_inf=M_inf_, TAS=TAS_, CAS=CAS_, EAS=EAS_)
-    print(fc.tostring(full_output=True))
+    ell_ = None if args.ell is None else _dimension(args.ell)
+    fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, ell=ell_)
+    print(fc.tostring(full_output=True, pretty_print=False))
 
 
 if __name__ == '__main__':

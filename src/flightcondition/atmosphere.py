@@ -11,31 +11,13 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-from numpy import array, exp, ndarray, pi, shape, size, str_, sqrt,\
+from numpy import atleast_1d, exp, ndarray, pi, shape, size, str_, sqrt,\
     zeros_like
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
 from flightcondition.units import unit, check_dimensioned,\
-    check_US_length_units, check_length_dimensioned,\
-    to_base_units_wrapper
-
-
-def _atleast_1d(arr):
-    """DEPRECATED: My version of numpy.atleast_1d that supports Python 3.7.
-    This function will be deleted in future versions.
-
-    Args:
-        arr (object): Array or scalar input
-
-    Returns:
-        np.array: Numpy array with at least one element
-    """
-
-    if len(shape(arr)) == 0:  # scalar, non-array
-        return array([arr.magnitude]) * arr.units
-    else:  # already an array
-        return arr
+    check_length_dimensioned, check_US_length_units, to_base_units_wrapper
 
 
 def _len1array_to_scalar(func):
@@ -92,7 +74,51 @@ def _property_decorators(func):
     # return _len1array_to_scalar(to_base_units_wrapper(property(func)))
 
 
-class Atmosphere():
+class DimensionalData:
+    """Parent class to hold dimensional data"""
+
+    class _ByVarName():
+        """Nested class to reference variables by longer variable name. """
+
+        def __init__(self, self_nestee, varnames_dict):
+            """Initialize
+            Args:
+                self_nestee: Reference to `self` of nestee class that will have
+                    this object with referenced variable names
+                varnames_dict: Dictionary that maps variables to their longer
+                    names
+            """
+            for var, varname in varnames_dict.items():
+                setattr(self, varname, getattr(self_nestee, var))
+
+    def __str__(self):
+        """Output string when object is printed.
+
+        Returns:
+            str: Full string output
+        """
+        return self.tostring(full_output=True)
+
+    def __repr__(self):
+        """Output string representation of class object.
+
+        Returns:
+            str: Full string output
+        """
+        return self.tostring(full_output=False)
+
+    def _init_byvarname(self, varnames_dict):
+        """Initialize nested class to reference variables by longer variable
+        name.
+
+        Args:
+            varnames_dict: Dictionary that maps variables to their longer
+                names
+        """
+        self.byvarname = self._ByVarName(self, varnames_dict)
+
+
+class Atmosphere(DimensionalData):
     """Compute quantities from International Civil Aviation Organization (ICAO)
     1993, which extends the US 1976 Standard Atmospheric Model to 80 km.
 
@@ -148,7 +174,7 @@ class Atmosphere():
                 H_arr (length): Geopotential altitude
 
             """
-            H_arr = _atleast_1d(H_arr)
+            H_arr = atleast_1d(H_arr)
 
             self._layer_name = [""]*size(H_arr)
             self._H_base = zeros_like(H_arr) * unit('m')
@@ -211,24 +237,6 @@ class Atmosphere():
             """Layer base pressure :math:`p_{base}` """
             return self._p_base
 
-    class _ByVarName():
-        """Nested class to reference variables by longer variable name. """
-
-        def __init__(self, self_nestee, varnames_dict):
-            """Initialize
-            Args:
-                self_nestee: Reference to `self` of nestee class that will have
-                    this object with referenced variable names
-                varnames_dict: Dictionary that maps variables to their longer
-                    names
-            """
-            for var, varname in varnames_dict.items():
-                setattr(self, varname, getattr(self_nestee, var))
-
-        # def __repr__(self):
-        #     """String representation of variable name object.  """
-        #     return repr(self.self_nestee.varnames_dict)
-
     def __init__(self, h=0*unit('kft')):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
@@ -248,23 +256,7 @@ class Atmosphere():
         self.layer = __class__.Layer(self.H)
 
         # Allow access to variables using full names
-        self.byvarname = self._ByVarName(self, self.varnames)
-
-    def __str__(self):
-        """Output string when object is printed.
-
-        Returns:
-            str: String output
-        """
-        return self.tostring(full_output=True)
-
-    def __repr__(self):
-        """Output string representation of class object. Default for __str__
-
-        Returns:
-            str: String output
-        """
-        return self.tostring(full_output=False)
+        self._init_byvarname(self.varnames)
 
     def _process_input_altitude(self, alt):
         """Check that input is of type Quantity from pint package. Check that
@@ -278,7 +270,7 @@ class Atmosphere():
             length: Geometric altitude
         """
         tofloat = 1.0
-        h = _atleast_1d(alt) * tofloat
+        h = atleast_1d(alt) * tofloat
 
         check_dimensioned(h)
         check_length_dimensioned(h)
@@ -311,65 +303,71 @@ class Atmosphere():
         Kn = self.MFP/ell
         return Kn
 
-    def tostring(self, full_output=True, US_units=None):
+    def tostring(self, full_output=True, US_units=None, max_var_chars=0,
+                 pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             US_units (bool): Set to True for US units and False for SI
+            max_var_chars (int): Maximum number of characters in unit string
+            pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation of class object
         """
         US_units = self.US_units if US_units is None else US_units
+        pp_ = '~P' if pretty_print else ''
         if US_units:
-            h_str   = f"h     = {self.h.to('kft'):10.5g~P}"
-            H_str   = f"H     = {self.H.to('kft'):10.5g~P}"
-            p_str   = f"p     = {self.p.to('lbf/ft^2'):10.5g~P}"
-            T_str   = f"T     = {self.T.to('degR'):10.5g~P}"
-            rho_str = f"rho   = {self.rho.to('slug/ft^3'):10.4e~P}"
-            a_str   = f"a     = {self.a.to('ft/s'):10.5g~P}"
-            mu_str  = f"mu    = {self.mu.to('lbf/ft^2 s'):10.4e~P}"
-            nu_str  = f"nu    = {self.nu.to('ft^2/s'):10.4e~P}"
-            k_str   = f"k     = {self.k.to('slug ft/s^3/degR'):10.4e~P}"
-            g_str   = f"g     = {self.g.to('ft/s^2'):10.5g~P}"
-            MFP_str = f"MFP   = {self.MFP.to('ft'):10.4e~P}"
+            h_str   = f"h      = {self.h.to('kft'):10.5g{pp_}}"
+            H_str   = f"H      = {self.H.to('kft'):10.5g{pp_}}"
+            p_str   = f"p      = {self.p.to('lbf/ft^2'):10.5g{pp_}}"
+            T_str   = f"T      = {self.T.to('degR'):10.5g{pp_}}"
+            rho_str = f"rho    = {self.rho.to('slug/ft^3'):10.4e{pp_}}"
+            a_str   = f"a      = {self.a.to('ft/s'):10.5g{pp_}}"
+            mu_str  = f"mu     = {self.mu.to('lbf/ft^2 s'):10.4e{pp_}}"
+            nu_str  = f"nu     = {self.nu.to('ft^2/s'):10.4e{pp_}}"
+            k_str   = f"k      = {self.k.to('slug ft/s^3/degR'):10.4e{pp_}}"
+            g_str   = f"g      = {self.g.to('ft/s^2'):10.5g{pp_}}"
+            MFP_str = f"MFP    = {self.MFP.to('ft'):10.4e{pp_}}"
         else:  # SI units
-            h_str   = f"h     = {self.h.to('km'):10.5g~P}"
-            H_str   = f"H     = {self.H.to('km'):10.5g~P}"
-            p_str   = f"p     = {self.p.to('Pa'):10.5g~P}"
-            T_str   = f"T     = {self.T.to('degK'):10.5g~P}"
-            rho_str = f"rho   = {self.rho.to('kg/m^3'):10.4e~P}"
-            a_str   = f"a     = {self.a.to('m/s'):10.5g~P}"
-            mu_str  = f"mu    = {self.mu.to('Pa s'):10.4e~P}"
-            nu_str  = f"nu    = {self.nu.to('m^2/s'):10.4e~P}"
-            k_str   = f"k     = {self.k.to('W/m/K'):10.4e~P}"
-            g_str   = f"g     = {self.g.to('m/s^2'):10.5g~P}"
-            MFP_str = f"MFP   = {self.MFP.to('m'):10.4e~P}"
+            h_str   = f"h      = {self.h.to('km'):10.5g{pp_}}"
+            H_str   = f"H      = {self.H.to('km'):10.5g{pp_}}"
+            p_str   = f"p      = {self.p.to('Pa'):10.5g{pp_}}"
+            T_str   = f"T      = {self.T.to('degK'):10.5g{pp_}}"
+            rho_str = f"rho    = {self.rho.to('kg/m^3'):10.4e{pp_}}"
+            a_str   = f"a      = {self.a.to('m/s'):10.5g{pp_}}"
+            mu_str  = f"mu     = {self.mu.to('Pa s'):10.4e{pp_}}"
+            nu_str  = f"nu     = {self.nu.to('m^2/s'):10.4e{pp_}}"
+            k_str   = f"k      = {self.k.to('W/m/K'):10.4e{pp_}}"
+            g_str   = f"g      = {self.g.to('m/s^2'):10.5g{pp_}}"
+            MFP_str = f"MFP    = {self.MFP.to('m'):10.4e{pp_}}"
 
         # Insert longer variable name into output
-        max_chars = max([len(v) for v in self.varnames.values()])
-        h_str   = f"{self.varnames['h']:{max_chars}s} {h_str}"
-        H_str   = f"{self.varnames['H']:{max_chars}s} {H_str}"
-        p_str   = f"{self.varnames['p']:{max_chars}s} {p_str}"
-        T_str   = f"{self.varnames['T']:{max_chars}s} {T_str}"
-        rho_str = f"{self.varnames['rho']:{max_chars}s} {rho_str}"
-        a_str   = f"{self.varnames['a']:{max_chars}s} {a_str}"
-        mu_str  = f"{self.varnames['mu']:{max_chars}s} {mu_str}"
-        nu_str  = f"{self.varnames['nu']:{max_chars}s} {nu_str}"
-        k_str   = f"{self.varnames['k']:{max_chars}s} {k_str}"
-        g_str   = f"{self.varnames['g']:{max_chars}s} {g_str}"
-        MFP_str = f"{self.varnames['MFP']:{max_chars}s} {MFP_str}"
+        max_var_chars = max([
+            max([len(v) for v in self.varnames.values()]),
+            max_var_chars
+        ])
+        h_str   = f"{self.varnames['h']:{max_var_chars}s} {h_str}"
+        H_str   = f"{self.varnames['H']:{max_var_chars}s} {H_str}"
+        p_str   = f"{self.varnames['p']:{max_var_chars}s} {p_str}"
+        T_str   = f"{self.varnames['T']:{max_var_chars}s} {T_str}"
+        rho_str = f"{self.varnames['rho']:{max_var_chars}s} {rho_str}"
+        a_str   = f"{self.varnames['a']:{max_var_chars}s} {a_str}"
+        mu_str  = f"{self.varnames['mu']:{max_var_chars}s} {mu_str}"
+        nu_str  = f"{self.varnames['nu']:{max_var_chars}s} {nu_str}"
+        k_str   = f"{self.varnames['k']:{max_var_chars}s} {k_str}"
+        g_str   = f"{self.varnames['g']:{max_var_chars}s} {g_str}"
+        MFP_str = f"{self.varnames['MFP']:{max_var_chars}s} {MFP_str}"
 
         if full_output:
-            print("DEBUG", self.layer.name, type(self.layer.name), shape(self.layer.name))
             if type(self.layer.name) is str_:  # singular string
                 trunc_layer_name = self.layer.name
             else:
                 trunc_layer_name = " ".join([
                     "[" + f"{s[:10]}" for s in self.layer.name + "]"
                 ])
-            layer_str = (f"{'atmospheric_layer ':{max_chars}} name  = "
+            layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name   = "
                          f"{trunc_layer_name}")
 
             repr_str = (f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n{rho_str}\n"
@@ -425,13 +423,13 @@ class Atmosphere():
     @_property_decorators
     def p(self):
         """Air pressure :math:`p` """
-        H_base = _atleast_1d(self.layer.H_base)
-        T_base = _atleast_1d(self.layer.T_base)
-        T_grad = _atleast_1d(self.layer.T_grad)
-        p_base = _atleast_1d(self.layer.p_base)
+        H_base = atleast_1d(self.layer.H_base)
+        T_base = atleast_1d(self.layer.T_base)
+        T_grad = atleast_1d(self.layer.T_grad)
+        p_base = atleast_1d(self.layer.p_base)
 
-        H = _atleast_1d(self.H)
-        T = _atleast_1d(self.T)
+        H = atleast_1d(self.H)
+        T = atleast_1d(self.T)
         g_0 = Phys.g
         R_air = Phys.R_air
 
@@ -451,9 +449,9 @@ class Atmosphere():
     @_property_decorators
     def T(self):
         """Ambient air temperature :math:`T` """
-        T_grad = _atleast_1d(self.layer.T_grad)
-        H_base = _atleast_1d(self.layer.H_base)
-        T_base = _atleast_1d(self.layer.T_base)
+        T_grad = atleast_1d(self.layer.T_grad)
+        H_base = atleast_1d(self.layer.H_base)
+        T_base = atleast_1d(self.layer.T_base)
         T = T_base + T_grad*(self.H - H_base)
         return T
 

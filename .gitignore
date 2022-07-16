@@ -1,6 +1,7 @@
 archive
 build
 dist
+images
 do
 do.py
 do.sh
@@ -12,3 +13,4 @@ scripts
 *__pycache__
 .mypy_cache
 .vscode
+.eggs
