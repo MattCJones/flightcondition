@@ -2,6 +2,7 @@ archive
 build
 dist
 images
+local
 do
 do.py
 do.sh

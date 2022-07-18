@@ -21,8 +21,8 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
     to_base_units_wrapper
 
 
-class Speed(DimensionalData):
-    """Class to hold speed data. """
+class Airspeed(DimensionalData):
+    """Class to hold airspeed data. """
 
     M: unit.Quantity
     TAS: unit.Quantity
@@ -38,6 +38,7 @@ class Speed(DimensionalData):
         'EAS': 'equivalent_airspeed',
         'q_inf': 'dynamic_pressure',
         'q_c': 'impact_pressure',
+        'Re_by_L': 'reynolds_per_length',
     }
 
     def tostring(self, full_output=True, US_units=None, max_var_chars=0,
@@ -62,11 +63,13 @@ class Speed(DimensionalData):
             CAS_str = f"CAS    = {self.CAS.to('knots'):10.5g{pp_}}"
             EAS_str = f"EAS    = {self.EAS.to('knots'):10.5g{pp_}}"
             q_str   = f"q_inf  = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
+            Re_by_L_str = f"Re/L = {self.Re_by_L.to('1/in'):10.5g~P}"
         else:  # SI units
             TAS_str = f"TAS    = {self.TAS.to('m/s'):10.5g{pp_}}"
             CAS_str = f"CAS    = {self.CAS.to('m/s'):10.5g{pp_}}"
             EAS_str = f"EAS    = {self.EAS.to('m/s'):10.5g{pp_}}"
             q_str   = f"q_inf  = {self.q_inf.to('Pa'):10.5g{pp_}}"
+            Re_by_L_str = f"Re/L = {self.Re_by_L.to('1/mm'):10.5g~P}"
 
         # Insert longer variable name into output
         max_var_chars = max([
@@ -78,11 +81,15 @@ class Speed(DimensionalData):
         CAS_str = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}"
         EAS_str = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}"
         q_str   = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}"
+        Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
+                       f"{Re_by_L_str}")
 
         if full_output:
-            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n{q_str}")
+            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n{q_str}"
+                        f"\n{Re_by_L_str}")
         else:
-            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}")
+            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}"
+                        f"\n{Re_by_L_str}")
 
         return repr_str
 
@@ -90,12 +97,11 @@ class Speed(DimensionalData):
 class Length(DimensionalData):
     """Class to hold length data. """
 
-    ell: unit.Quantity
+    L: unit.Quantity
 
     varnames = {
-        'ell': 'length_scale',
+        'L': 'length_scale',
         'Re': 'reynolds_number',
-        'Re_by_ell': 'reynolds_per_length',
     }
 
     def tostring(self, full_output=True, US_units=None, max_var_chars=0,
@@ -114,27 +120,27 @@ class Length(DimensionalData):
 
         Re_str = f"Re     = {self.Re:10.5g~P}"
         if US_units:
-            ell_str = f"ell    = {self.ell.to('ft'):10.5g~P}"
-            Re_by_ell_str = f"Re/ell = {self.Re_by_ell.to('1/in'):10.5g~P}"
+            L_str = f"L    = {self.L.to('ft'):10.5g~P}"
         else:  # SI units
-            ell_str = f"ell    = {self.ell.to('m'):10.5g~P}"
-            Re_by_ell_str = f"Re/ell = {self.Re_by_ell.to('1/mm'):10.5g~P}"
+            L_str = f"L    = {self.L.to('m'):10.5g~P}"
 
         # Insert longer variable name into output
-        ell_str = f"{self.varnames['ell']:{max_var_chars}s} {ell_str}"
+        max_var_chars = max([
+            max([len(v) for v in self.varnames.values()]),
+            max_var_chars
+        ])
+        L_str = f"{self.varnames['L']:{max_var_chars}s} {L_str}"
         Re_str = f"{self.varnames['Re']:{max_var_chars}s} {Re_str}"
-        Re_by_ell_str = (f"{self.varnames['Re_by_ell']:{max_var_chars}s} "
-                         f"{Re_by_ell_str}")
 
         if full_output:
-            repr_str = (f"{ell_str}\n{Re_str}\n{Re_by_ell_str}")
+            repr_str = (f"{L_str}\n{Re_str}")
         else:
-            repr_str = (f"{ell_str}\n{Re_str}\n{Re_by_ell_str}")
+            repr_str = (f"{L_str}\n{Re_str}")
 
         return repr_str
 
 
-class FlightCondition:
+class FlightCondition(DimensionalData):
     """Easily convert between Mach number, true airspeed (TAS), calibrated
     airspeed (CAS), and equivalent airspeed (EAS) for given altitude(s).
     Additional flight condition data and atmospheric data is computed.
@@ -144,53 +150,59 @@ class FlightCondition:
     Usage:
         from flightcondition import FlightCondition, unit, dimless
 
-        # Compute flight conditions for a scalar or array of altitudes
-        altitudes = [0, 10, 33.5] * unit('kft')
-        fc = FlightCondition(altitudes, EAS=300*unit('knots'))
+        # Compute flight condition at 3 km, Mach 0.5
+        fc = FlightCondition(3*unit('km'), M=0.5)
 
-        # Print all flight condition data:
-        print(f"{fc}")
+        # Uncomment to print summary of flight condition quantities:
+        #print(f"{fc}")
 
-        # Print while specifying abbreviated output in SI units:
-        print(f"\n{fc.tostring(full_output=False, US_units=False)}")
+        # Uncomment to print abbreviated output in US units:
+        #print(f"\n{fc.tostring(full_output=False, US_units=True)}")
 
-        # Access flight speed formats individually
-        M = fc.speed.M
-        U_inf, U_CAS, U_EAS = fc.speed.TAS, fc.speed.CAS, fc.speed.EAS
+        # Access true, calibrated, equivalent airspeeds
+        KTAS = fc.vel.TAS.to('knots')
+        KCAS = fc.vel.CAS.to('knots')
+        KEAS = fc.vel.EAS.to('knots')
+        print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
+            f" which is {KCAS.magnitude:.4g} KCAS,"
+            f" or {KEAS.magnitude:.4g} KEAS")
+        # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
 
-        # Access atmospheric data alone (see Atmosphere class for options)
-        alt = fc.altitude  # access Atmosphere object 'altitude'
-        p, T, rho, nu, a = alt.p, alt.T, alt.rho, alt.nu, alt.a
+        # Access atmospheric data (see Atmosphere class for more)
+        atm = fc.atm  # access Atmosphere object
+        h, p, T, rho, nu, a = atm.h, atm.p, atm.T, atm.rho, atm.nu, atm.a
+        print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
+        # >>> The ambient temperature at 3 km is 268.7 K
 
-        # Input true/calibrated/equivalent airspeed or Mach number
-        fc_TAS = FlightCondition(altitudes, TAS=300*unit('knots'))
-        fc_CAS = FlightCondition(altitudes, CAS=300*unit('knots'))
-        fc_EAS = FlightCondition(altitudes, EAS=300*unit('knots'))
-        fc_M = FlightCondition(altitudes, M=0.4535*dimless)
+        # Compute again instead using true airspeed and altitude in km
+        fc = FlightCondition(3.048*unit('km'), TAS=401.7*unit('mph'))
+        #print(f"{fc}")  # uncomment to print output
 
-        # Specify desired units on input and output
-        altitudes_in_km = [0, 3.048, 10.2108] * unit('km')
-        lengthscale = 60 * unit('in')  # arbitrary length scale of interest
-        fc_other_units = FlightCondition(altitudes, EAS=154.33*unit('m/s'),
-                                        ell=lengthscale)
-        U_TAS = fc_other_units.speed.TAS
-        print(f"\nThe true airspeed in m/s is {U_TAS.to('m/s'):.5g}")
-        print(f"The true airspeed in km/s is {U_TAS.to('km/s'):.5g}")
+        # Compute for a range of altitudes at 275.14 knots-equivalent
+        # airspeed with a characteristic length scale of 10 meters
+        fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
+                            EAS=275.14*unit('kt'),
+                            L=10*unit('m'))
 
-        # Compute additional derived quantities (see class for all options)
+        # Compute additional derived quantities
+        # Explore the class data structure for all options
         print(f"\nThe dynamic pressure in psi is "
-            f"{fc.speed.q_inf.to('psi'):.5g}")
-        print(f"The Reynolds number is {fc.length.Re:.5g}")
-        print(f"The Reynolds number per-unit-length [1/in] is "
-            f"{fc.length.Re_by_ell.to('1/in'):.5g}")
+            f"{fc.vel.q_inf.to('psi'):.3g}")
+        # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
+        print(f"The Reynolds number is {fc.len.Re:.3g}")
+        # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
+
+        # Alternatively access quantities by their full name
+        print(fc.vel.TAS == fc.byname.true_airspeed)
+        # >>> [ True  True  True]
     """
 
     def __init__(
-        self, h=0*unit('ft'), M=None, TAS=None, CAS=None, EAS=None, ell=None
+        self, h=0*unit('ft'), M=None, TAS=None, CAS=None, EAS=None, L=None
     ):
-        """Constructor based on altitude and input speed in terms of Mach
-        number, TAS, CAS, or EAS.  Input at least one speed at the desired
-        altitude.  All inputs must be dimensional unit quantities.
+        """Constructor based on altitude and input airspeed in terms of Mach
+        number, TAS, CAS, or EAS.  Input at least one format of airspeed at the
+        desired altitude.  All inputs must be dimensional unit quantities.
 
         Args:
             h (length): Geometric altitude
@@ -198,60 +210,60 @@ class FlightCondition:
             TAS (speed): True airspeed
             CAS (speed): Calibrated airspeed
             EAS (speed): Equivalent airspeed
-            ell (length): Length scale
+            L (length): Length scale
         """
-        # Set up classes for speed quantities and length quantities
-        self.speed = Speed()
-        self.length = Length()
+        # Set up classes for airspeed quantities and length quantities
+        self.vel = Airspeed()
+        self.len = Length()
 
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
-        self.altitude = Atmosphere(h)
+        self.atm = Atmosphere(h)
 
         h0 = 0 * unit('kft')
-        self._altitude0 = Atmosphere(h0)
-        p_inf = self.altitude.p
-        p_inf_h0 = self._altitude0.p
+        self._atm0 = Atmosphere(h0)
+        p_inf = self.atm.p
+        p_inf_h0 = self._atm0.p
         self._delta = p_inf/p_inf_h0
 
         # Determine if US units or not
-        self.US_units = self.altitude.US_units
+        self.US_units = self.atm.US_units
 
-        # Compute speed-based quantities
-        # Use Mach=0 if no speed is input
+        # Compute airspeed-based quantities
+        # Use Mach=0 if no airspeed is input
         if M is None and TAS is None and CAS is None and EAS is None:
             M = 0*dimless
 
         if M is not None:
-            self.speed.M = self._checkandsize(M, default_dim=dimless)
-            self.speed.TAS = self._TAS_from_M(self.speed.M)
-            self.speed.EAS = self._EAS_from_TAS(self.speed.TAS, self.speed.M)
-            self.speed.q_c = self._q_c_from_M(self.speed.M)
-            self.speed.CAS = self._CAS_from_q_c(self.speed.q_c)
+            self.vel.M = self._checkandsize(M, default_dim=dimless)
+            self.vel.TAS = self._TAS_from_M(self.vel.M)
+            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
+            self.vel.q_c = self._q_c_from_M(self.vel.M)
+            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif TAS is not None:
-            self.speed.TAS = self._checkandsize(TAS)
-            self.speed.M = self._M_from_TAS(TAS)
-            self.speed.EAS = self._EAS_from_TAS(self.speed.TAS, self.speed.M)
-            self.speed.q_c = self._q_c_from_M(self.speed.M)
-            self.speed.CAS = self._CAS_from_q_c(self.speed.q_c)
+            self.vel.TAS = self._checkandsize(TAS)
+            self.vel.M = self._M_from_TAS(TAS)
+            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
+            self.vel.q_c = self._q_c_from_M(self.vel.M)
+            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif CAS is not None:
-            self.speed.CAS = self._checkandsize(CAS)
-            self.speed.q_c = self._q_c_from_CAS(self.speed.CAS)
-            self.speed.M = self._M_from_q_c(self.speed.q_c)
-            self.speed.TAS = self._TAS_from_M(self.speed.M)
-            self.speed.EAS = self._EAS_from_TAS(self.speed.TAS, self.speed.M)
+            self.vel.CAS = self._checkandsize(CAS)
+            self.vel.q_c = self._q_c_from_CAS(self.vel.CAS)
+            self.vel.M = self._M_from_q_c(self.vel.q_c)
+            self.vel.TAS = self._TAS_from_M(self.vel.M)
+            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
         elif EAS is not None:
-            self.speed.EAS = self._checkandsize(EAS)
-            self.speed.M = self._M_from_EAS(self.speed.EAS)
-            self.speed.TAS = self._TAS_from_M(self.speed.M)
-            self.speed.q_c = self._q_c_from_M(self.speed.M)
-            self.speed.CAS = self._CAS_from_q_c(self.speed.q_c)
+            self.vel.EAS = self._checkandsize(EAS)
+            self.vel.M = self._M_from_EAS(self.vel.EAS)
+            self.vel.TAS = self._TAS_from_M(self.vel.M)
+            self.vel.q_c = self._q_c_from_M(self.vel.M)
+            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         else:
             raise TypeError("Input M, TAS, CAS, or EAS")
-        self.speed.q_inf = self._q_inf_from_TAS(self.speed.TAS)
+        self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
 
         # Check that computations are within valid Mach number range
-        M = atleast_1d(self.speed.M)
+        M = atleast_1d(self.vel.M)
         self._mach_min = 0 * dimless
         self._mach_max = 1 * dimless
         if (M < self._mach_min).any() or (self._mach_max < M).any():
@@ -260,46 +272,43 @@ class FlightCondition:
                 f"({self._mach_min:.5g} < M < {self._mach_max:.5g})"
             )
 
+        # Compute Reynolds Number per length
+        self.vel.Re_by_L = self._reynolds_per_length()
+
         # Compute length-scale-based quantities
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
-        if ell is None:
-            ell_unit = unit('ft') if self.US_units else unit('m')
-            self.length.ell = 1.0 * ell_unit
+        if L is None:
+            L_unit = unit('ft') if self.US_units else unit('m')
+            self.len.L = 1.0 * L_unit
         else:  # length scale is input by user
-            self.length.ell = ell
+            self.len.L = L
 
             # Verify that length input is dimensional length quantity
-            check_length_dimensioned(self.length.ell)
+            check_length_dimensioned(self.len.L)
 
             # If altitude is 0, but length scale is input, determine if US
             # units based on the input length scale
-            if self.altitude.h.magnitude.all() == 0:
-                self.US_units = check_US_length_units(ell)
+            if self.atm.h.magnitude.all() == 0:
+                self.US_units = check_US_length_units(L)
 
         # Assign lengths scale and compute quantities
-        self.length.Re = self._reynolds_number(self.length.ell)
-        self.length.Re_by_ell = self._reynolds_per_length()
+        self.len.Re = self._reynolds_number(self.len.L)
 
-        # Allow access to variables using full names
-        self.speed._init_byvarname(self.speed.varnames)
-        self.length._init_byvarname(self.length.varnames)
+        # Allow access to variables by their full names in vel and len objects
+        super().__init__()
+        self.vel.byname._populate_data(varsobj=self.vel,
+                                       varnames_dict=self.vel.varnames)
+        self.len.byname._populate_data(varsobj=self.len,
+                                       varnames_dict=self.len.varnames)
 
-    def __str__(self):
-        """Output string when object is printed.
-
-        Returns:
-            str: Full string output
-        """
-        return self.tostring(full_output=True)
-
-    def __repr__(self):
-        """Output string representation of class object.
-
-        Returns:
-            str: Full string output
-        """
-        return self.tostring(full_output=False)
+        # Access full names from base object
+        self.byname._populate_data(varsobj=self.atm,
+                                   varnames_dict=self.atm.varnames)
+        self.byname._populate_data(varsobj=self.vel,
+                                   varnames_dict=self.vel.varnames)
+        self.byname._populate_data(varsobj=self.len,
+                                   varnames_dict=self.len.varnames)
 
     @staticmethod
     def _isentropic_mach(p_0, p):
@@ -374,13 +383,13 @@ class FlightCondition:
         # Require altitude and speed arrays to be equal or singular speed array
         wrongsize_msg = ("Input arrays for altitude and airspeed must either "
                          "equal in size or one must be singular.")
-        if shape(self.altitude.h):  # if altitude is an array
+        if shape(self.atm.h):  # if altitude is an array
             if shape(inpvar):  # if inpvar is an array
-                if not inpvar.size == self.altitude.h.size:
-                    if not inpvar.size == 1 and not self.altitude.h.size == 1:
+                if not inpvar.size == self.atm.h.size:
+                    if not inpvar.size == 1 and not self.atm.h.size == 1:
                         raise TypeError(wrongsize_msg)
 
-            sizedarr = ones(shape(self.altitude.h))*inpvar
+            sizedarr = ones(shape(self.atm.h))*inpvar
         else:
             sizedarr = inpvar
 
@@ -402,34 +411,31 @@ class FlightCondition:
             str: String representation
         """
         US_units = self.US_units if US_units is None else US_units
-        alti_str = self.altitude.tostring(full_output, US_units,
-                                          pretty_print=pretty_print)
+        alti_str = self.atm.tostring(full_output, US_units,
+                                     pretty_print=pretty_print)
         max_var_chars = max([
-            max([len(v) for v in self.speed.varnames.values()]),
-            max([len(v) for v in self.altitude.varnames.values()])
+            max([len(v) for v in self.vel.varnames.values()]),
+            max([len(v) for v in self.atm.varnames.values()])
         ])
-        spee_str = self.speed.tostring(full_output, US_units,
-                                       max_var_chars=max_var_chars,
-                                       pretty_print=pretty_print)
-        leng_str = self.length.tostring(full_output, US_units,
-                                        max_var_chars=max_var_chars,
-                                        pretty_print=pretty_print)
+        spee_str = self.vel.tostring(full_output, US_units,
+                                     max_var_chars=max_var_chars,
+                                     pretty_print=pretty_print)
+        leng_str = self.len.tostring(full_output, US_units,
+                                     max_var_chars=max_var_chars,
+                                     pretty_print=pretty_print)
 
         unit_str = "US" if US_units else "SI"
         ext_str = "extended" if full_output else "abbreviated"
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
         line_str = "========================================================="
-        alti_hdr = "------------------ Altitude Quantities ------------------"
-        spee_hdr = "------------------ Speed Quantities ---------------------"
-        leng_hdr = "------------------ Length Quantities --------------------"
+        alti_hdr = "-----------------  Altitude Quantities  -----------------"
+        spee_hdr = "-----------------  Airspeed Quantities  -----------------"
+        leng_hdr = "-----------------   Length Quantities   -----------------"
 
         repr_str = (f"{line_str}\n{head_str}\n{line_str}"
-                    f"\n{alti_hdr}"
-                    f"\n{alti_str}"
-                    f"\n{spee_hdr}"
-                    f"\n{spee_str}"
-                    f"\n{leng_hdr}"
-                    f"\n{leng_str}"
+                    f"\n{alti_hdr}" f"\n{alti_str}"
+                    f"\n{spee_hdr}" f"\n{spee_str}"
+                    f"\n{leng_hdr}" f"\n{leng_str}"
                     )
 
         return repr_str
@@ -444,7 +450,7 @@ class FlightCondition:
         Returns:
             dimless: Mach number
         """
-        a_inf = self.altitude.a
+        a_inf = self.atm.a
         M = __class__._mach_number(U=TAS, a=a_inf)
         return M
 
@@ -458,7 +464,7 @@ class FlightCondition:
         Returns:
             speed: True airspeed
         """
-        a_inf = self.altitude.a
+        a_inf = self.atm.a
         TAS = __class__._mach_airspeed(M, a_inf)
         return TAS
 
@@ -472,7 +478,7 @@ class FlightCondition:
         Returns:
             dimless: Mach number
         """
-        a_inf_h0 = self._altitude0.a
+        a_inf_h0 = self._atm0.a
         M = EAS/(a_inf_h0*sqrt(self._delta))
         return M
 
@@ -486,7 +492,7 @@ class FlightCondition:
         Returns:
             speed: Equivalent airspeed
         """
-        a_inf_h0 = self._altitude0.a
+        a_inf_h0 = self._atm0.a
         EAS = M*(a_inf_h0*sqrt(self._delta))
         return EAS
 
@@ -500,7 +506,7 @@ class FlightCondition:
         Returns:
             pressure: Dynamic pressure
         """
-        rho_inf = self.altitude.rho
+        rho_inf = self.atm.rho
         q_inf = 0.5*rho_inf*TAS**2
         return q_inf
 
@@ -515,8 +521,8 @@ class FlightCondition:
         Returns:
             pressure: Impact pressure
         """
-        a_h0 = self._altitude0.a
-        p_h0 = self._altitude0.p
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
         M_ = __class__._mach_number(U=CAS, a=a_h0)
         q_c = __class__._isentropic_stagnation_pressure(M=M_, p=p_h0)
@@ -534,8 +540,8 @@ class FlightCondition:
             pressure: Impact pressure
 
         """
-        a_h0 = self._altitude0.a
-        p_h0 = self._altitude0.p
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
         M_ = __class__._isentropic_mach(p_0=q_c, p=p_h0)
         CAS = __class__._mach_airspeed(M_, a_h0)
@@ -551,7 +557,7 @@ class FlightCondition:
         Returns:
             dimless: Mach number
         """
-        p_inf = self.altitude.p
+        p_inf = self.atm.p
         # Isentropic flow equation
         M = __class__._isentropic_mach(p_0=q_c, p=p_inf)
 
@@ -567,7 +573,7 @@ class FlightCondition:
         Returns:
             impact pressure
         """
-        p_inf = self.altitude.p
+        p_inf = self.atm.p
         # Solve for impact pressure from isentropic flow equation:
         q_c = __class__._isentropic_stagnation_pressure(M=M, p=p_inf)
         return q_c
@@ -583,7 +589,7 @@ class FlightCondition:
         Returns:
             speed: Equivalent airspeed
         """
-        a_inf_h0 = self._altitude0.a
+        a_inf_h0 = self._atm0.a
         EAS = M*(a_inf_h0*sqrt(self._delta))
         return EAS
 
@@ -606,64 +612,64 @@ class FlightCondition:
         return self.q_inf * S_ref
 
     @to_base_units_wrapper
-    def redim_moment(self, S_ref, ell):
+    def redim_moment(self, S_ref, L):
         """Factor to redimensionalize moment from moment coefficient e.g.,
 
             .. math::
 
-                M & = C_M q_\\infty S_ref ell
+                M & = C_M q_\\infty S_ref L
                   & = C_M \\text{redim_moment}
 
         Args:
             S_ref (area): Reference area
-            ell (length): Reference length
+            L (length): Reference length
 
         Returns:
             moment: Redimensionalization factor
         """
         check_area_dimensioned(S_ref)
-        check_length_dimensioned(ell)
-        return self.q_inf * S_ref * ell
+        check_length_dimensioned(L)
+        return self.q_inf * S_ref * L
 
     @to_base_units_wrapper
-    def _reynolds_number(self, ell):
+    def _reynolds_number(self, L):
         """Compute Reynolds number for the flight condition.
 
         Args:
-            ell (length): Length scale
+            L (length): Length scale
 
         Returns:
             dimless: Reynolds number
         """
-        nu = self.altitude.nu
-        TAS = self.speed.TAS
-        Re_ell = TAS*ell/nu
-        return Re_ell
+        nu = self.atm.nu
+        TAS = self.vel.TAS
+        Re_L = TAS*L/nu
+        return Re_L
 
     def _reynolds_per_length(self, length_unit='in'):
         """Compute Reynolds number divided by length unit.
 
         Reynolds number is,
-            Re = U_inf * ell / nu
+            Re = U_inf * L / nu
 
         For some fluid dynamics solvers the user must input the Reynolds number
         in terms of Reynolds number per-unit-length,
-            Re_by_ell = Re_ell / ell_in_grid_units
-                      = U_inf * (ell/ell_in_grid_units) / nu
+            Re_by_L = Re_L / L_in_grid_units
+                      = U_inf * (L/L_in_grid_units) / nu
 
         Assume the length scale is 5 feet.  When grid units are the same as
         standard length units, such as feet vs. feet, the term
-        (ell_in_grid_units/ell) is unity, and does not change the Reynolds
+        (L_in_grid_units/L) is unity, and does not change the Reynolds
         number magnitude.  For example,
-            ell/ell_in_grid_units = (5 ft)/(5 ft) = 1 ft/ft
+            L/L_in_grid_units = (5 ft)/(5 ft) = 1 ft/ft
 
         When grid units differ from standard length units, such as inches vs.
-        feet, the term (ell_in_grid_units/ell) becomes,
-            ell/ell_in_grid_units = (5 ft)/(60 in) = 1/12 ft/in
+        feet, the term (L_in_grid_units/L) becomes,
+            L/L_in_grid_units = (5 ft)/(60 in) = 1/12 ft/in
         which is the conversion factor between feet and inches.
 
-        So, the Re_by_ell term becomes
-            Re_by_ell = Re_ell * (1/12 1/in)
+        So, the Re_by_L term becomes
+            Re_by_L = Re_L * (1/12 1/in)
 
         In this case, it is helpful to compute Reynolds number per-unit-length
         in inches (length_unit='in').
@@ -675,8 +681,8 @@ class FlightCondition:
         Returns:
             dimless: Reynolds number
         """
-        nu_inf = self.altitude.nu
-        TAS = self.speed.TAS
+        nu_inf = self.atm.nu
+        TAS = self.vel.TAS
         Re_by_length_unit = TAS/nu_inf
         Re_by_length_unit.ito(f"1/{length_unit}")
         return Re_by_length_unit

@@ -77,19 +77,22 @@ def _property_decorators(func):
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
-    class _ByVarName():
-        """Nested class to reference variables by longer variable name. """
+    class _ByName():
+        """Nested class to reference quantities by their full name. """
 
-        def __init__(self, self_nestee, varnames_dict):
-            """Initialize
+        def _populate_data(self, varsobj, varnames_dict):
+            """Populate full names and link to variable
             Args:
-                self_nestee: Reference to `self` of nestee class that will have
-                    this object with referenced variable names
                 varnames_dict: Dictionary that maps variables to their longer
                     names
+                varsobj: Object that holds all of the variables
             """
             for var, varname in varnames_dict.items():
-                setattr(self, varname, getattr(self_nestee, var))
+                setattr(self, varname, getattr(varsobj, var))
+
+    def __init__(self):
+        """Initialize object. """
+        self.byname = self._ByName()
 
     def __str__(self):
         """Output string when object is printed.
@@ -107,16 +110,6 @@ class DimensionalData:
         """
         return self.tostring(full_output=False)
 
-    def _init_byvarname(self, varnames_dict):
-        """Initialize nested class to reference variables by longer variable
-        name.
-
-        Args:
-            varnames_dict: Dictionary that maps variables to their longer
-                names
-        """
-        self.byvarname = self._ByVarName(self, varnames_dict)
-
 
 class Atmosphere(DimensionalData):
     """Compute quantities from International Civil Aviation Organization (ICAO)
@@ -126,26 +119,27 @@ class Atmosphere(DimensionalData):
         from flightcondition import Atmosphere, unit
 
         # Compute atmospheric data for a scalar or array of altitudes
-        h = [0.0, 12.7, 44.2, 81.0] * unit('km')
+        h = [0.0, 44.2, 81.0] * unit('km')
         atm = Atmosphere(h)
 
-        # Print all atmospheric quantities:
-        print(f"\n{atm}")
+        # Uncomment to print all atmospheric quantities:
+        #print(f"\n{atm}")
 
-        # Print while specifying abbreviated output in US units:
-        print(f"\n{atm.tostring(full_output=False, US_units=True)}")
+        # Uncomment to print while specifying abbreviated output in US units:
+        #print(f"\n{atm.tostring(full_output=False, US_units=True)}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
 
         # Access individual properties and convert to desired units: "
-        p, T, rho, nu, a = atm.p, atm.T, atm.rho, atm.nu, atm.a
-        print(f"\nThe pressure in psi is {p.to('psi'):.5g}")
+        p, T, rho, nu, a, k = atm.p, atm.T, atm.rho, atm.nu, atm.a, atm.k
+        print(f"\nThe pressure in psi is {p.to('psi'):.3g}")
+        # >>> The pressure in psi is [14.7 0.024 0.000129] psi
 
-        # Compute additional properties such as thermal conductivity,
-        # mean free path, and more (see class for all options)
-        print(f"\nThe thermal conductivity is {atm.k:.5g}"
-            f"\nThe mean free path = {atm.MFP:.5g}")
+        # Compute additional properties such as mean free path
+        # Explore the class data structure for all options
+        print( f"\nThe mean free path = {atm.MFP:.3g}")
+        # >>> The mean free path = [7.25e-08 4.04e-05 0.00564] yd
     """
 
     varnames = {
@@ -254,7 +248,8 @@ class Atmosphere(DimensionalData):
         self.layer = __class__.Layer(self.H)
 
         # Allow access to variables using full names
-        self._init_byvarname(self.varnames)
+        super().__init__()
+        self.byname._populate_data(varsobj=self, varnames_dict=self.varnames)
 
     def _process_input_altitude(self, alt):
         """Check that input is of type Quantity from pint package. Check that
