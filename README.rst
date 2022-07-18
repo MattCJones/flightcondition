@@ -49,7 +49,7 @@ Dependencies
 
 Usage
 =====
-In a Python script or an ipython notebook, import all utilities with,
+Import all utilities with,
 
 .. code-block:: python
 
@@ -67,18 +67,23 @@ common flight condition data.  Access flight condition quantities through
 
 Outputs include:
 
-#. :code:`atmosphere` (altitude) quantities - see :code:`Atmosphere` class below.
-#. :code:`speed` quantities and conversions, for example:
-   Mach number :code:`mach`,
-   True airspeed :code:`TAS`,
-   Calibrated airspeed :code:`CAS`,
+#. :code:`atm` *atmospheric* quantities - see :code:`Atmosphere` class below.
+#. :code:`vel` *airspeed* quantities:
+   Mach number :code:`M`,
+   true airspeed :code:`TAS`,
+   calibrated airspeed :code:`CAS`,
+   equivalent airspeed :code:`EAS`,
+   dynamic pressure :code:`q_inf`,
    and
-   Equivalent airspeed :code:`EAS`.
+   Reynolds number per unit length :code:`Re_by_L`
+   .
 
-#. :code:`length` quantities, for example:
+#. :code:`len` *length-scale* quantities:
    Reynolds number :code:`Re`.
 
-And other lesser-used quantities! Explore the class for more.
+Quantities may also be accessed using their full name with the :code:`byname`
+object.  For example, Mach number can be accessed using :code:`vel.M` or by its
+full name using :code:`byname.mach_number`
 
 Usage:
 

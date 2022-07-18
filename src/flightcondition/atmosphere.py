@@ -312,29 +312,29 @@ class Atmosphere(DimensionalData):
         US_units = self.US_units if US_units is None else US_units
         pp_ = '~P' if pretty_print else ''
         if US_units:
-            h_str   = f"h      = {self.h.to('kft'):10.5g{pp_}}"
-            H_str   = f"H      = {self.H.to('kft'):10.5g{pp_}}"
-            p_str   = f"p      = {self.p.to('lbf/ft^2'):10.5g{pp_}}"
-            T_str   = f"T      = {self.T.to('degR'):10.5g{pp_}}"
-            rho_str = f"rho    = {self.rho.to('slug/ft^3'):10.4e{pp_}}"
-            a_str   = f"a      = {self.a.to('ft/s'):10.5g{pp_}}"
-            mu_str  = f"mu     = {self.mu.to('lbf/ft^2 s'):10.4e{pp_}}"
-            nu_str  = f"nu     = {self.nu.to('ft^2/s'):10.4e{pp_}}"
-            k_str   = f"k      = {self.k.to('slug ft/s^3/degR'):10.4e{pp_}}"
-            g_str   = f"g      = {self.g.to('ft/s^2'):10.5g{pp_}}"
-            MFP_str = f"MFP    = {self.MFP.to('ft'):10.4e{pp_}}"
+            h_str   = f"h       = {self.h.to('kft'):10.5g{pp_}}"
+            H_str   = f"H       = {self.H.to('kft'):10.5g{pp_}}"
+            p_str   = f"p       = {self.p.to('lbf/ft^2'):10.5g{pp_}}"
+            T_str   = f"T       = {self.T.to('degR'):10.5g{pp_}}"
+            rho_str = f"rho     = {self.rho.to('slug/ft^3'):10.4e{pp_}}"
+            a_str   = f"a       = {self.a.to('ft/s'):10.5g{pp_}}"
+            mu_str  = f"mu      = {self.mu.to('lbf/ft^2 s'):10.4e{pp_}}"
+            nu_str  = f"nu      = {self.nu.to('ft^2/s'):10.4e{pp_}}"
+            k_str   = f"k       = {self.k.to('slug ft/s^3/degR'):10.4e{pp_}}"
+            g_str   = f"g       = {self.g.to('ft/s^2'):10.5g{pp_}}"
+            MFP_str = f"MFP     = {self.MFP.to('ft'):10.4e{pp_}}"
         else:  # SI units
-            h_str   = f"h      = {self.h.to('km'):10.5g{pp_}}"
-            H_str   = f"H      = {self.H.to('km'):10.5g{pp_}}"
-            p_str   = f"p      = {self.p.to('Pa'):10.5g{pp_}}"
-            T_str   = f"T      = {self.T.to('degK'):10.5g{pp_}}"
-            rho_str = f"rho    = {self.rho.to('kg/m^3'):10.4e{pp_}}"
-            a_str   = f"a      = {self.a.to('m/s'):10.5g{pp_}}"
-            mu_str  = f"mu     = {self.mu.to('Pa s'):10.4e{pp_}}"
-            nu_str  = f"nu     = {self.nu.to('m^2/s'):10.4e{pp_}}"
-            k_str   = f"k      = {self.k.to('W/m/K'):10.4e{pp_}}"
-            g_str   = f"g      = {self.g.to('m/s^2'):10.5g{pp_}}"
-            MFP_str = f"MFP    = {self.MFP.to('m'):10.4e{pp_}}"
+            h_str   = f"h       = {self.h.to('km'):10.5g{pp_}}"
+            H_str   = f"H       = {self.H.to('km'):10.5g{pp_}}"
+            p_str   = f"p       = {self.p.to('Pa'):10.5g{pp_}}"
+            T_str   = f"T       = {self.T.to('degK'):10.5g{pp_}}"
+            rho_str = f"rho     = {self.rho.to('kg/m^3'):10.4e{pp_}}"
+            a_str   = f"a       = {self.a.to('m/s'):10.5g{pp_}}"
+            mu_str  = f"mu      = {self.mu.to('Pa s'):10.4e{pp_}}"
+            nu_str  = f"nu      = {self.nu.to('m^2/s'):10.4e{pp_}}"
+            k_str   = f"k       = {self.k.to('W/m/K'):10.4e{pp_}}"
+            g_str   = f"g       = {self.g.to('m/s^2'):10.5g{pp_}}"
+            MFP_str = f"MFP     = {self.MFP.to('m'):10.4e{pp_}}"
 
         # Insert longer variable name into output
         max_var_chars = max([
@@ -360,7 +360,7 @@ class Atmosphere(DimensionalData):
                 trunc_layer_name = "[" + " ".join([
                     f"{s[:10]}" for s in self.layer.name
                 ]) + "]"
-            layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name   = "
+            layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name    = "
                          f"{trunc_layer_name}")
 
             repr_str = (f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n{rho_str}\n"
