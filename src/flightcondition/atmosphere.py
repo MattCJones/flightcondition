@@ -74,25 +74,25 @@ def _property_decorators(func):
     # return _len1array_to_scalar(to_base_units_wrapper(property(func)))
 
 
+class AccessByName():
+    """Nested class to reference quantities by their full name. """
+
+    def _populate_data(self, varsobj, varnames_dict):
+        """Populate full names and link to variable
+        Args:
+            varnames_dict: Dictionary that maps variables to their longer
+                names
+            varsobj: Object that holds all of the variables
+        """
+        for var, varname in varnames_dict.items():
+            setattr(self, varname, getattr(varsobj, var))
+
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
-    class _ByName():
-        """Nested class to reference quantities by their full name. """
-
-        def _populate_data(self, varsobj, varnames_dict):
-            """Populate full names and link to variable
-            Args:
-                varnames_dict: Dictionary that maps variables to their longer
-                    names
-                varsobj: Object that holds all of the variables
-            """
-            for var, varname in varnames_dict.items():
-                setattr(self, varname, getattr(varsobj, var))
-
     def __init__(self):
         """Initialize object. """
-        self.byname = self._ByName()
+        self.byname = AccessByName()
 
     def __str__(self):
         """Output string when object is printed.

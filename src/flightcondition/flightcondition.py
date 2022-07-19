@@ -14,7 +14,8 @@ Email: matt.c.jones.aoe@gmail.com
 
 from numpy import atleast_1d, ones, sqrt, shape
 
-from flightcondition.atmosphere import Atmosphere, DimensionalData
+from flightcondition.atmosphere import Atmosphere, AccessByName,\
+    DimensionalData
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
     check_dimensioned, check_length_dimensioned, check_US_length_units,\
@@ -309,6 +310,24 @@ class FlightCondition(DimensionalData):
                                    varnames_dict=self.vel.varnames)
         self.byname._populate_data(varsobj=self.len,
                                    varnames_dict=self.len.varnames)
+
+        # Access all variables from .byvar. at base level
+        self.byvar = AccessByName()
+
+        byvar_atm = {}
+        for var, _ in self.atm.varnames.items():
+            byvar_atm[var] = var
+        self.byvar._populate_data(self.atm, byvar_atm)
+
+        byvar_vel = {}
+        for var, _ in self.vel.varnames.items():
+            byvar_vel[var] = var
+        self.byvar._populate_data(self.vel, byvar_vel)
+
+        byvar_len = {}
+        for var, _ in self.len.varnames.items():
+            byvar_len[var] = var
+        self.byvar._populate_data(self.len, byvar_len)
 
     @staticmethod
     def _isentropic_mach(p_0, p):
