@@ -87,6 +87,7 @@ class AccessByName():
         for var, varname in varnames_dict.items():
             setattr(self, varname, getattr(varsobj, var))
 
+
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
