@@ -181,7 +181,7 @@ def test_mach_bounds():
 
 def test_command_line_interface():
     """Test that command line interface is running properly. """
-    cmd_str = "flightcondition --alt 23 kft --EAS 233 kt -L 4 ft"
+    cmd_str = "flightcondition --alt 23 kft --EAS 233 kt --len 4 ft"
     out = run(split(cmd_str), capture_output=True)
     out_str = out.stdout.decode()
     out_regex = r"""[=]+

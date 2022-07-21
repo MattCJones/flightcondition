@@ -16,8 +16,9 @@ from .flightcondition import FlightCondition
 from .units import unit
 
 RUNCMD = 'flightcondition'
-SHORT_DESCRIPTION = ("Airspeed conversions (true/calibrated/equivalent/Mach), "
-                     "atmospheric data, and more with built-in unit checking.")
+SHORT_DESCRIPTION = ("Compute airspeed (true/calibrated/equivalent/Mach), "
+                     "atmospheric data, and other flight condition quantities,"
+                     " with easy unit conversion.")
 
 
 def _parse_args(args_arr):
@@ -38,19 +39,19 @@ def _parse_args(args_arr):
         default=[0, 'kft'],
         help="altitude and lenght unit, default='0 kft'")
     parser.add_argument(
-        '-M', '--mach-number', dest='M', metavar='', nargs=None, type=float,
-        default=None, help="Mach number")
+        '--Mach', dest='M', metavar='', nargs=None, type=float,
+        default=None, help="Mach number, e.g. '0.5'")
     parser.add_argument(
-        '-T', '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
+        '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
         help="true airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
-        '-C', '--CAS', dest='CAS', metavar='', nargs=2, type=str, default=None,
+        '--CAS', dest='CAS', metavar='', nargs=2, type=str, default=None,
         help="calibrated airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
-        '-E', '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
+        '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
         help="equivalent airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
-        '-L', '--length-scale', dest='length_scale', metavar='', nargs=2,
+        '--length', dest='length_scale', metavar='', nargs=2,
         type=str, default=None,
         help="length scale, e.g. '10 ft'")
     parser.add_argument(
@@ -87,8 +88,13 @@ def main():
     EAS_ = None if args.EAS is None else _dimension(args.EAS)
     L_ = None if args.length_scale is None else _dimension(args.length_scale)
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_)
-    print(fc.tostring(full_output=True,
-                      pretty_print=(not args.no_pretty_print)))
+
+    # Print output but catch common unicode exception
+    try:
+        print(fc.tostring(full_output=True,
+              pretty_print=(not args.no_pretty_print)))
+    except UnicodeEncodeError:
+        print(fc.tostring(full_output=True, pretty_print=False))
 
 
 if __name__ == '__main__':
