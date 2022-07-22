@@ -55,22 +55,21 @@ class Airspeed(DimensionalData):
         Returns:
             str: String representation
         """
+
         pp_ = '~P' if pretty_print else ''
-
         M_str = f"M       = {self.M:10.5g{pp_}}"
-
         if US_units:
             TAS_str = f"TAS     = {self.TAS.to('knots'):10.5g{pp_}}"
             CAS_str = f"CAS     = {self.CAS.to('knots'):10.5g{pp_}}"
             EAS_str = f"EAS     = {self.EAS.to('knots'):10.5g{pp_}}"
             q_str   = f"q_inf   = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g~P}"
+            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
         else:  # SI units
             TAS_str = f"TAS     = {self.TAS.to('m/s'):10.5g{pp_}}"
             CAS_str = f"CAS     = {self.CAS.to('m/s'):10.5g{pp_}}"
             EAS_str = f"EAS     = {self.EAS.to('m/s'):10.5g{pp_}}"
             q_str   = f"q_inf   = {self.q_inf.to('Pa'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g~P}"
+            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g{pp_}}"
 
         # Insert longer variable name into output
         max_var_chars = max([
@@ -119,11 +118,12 @@ class Length(DimensionalData):
             str: String representation
         """
 
-        Re_str = f"Re      = {self.Re:10.5g~P}"
+        pp_ = '~P' if pretty_print else ''
+        Re_str = f"Re      = {self.Re:10.5g{pp_}}"
         if US_units:
-            L_str = f"L       = {self.L.to('ft'):10.5g~P}"
+            L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
         else:  # SI units
-            L_str = f"L       = {self.L.to('m'):10.5g~P}"
+            L_str = f"L       = {self.L.to('m'):10.5g{pp_}}"
 
         # Insert longer variable name into output
         max_var_chars = max([
