@@ -54,10 +54,10 @@ def _parse_args(args_arr):
         '--length', dest='length_scale', metavar='', nargs=2,
         type=str, default=None,
         help="length scale, e.g. '10 ft'")
-    parser.add_argument(
-        '--no-pretty-print', dest='no_pretty_print', default=False,
-        action='store_true',
-        help="turn off pretty print (throws error in some terminals)")
+    # parser.add_argument(
+    #     '--no-pretty-print', dest='no_pretty_print', default=False,
+    #     action='store_true',
+    #     help="turn off pretty print (throws error in some terminals)")
 
     args = parser.parse_args(args_arr)
 
