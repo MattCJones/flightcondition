@@ -251,7 +251,7 @@ class Atmosphere(DimensionalData):
         atmospheric quantities.
 
         Args:
-            h (length): Geometric altitude
+            h (length): Geometric altitude - aliases are 'alt', 'altitude'
         """
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]

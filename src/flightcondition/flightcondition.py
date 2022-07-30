@@ -216,12 +216,16 @@ class FlightCondition(DimensionalData):
         desired altitude.  All inputs must be dimensional unit quantities.
 
         Args:
-            h (length): Geometric altitude
-            M (dimless): Mach number
-            TAS (speed): True airspeed
-            CAS (speed): Calibrated airspeed
-            EAS (speed): Equivalent airspeed
-            L (length): Length scale
+            h (length): Geometric altitude - aliases are 'alt', 'altitude'
+            M (dimless): Mach number - aliases are 'mach', 'Mach', 'M_inf',
+                'mach_number'
+            TAS (speed): True airspeed - aliases are 'tas', 'true_airspeed'
+            CAS (speed): Calibrated airspeed - aliases are 'cas',
+                'calibrated_airspeed'
+            EAS (speed): Equivalent airspeed - aliases are 'eas',
+                'equivalent_airspeed'
+            L (length): Length scale - aliases are 'ell', 'len', 'length',
+                'length_scale', 'l'
         """
         # Set up classes for airspeed quantities and length quantities
         self.vel = Airspeed()
@@ -241,7 +245,7 @@ class FlightCondition(DimensionalData):
         self.US_units = self.atm.US_units
 
         # Check for hidden aliases
-        M_aliases = ['mach', 'Mach', 'MACH', 'M_inf', 'mach_number']
+        M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
         if M is None:
             M = __class__.arg_from_alias(M_aliases, kwargs)
         TAS_aliases = ['tas', 'true_airspeed']
@@ -253,6 +257,9 @@ class FlightCondition(DimensionalData):
         EAS_aliases = ['eas', 'equivalent_airspeed']
         if EAS is None:
             EAS = __class__.arg_from_alias(EAS_aliases, kwargs)
+        L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
+        if L is None:
+            L = __class__.arg_from_alias(L_aliases, kwargs)
 
         # Check if KTAS, KCAS, or KEAS input and append knots unit if so
         KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']

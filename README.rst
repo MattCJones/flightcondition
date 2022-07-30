@@ -61,31 +61,56 @@ or more explicitly as shown in the following examples.
 Flight Condition
 ----------------
 
-The :code:`Flightcondition` class can be used to compute and interact with
-common flight condition data.  Access flight condition quantities through
-:code:`altitude`, :code:`speed`, and :code:`length` objects.
+The :code:`FlightCondition` class is used to compute and interact with
+common flight condition data.  Inputs include altitude, airspeed in some
+format, and an optional length scale.
 
-Outputs include:
+**Input** arguments include:
+
+#. :code:`h` *geometric altitude* - aliases are :code:`alt`, :code:`altitude`
+
+#. Airspeed (pick one):
+
+   * :code:`M` *mach number* - aliases are :code:`mach`, :code:`Mach`,
+     :code:`M_inf`, :code:`mach_number`
+   * :code:`TAS` *true airspeed* - aliases are :code:`tas`,
+     :code:`true_airspeed`
+   * :code:`CAS` *calibrated airspeed* - aliases are
+     :code:`cas`, :code:`calibrated_airspeed`
+   * :code:`EAS` *equivalent airspeed* - aliases are :code:`eas`,
+     :code:`equivalent_airspeed`
+
+#. :code:`L` *length scale* (optional) - aliases are :code:`ell`, :code:`len`,
+   :code:`length`, :code:`length_scale`, :code:`l`
+
+See also the :code:`KTAS`, :code:`KCAS`, and :code:`KEAS` syntactic sugar.  For
+example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
+
+**Outputs** include:
 
 #. :code:`atm` *atmospheric* quantities - see :code:`Atmosphere` class below.
 #. :code:`vel` *airspeed* quantities:
-   Mach number :code:`M`,
-   true airspeed :code:`TAS`,
-   calibrated airspeed :code:`CAS`,
-   equivalent airspeed :code:`EAS`,
-   dynamic pressure :code:`q_inf`,
-   and
-   Reynolds number per unit length :code:`Re_by_L`
-   .
+
+   * Mach number :code:`M`
+   * true airspeed :code:`TAS`
+   * calibrated airspeed :code:`CAS`
+   * equivalent airspeed :code:`EAS`
+   * dynamic pressure :code:`q_inf`
+   * impact pressure :code:`q_c`
+   * stagnation pressure :code:`p_0`
+   * Reynolds number per unit length :code:`Re_by_L`
 
 #. :code:`len` *length-scale* quantities:
-   Reynolds number :code:`Re`.
+   
+   * Reynolds number :code:`Re`
 
-Quantities may also be accessed using their full name with the :code:`byname`
-object.  For example, Mach number can be accessed using :code:`vel.M` or by its
-full name using :code:`byname.mach_number`
+Quantities may be accessed using the specific :code:`atm`, :code:`vel`, or
+:code:`len` object or by using the aggregated :code:`byvar` object.  Quantities
+may also be accessed using their full name with the :code:`byname` object.  For
+example, Mach number can be accessed using :code:`.vel.M`, :code:`.byvar.M`, or
+by its full name using :code:`.byname.mach_number`
 
-Usage:
+**Example usage**:
 
 .. code-block:: python
 
@@ -136,6 +161,7 @@ Usage:
     # Alternatively access quantities by their full name
     print(fc.vel.TAS == fc.byname.true_airspeed)
     # >>> [ True  True  True]
+
 
 Atmosphere
 ----------
@@ -224,7 +250,10 @@ knots-equivalent-airspeed at 23 kilo-feet with a length scale of 4 feet:
 
 .. code-block:: bash
 
-    flightcondition --alt 23 kft --EAS 233 kt --len 4 ft
+    flightcondition --alt 23 kft --EAS 233 knots --len 4 ft
+
+Alternatively use the :code:`--KEAS 233` syntactic sugar to omit the
+:code:`knots` unit.  See also :code:`--KTAS` and  :code:`--KCAS`.
 
 License
 =======
