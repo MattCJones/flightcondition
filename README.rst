@@ -8,8 +8,8 @@ About
 Airspeed conversions (true/calibrated/equivalent/Mach), atmospheric data, and
 more with built-in unit checking.  Specific sub-modules include:
 
-* :code:`flightcondition` : input altitude to compute common flight condition data.  Easily swap between Mach number, true airspeed, calibrated airspeed, and equivalent airspeed.  Includes atmospheric data.
-* :code:`atmosphere` : input altitude to compute 1993 International Standard Atmosphere data.  Many relevant, derived quantities are included.
+* :code:`flightcondition` : input altitude to compute common flight condition data.  Easily swap between Mach number, true airspeed, calibrated airspeed, and equivalent airspeed.  Includes atmospheric data.  Airspeed is limited to subsonic, isentropic flow.
+* :code:`atmosphere` : input altitude to compute 1993 International Standard Atmosphere data.  Many relevant, derived quantities are included. The upper limit is 80 kilometers.
 * :code:`units` : built-in unit-checking and conversion using `pint <https://pint.readthedocs.io>`_ package.
 
 See examples below for usage!
@@ -245,7 +245,7 @@ A command line interface (CLI) is included for convenience but with limited
 functionality.  Run :code:`flightcondition -h` for help.
 
 An example call is provided for the flight condition of 233
-knots-equivalent-airspeed at 23 kilo-feet with a length scale of 4 feet and
+knots-equivalent-airspeed at 23 kilofeet with a length scale of 4 feet and
 abbreviated output:
 
 .. code-block:: bash
