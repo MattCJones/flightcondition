@@ -208,7 +208,8 @@ class FlightCondition(DimensionalData):
     """
 
     def __init__(
-        self, h=0*unit('ft'), M=None, TAS=None, CAS=None, EAS=None, L=None
+        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
+        **kwargs,
     ):
         """Constructor based on altitude and input airspeed in terms of Mach
         number, TAS, CAS, or EAS.  Input at least one format of airspeed at the
@@ -238,6 +239,34 @@ class FlightCondition(DimensionalData):
 
         # Determine if US units or not
         self.US_units = self.atm.US_units
+
+        # Check for hidden aliases
+        M_aliases = ['mach', 'Mach', 'MACH', 'M_inf', 'mach_number']
+        if M is None:
+            M = __class__.arg_from_alias(M_aliases, kwargs)
+        TAS_aliases = ['tas', 'true_airspeed']
+        if TAS is None:
+            TAS = __class__.arg_from_alias(TAS_aliases, kwargs)
+        CAS_aliases = ['cas', 'calibrated_airspeed']
+        if CAS is None:
+            CAS = __class__.arg_from_alias(CAS_aliases, kwargs)
+        EAS_aliases = ['eas', 'equivalent_airspeed']
+        if EAS is None:
+            EAS = __class__.arg_from_alias(EAS_aliases, kwargs)
+
+        # Check if KTAS, KCAS, or KEAS input and append knots unit if so
+        KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']
+        if TAS is None:
+            KTAS = __class__.arg_from_alias(KTAS_aliases, kwargs)
+            TAS = None if KTAS is None else KTAS * unit('knots')
+        KCAS_aliases = ['KCAS', 'kcas', 'knots_calibrated_airspeed']
+        if CAS is None:
+            KCAS = __class__.arg_from_alias(KCAS_aliases, kwargs)
+            CAS = None if KCAS is None else KCAS * unit('knots')
+        KEAS_aliases = ['KEAS', 'keas', 'knots_equivalent_airspeed']
+        if EAS is None:
+            KEAS = __class__.arg_from_alias(KEAS_aliases, kwargs)
+            EAS = None if KEAS is None else KEAS * unit('knots')
 
         # Compute airspeed-based quantities
         # Use Mach=0 if no airspeed is input

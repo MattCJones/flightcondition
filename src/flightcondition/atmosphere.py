@@ -111,6 +111,22 @@ class DimensionalData:
         """
         return self.tostring(full_output=False)
 
+    @staticmethod
+    def arg_from_alias(alias_list, kwargs_dict):
+        """Determine argument from hidden alias list
+
+        Args:
+            alias_list (dict): list of possible argument aliases
+
+        Returns:
+            unit.Quantity: argument
+        """
+        for alias in alias_list:
+            if alias in kwargs_dict.keys():
+                return kwargs_dict[alias]
+        else:  # no break
+            return None
+
 
 class Atmosphere(DimensionalData):
     """Compute quantities from International Civil Aviation Organization (ICAO)
@@ -230,7 +246,7 @@ class Atmosphere(DimensionalData):
             """Layer base pressure :math:`p_{base}` """
             return self._p_base
 
-    def __init__(self, h=0*unit('kft')):
+    def __init__(self, h=None, **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
@@ -244,6 +260,14 @@ class Atmosphere(DimensionalData):
         self._h_max = __class__.h_from_H(self._H_max)
 
         # Process altitude input
+        # Check for hidden aliases
+        h_aliases = ['alt', 'altitude']
+        if h is None:
+            h = __class__.arg_from_alias(h_aliases, kwargs)
+
+        # Default to 0 kft
+        if h is None:
+            h = 0 * unit('ft')
         self._h = self._process_input_altitude(h)
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)

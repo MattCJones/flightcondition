@@ -51,6 +51,15 @@ def _parse_args(args_arr):
         '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
         help="equivalent airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
+        '--KTAS', dest='KTAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--KCAS', dest='KCAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--KEAS', dest='KEAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--length', dest='length_scale', metavar='', nargs=2, type=str,
         default=None, help="length scale, e.g. '10 ft'")
     parser.add_argument(  # hidden option to turn off pretty print
@@ -84,6 +93,9 @@ def main():
     TAS_ = None if args.TAS is None else _dimension(args.TAS)
     CAS_ = None if args.CAS is None else _dimension(args.CAS)
     EAS_ = None if args.EAS is None else _dimension(args.EAS)
+    TAS_ = TAS_ if args.KTAS is None else args.KTAS*unit('knots')
+    CAS_ = CAS_ if args.KCAS is None else args.KCAS*unit('knots')
+    EAS_ = EAS_ if args.KEAS is None else args.KEAS*unit('knots')
     L_ = None if args.length_scale is None else _dimension(args.length_scale)
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_)
 
