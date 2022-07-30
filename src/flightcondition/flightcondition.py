@@ -426,6 +426,10 @@ class FlightCondition(DimensionalData):
         if default_dim is not None:
             inpvar *= default_dim
         check_dimensioned(inpvar)
+
+        # Force local unit registry
+        inpvar = inpvar.magnitude * unit(str(inpvar.units))
+
         # Require altitude and speed arrays to be equal or singular speed array
         wrongsize_msg = ("Input arrays for altitude and airspeed must either "
                          "equal in size or one must be singular.")

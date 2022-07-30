@@ -27,25 +27,32 @@ _US_length_units = ('ft', 'feet', 'foot', 'kft', 'kilofoot', 'kilofeet'
                     'mi', 'mile', 'miles')
 
 
-def check_dimensioned(inp):
-    """Check that input is dimensional (type 'Quantity' from pint package) and
-    *not* from a different unit registry.
+def check_same_registry(inp):
+    """Check if input units are using this package's unit registry.
 
     Args:
         inp (object): Object to assert as dimensional type
 
     """
-    if isinstance(inp, unit.Quantity):
+    if isinstance(inp, unit.Quantity):  # method to check if same registry
         dummy = 1 * unit('m')
         # Registry equality check
-        if inp._REGISTRY is not dummy._REGISTRY:
-            msg = ("Cannot operate with {} and {} of different registries."
-                   "For units, try:\n\tfrom flightcondition import unit ")
-            raise ValueError(
-                msg.format(inp.__class__.__name__, dummy.__class__.__name__)
-            )
+        return (inp._REGISTRY is dummy._REGISTRY)
     else:
-        raise TypeError("Input value is not correctly typed! Use"
+        return False
+
+
+def check_dimensioned(inp):
+    """Check that input is dimensional (type 'Quantity' from pint package).
+
+    Args:
+        inp (object): Object to assert as dimensional type
+
+    """
+    try:
+        inp.units.compatible_units()  # check that uses pint methods
+    except AttributeError:
+        raise TypeError("Input value is not correctly dimensioned! Use"
                         " dimensional type 'Quantity' from pint package.")
 
 
@@ -56,8 +63,7 @@ def check_length_dimensioned(inp):
         inp (object): Object to assert as length dimensional type
 
     """
-    length_dimensionality = (1*unit('ft')).dimensionality
-    if not (inp.dimensionality == length_dimensionality):
+    if not (inp.check('[length]')):
         raise TypeError("Input value is not correctly typed! Use length"
                         " dimensional unit.")
 
@@ -81,8 +87,7 @@ def check_area_dimensioned(inp):
         inp (object): Object to assert as area dimensional type
 
     """
-    area_dimensionality = (1*unit('ft^2')).dimensionality
-    if not (inp.dimensionality == area_dimensionality):
+    if not (inp.check('[length]^2')):
         raise TypeError("Input value is not correctly typed! Use area"
                         " dimensional unit.")
 
@@ -131,7 +136,7 @@ def printv(var, to=None, name="", prec=".5g", fmt="~P", *args, **kwargs):
     if isinstance(var, unit.Quantity):
         output = (var.to(to) if to is not None else var.to_base_units())
     else:
-        output = var
+        output = var  # FIXME
     name = name if name else name_of_var(var)
     print(f"{name} = {output:{prec}{fmt}}", *args, **kwargs)
 

@@ -267,6 +267,7 @@ class Atmosphere(DimensionalData):
         h = atleast_1d(alt) * tofloat
 
         check_dimensioned(h)
+        h = h.magnitude * unit(str(h.units))  # force local unit registry
         check_length_dimensioned(h)
 
         if len(shape(h)) > 1:
