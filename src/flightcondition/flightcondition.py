@@ -511,7 +511,7 @@ class FlightCondition(DimensionalData):
                                      pretty_print=pretty_print)
 
         unit_str = "US" if US_units else "SI"
-        ext_str = "extended" if full_output else "abbreviated"
+        ext_str = "extended output" if full_output else "abbreviated output"
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
         line_str = "========================================================="
         alti_hdr = "-----------------  Altitude Quantities  -----------------"

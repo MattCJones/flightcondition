@@ -241,16 +241,38 @@ a separate :code:`pint.UnitRegistry`.
 
 Command Line Interface
 ----------------------
-It is also possible to compute flight conditions from the command line for
-convenience but with limited functionality.  Run :code:`flightcondition -h` for
-help.
+A command line interface (CLI) is included for convenience but with limited
+functionality.  Run :code:`flightcondition -h` for help.
 
 An example call is provided for the flight condition of 233
-knots-equivalent-airspeed at 23 kilo-feet with a length scale of 4 feet:
+knots-equivalent-airspeed at 23 kilo-feet with a length scale of 4 feet and
+abbreviated output:
 
 .. code-block:: bash
 
-    flightcondition --alt 23 kft --EAS 233 knots --len 4 ft
+    flightcondition --alt 23 kft --EAS 233 knots --len 4 ft --abbreviated
+
+.. code-block:: bash
+
+    =========================================================
+        Flight Condition (US units, abbreviated output)
+    =========================================================
+    -----------------  Altitude Quantities  -----------------
+    geometric_altitude    h       = 23 kft
+    pressure              p       = 857.25 lbf/ft²
+    temperature           T       = 436.74 °R
+    density               rho     = 1.1435×10⁻³ slug/ft³
+    sound_speed           a       = 1024.5 ft/s
+    kinematic_viscosity   nu      = 2.8509×10⁻⁴ ft²/s
+    -----------------  Airspeed Quantities  -----------------
+    mach_number           M       = 0.55344
+    true_airspeed         TAS     = 566.99 ft/s
+    calibrated_airspeed   CAS     = 401.94 ft/s
+    equivalent_airspeed   EAS     = 393.26 ft/s
+    reynolds_per_length   Re_by_L = 1.6573×10⁵ 1/in
+    -----------------   Length Quantities   -----------------
+    length_scale          L       = 4 ft
+    reynolds_number       Re      = 7.9551×10⁶
 
 Alternatively use the :code:`--KEAS 233` syntactic sugar to omit the
 :code:`knots` unit.  See also :code:`--KTAS` and  :code:`--KCAS`.
@@ -258,7 +280,8 @@ Alternatively use the :code:`--KEAS 233` syntactic sugar to omit the
 License
 =======
 
-:code:`flightcondition` is licensed under the MIT LICENSE. See the `LICENSE <https://github.com/MattCJones/flightcondition/blob/main/LICENSE>`_ document.
+:code:`flightcondition` is licensed under the MIT LICENSE. See the `LICENSE
+<https://github.com/MattCJones/flightcondition/blob/main/LICENSE>`_ document.
 
 Disclaimer
 ==========

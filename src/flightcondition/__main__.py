@@ -62,6 +62,9 @@ def _parse_args(args_arr):
     parser.add_argument(
         '--length', dest='length_scale', metavar='', nargs=2, type=str,
         default=None, help="length scale, e.g. '10 ft'")
+    parser.add_argument(
+        '--abbreviated-output', dest='abbreviated_output', default=False,
+        action='store_true', help="display abbreviated output")
     parser.add_argument(  # hidden option to turn off pretty print
         '--no-pretty-print', dest='no_pretty_print', default=False,
         action='store_true', help=argparse.SUPPRESS)
@@ -100,11 +103,12 @@ def main():
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_)
 
     # Print output but catch common unicode exception
+    full_output = not args.abbreviated_output
     try:
-        print(fc.tostring(full_output=True,
+        print(fc.tostring(full_output=full_output,
               pretty_print=(not args.no_pretty_print)))
     except UnicodeEncodeError:
-        print(fc.tostring(full_output=True, pretty_print=False))
+        print(fc.tostring(full_output=full_output, pretty_print=False))
 
 
 if __name__ == '__main__':
