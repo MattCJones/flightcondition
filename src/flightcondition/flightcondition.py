@@ -31,6 +31,8 @@ class Airspeed(DimensionalData):
     EAS: unit.Quantity
     q_inf: unit.Quantity
     q_c: unit.Quantity
+    p_0: unit.Quantity
+    Re_by_L: unit.Quantity
 
     varnames = {
         'M': 'mach_number',
@@ -39,6 +41,7 @@ class Airspeed(DimensionalData):
         'EAS': 'equivalent_airspeed',
         'q_inf': 'dynamic_pressure',
         'q_c': 'impact_pressure',
+        'p_0': 'stagnation pressure',
         'Re_by_L': 'reynolds_per_length',
     }
 
@@ -59,16 +62,20 @@ class Airspeed(DimensionalData):
         pp_ = '~P' if pretty_print else ''
         M_str = f"M       = {self.M:10.5g{pp_}}"
         if US_units:
-            TAS_str = f"TAS     = {self.TAS.to('knots'):10.5g{pp_}}"
-            CAS_str = f"CAS     = {self.CAS.to('knots'):10.5g{pp_}}"
-            EAS_str = f"EAS     = {self.EAS.to('knots'):10.5g{pp_}}"
+            TAS_str = f"TAS     = {self.TAS.to('ft/s'):10.5g{pp_}}"
+            CAS_str = f"CAS     = {self.CAS.to('ft/s'):10.5g{pp_}}"
+            EAS_str = f"EAS     = {self.EAS.to('ft/s'):10.5g{pp_}}"
             q_str   = f"q_inf   = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
+            q_c_str = f"q_c     = {self.q_c.to('lbf/ft^2'):10.5g{pp_}}"
+            p_0_str = f"p_0     = {self.p_0.to('lbf/ft^2'):10.5g{pp_}}"
             Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
         else:  # SI units
             TAS_str = f"TAS     = {self.TAS.to('m/s'):10.5g{pp_}}"
             CAS_str = f"CAS     = {self.CAS.to('m/s'):10.5g{pp_}}"
             EAS_str = f"EAS     = {self.EAS.to('m/s'):10.5g{pp_}}"
             q_str   = f"q_inf   = {self.q_inf.to('Pa'):10.5g{pp_}}"
+            q_c_str = f"q_c     = {self.q_c.to('Pa'):10.5g{pp_}}"
+            p_0_str = f"p_0     = {self.p_0.to('Pa'):10.5g{pp_}}"
             Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g{pp_}}"
 
         # Insert longer variable name into output
@@ -81,12 +88,14 @@ class Airspeed(DimensionalData):
         CAS_str = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}"
         EAS_str = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}"
         q_str   = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}"
+        q_c_str = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}"
+        p_0_str = f"{self.varnames['p_0']:{max_var_chars}s} {p_0_str}"
         Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
                        f"{Re_by_L_str}")
 
         if full_output:
             repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n{q_str}"
-                        f"\n{Re_by_L_str}")
+                        f"\n{q_c_str}\n{p_0_str}\n{Re_by_L_str}")
         else:
             repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}"
                         f"\n{Re_by_L_str}")
@@ -261,7 +270,6 @@ class FlightCondition(DimensionalData):
             self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         else:
             raise TypeError("Input M, TAS, CAS, or EAS")
-        self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
 
         # Check that computations are within valid Mach number range
         M = atleast_1d(self.vel.M)
@@ -273,7 +281,10 @@ class FlightCondition(DimensionalData):
                 f"({self._mach_min:.5g} < M < {self._mach_max:.5g})"
             )
 
-        # Compute Reynolds Number per length
+        # Compute derived airspeed quantities
+        self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
+        self.vel.p_0 = self._isentropic_stagnation_pressure(M=self.vel.M,
+                                                            p=self.atm.p)
         self.vel.Re_by_L = self._reynolds_per_length()
 
         # Compute length-scale-based quantities
@@ -356,8 +367,24 @@ class FlightCondition(DimensionalData):
             pressure: Stagnation pressure
         """
         y = Phys.gamma_air
-        p_0 = p*(-1 + (1 + ((y-1)/2)*M**2)**(y/(y-1)))
+        p_0 = p*(1 + ((y-1)/2)*M**2)**(y/(y-1))
         return p_0
+
+    @staticmethod
+    def _impact_pressure(M, p):
+        """Isentropic flow equation for impact pressure
+
+        Args:
+            M (dimless): Mach number
+            p (pressure): Static pressure
+
+        Returns:
+            pressure: Impact pressure
+        """
+        # P_0 = p + q_c
+        p_0 = __class__._isentropic_stagnation_pressure(M=M, p=p)
+        q_c = p_0 - p
+        return q_c
 
     @staticmethod
     def _mach_number(U, a):
@@ -544,7 +571,7 @@ class FlightCondition(DimensionalData):
         p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
         M_ = __class__._mach_number(U=CAS, a=a_h0)
-        q_c = __class__._isentropic_stagnation_pressure(M=M_, p=p_h0)
+        q_c = __class__._impact_pressure(M=M_, p=p_h0)
         return q_c
 
     @to_base_units_wrapper
@@ -594,7 +621,7 @@ class FlightCondition(DimensionalData):
         """
         p_inf = self.atm.p
         # Solve for impact pressure from isentropic flow equation:
-        q_c = __class__._isentropic_stagnation_pressure(M=M, p=p_inf)
+        q_c = __class__._impact_pressure(M=M, p=p_inf)
         return q_c
 
     @to_base_units_wrapper
@@ -628,7 +655,7 @@ class FlightCondition(DimensionalData):
             force: Redimensionalization factor
         """
         check_area_dimensioned(S_ref)
-        return self.q_inf * S_ref
+        return self.vel.q_inf * S_ref
 
     @to_base_units_wrapper
     def redim_moment(self, S_ref, L):
@@ -648,7 +675,7 @@ class FlightCondition(DimensionalData):
         """
         check_area_dimensioned(S_ref)
         check_length_dimensioned(L)
-        return self.q_inf * S_ref * L
+        return self.vel.q_inf * S_ref * L
 
     @to_base_units_wrapper
     def _reynolds_number(self, L):

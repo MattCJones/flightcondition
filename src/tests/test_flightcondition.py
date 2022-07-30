@@ -191,7 +191,7 @@ def test_command_line_interface():
 .*h\s+= 23 \w+
 .*
 [-]+\s+Airspeed Quantities\s+[-]+
-.*EAS\s+= 233 \w+
+.*EAS\s+= 393.26 ft/s
 .*
 [-]+\s+Length Quantities\s+[-]+
 .*L\s+= 4 ft

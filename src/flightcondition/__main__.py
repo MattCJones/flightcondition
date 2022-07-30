@@ -51,13 +51,11 @@ def _parse_args(args_arr):
         '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
         help="equivalent airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
-        '--length', dest='length_scale', metavar='', nargs=2,
-        type=str, default=None,
-        help="length scale, e.g. '10 ft'")
-    # parser.add_argument(
-    #     '--no-pretty-print', dest='no_pretty_print', default=False,
-    #     action='store_true',
-    #     help="turn off pretty print (throws error in some terminals)")
+        '--length', dest='length_scale', metavar='', nargs=2, type=str,
+        default=None, help="length scale, e.g. '10 ft'")
+    parser.add_argument(  # hidden option to turn off pretty print
+        '--no-pretty-print', dest='no_pretty_print', default=False,
+        action='store_true', help=argparse.SUPPRESS)
 
     args = parser.parse_args(args_arr)
 
