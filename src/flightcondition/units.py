@@ -153,6 +153,7 @@ def to_base_units_wrapper(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         output = func(*args, **kwargs)
-        output.ito_base_units()
+        if output is not None:
+            output.ito_base_units()
         return output
     return wrapper

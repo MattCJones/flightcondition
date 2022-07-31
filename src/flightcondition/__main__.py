@@ -37,10 +37,13 @@ def _parse_args(args_arr):
     parser.add_argument(
         '--altitude', dest='altitude', metavar='', nargs=2, type=str,
         default=[0, 'kft'],
-        help="altitude and lenght unit, default='0 kft'")
+        help="altitude and length unit, default='0 kft'")
     parser.add_argument(
-        '--Mach', dest='M', metavar='', nargs=None, type=float,
+        '-M', '--Mach', dest='M', metavar='', nargs=None, type=float,
         default=None, help="Mach number, e.g. '0.5'")
+    parser.add_argument(
+        '--mach-number', dest='M', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
         help="true airspeed and speed unit, e.g. '150 knots'")
@@ -60,8 +63,11 @@ def _parse_args(args_arr):
         '--KEAS', dest='KEAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        '--length', dest='length_scale', metavar='', nargs=2, type=str,
-        default=None, help="length scale, e.g. '10 ft'")
+        '-L', '--length-scale', dest='length_scale', metavar='', nargs=2,
+        type=str, default=None, help="length scale, e.g. '10 ft'")
+    parser.add_argument(
+        '--ell', dest='length_scale', metavar='', nargs=2,
+        type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--abbreviated-output', dest='abbreviated_output', default=False,
         action='store_true', help="display abbreviated output")

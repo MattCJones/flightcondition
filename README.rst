@@ -8,9 +8,16 @@ About
 Airspeed conversions (true/calibrated/equivalent/Mach), atmospheric data, and
 more with built-in unit checking.  Specific sub-modules include:
 
-* :code:`flightcondition` : input altitude to compute common flight condition data.  Easily swap between Mach number, true airspeed, calibrated airspeed, and equivalent airspeed.  Includes atmospheric data.  Airspeed is limited to subsonic, isentropic flow.
-* :code:`atmosphere` : input altitude to compute 1993 International Standard Atmosphere data.  Many relevant, derived quantities are included. The upper limit is 80 kilometers.
-* :code:`units` : built-in unit-checking and conversion using `pint <https://pint.readthedocs.io>`_ package.
+* :code:`flightcondition` : input altitude to compute common flight condition
+  data.  Easily swap between Mach number, true airspeed, calibrated airspeed,
+  and equivalent airspeed.  Includes atmospheric data.
+* :code:`atmosphere` : input altitude to compute `1993 International Standard
+  Atmosphere
+  <https://en.wikipedia.org/wiki/International_Standard_Atmosphere>`_ data.
+  Many relevant, derived quantities are included. The upper limit is 80
+  kilometers.
+* :code:`units` : built-in unit-checking and conversion using `pint
+  <https://pint.readthedocs.io>`_ package.
 
 See examples below for usage!
 
@@ -74,7 +81,7 @@ format, and an optional length scale.
    * :code:`M` *mach number* - aliases are :code:`mach`, :code:`Mach`,
      :code:`M_inf`, :code:`mach_number`
    * :code:`TAS` *true airspeed* - aliases are :code:`tas`,
-     :code:`true_airspeed`
+     :code:`true_airspeed`, :code:`U_inf`, :code:`V_inf`
    * :code:`CAS` *calibrated airspeed* - aliases are
      :code:`cas`, :code:`calibrated_airspeed`
    * :code:`EAS` *equivalent airspeed* - aliases are :code:`eas`,
@@ -98,6 +105,7 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * dynamic pressure :code:`q_inf`
    * impact pressure :code:`q_c`
    * stagnation pressure :code:`p_0`
+   * stagnation temperature :code:`T_0`
    * Reynolds number per unit length :code:`Re_by_L`
 
 #. :code:`len` *length-scale* quantities:
@@ -244,7 +252,7 @@ Command Line Interface
 A command line interface (CLI) is included for convenience but with limited
 functionality.  Run :code:`flightcondition -h` for help.
 
-An example call is provided for the flight condition of 233
+An example call is given for the flight condition of 233
 knots-equivalent-airspeed at 23 kilofeet with a length scale of 4 feet and
 abbreviated output:
 
@@ -276,6 +284,23 @@ abbreviated output:
 
 Alternatively use the :code:`--KEAS 233` syntactic sugar to omit the
 :code:`knots` unit.  See also :code:`--KTAS` and  :code:`--KCAS`.
+
+Assumptions
+===========
+
+* Atmospheric quantities follow the `1993 International Standard Atmosphere
+  <https://en.wikipedia.org/wiki/International_Standard_Atmosphere>`_ model.
+* Airspeed computations include varying degrees of the following assumptions.
+  If assumptions are broken for a particular quantity, that quantity returns
+  :code:`None`.
+
+  - Continuum flow (mean free path is much smaller than the characteristic
+    length scale)
+  - Ideal gas
+  - Thermally perfect gas
+  - Calorically perfect gas
+  - Adiabatic
+  - Reversible (:code:`CAS`, :code:`q_c`, :code:`p_0`)
 
 License
 =======
