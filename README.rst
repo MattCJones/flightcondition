@@ -9,8 +9,8 @@ Airspeed conversions (true/calibrated/equivalent/Mach), atmospheric data, and
 more with built-in unit checking.  Specific sub-modules include:
 
 * :code:`flightcondition` : input altitude to compute common flight condition
-  data.  Easily swap between Mach number, true airspeed, calibrated airspeed,
-  and equivalent airspeed.  Includes atmospheric data.
+  data.  Easily swap between true airspeed, calibrated airspeed,
+  equivalent airspeed, and Mach number.  Includes atmospheric data.
 * :code:`atmosphere` : input altitude to compute `1993 International Standard
   Atmosphere
   <https://en.wikipedia.org/wiki/International_Standard_Atmosphere>`_ data.
@@ -78,14 +78,14 @@ format, and an optional length scale.
 
 #. Airspeed (pick one):
 
-   * :code:`M` *mach number* - aliases are :code:`mach`, :code:`Mach`,
-     :code:`M_inf`, :code:`mach_number`
    * :code:`TAS` *true airspeed* - aliases are :code:`tas`,
      :code:`true_airspeed`, :code:`U_inf`, :code:`V_inf`
    * :code:`CAS` *calibrated airspeed* - aliases are
      :code:`cas`, :code:`calibrated_airspeed`
    * :code:`EAS` *equivalent airspeed* - aliases are :code:`eas`,
      :code:`equivalent_airspeed`
+   * :code:`M` *mach number* - aliases are :code:`mach`, :code:`Mach`,
+     :code:`M_inf`, :code:`mach_number`
 
 #. :code:`L` *length scale* (optional) - aliases are :code:`ell`, :code:`len`,
    :code:`length`, :code:`length_scale`, :code:`l`
@@ -98,14 +98,14 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
 #. :code:`atm` *atmospheric* quantities - see :code:`Atmosphere` class below.
 #. :code:`vel` *airspeed* quantities:
 
+   * True airspeed :code:`TAS`
+   * Calibrated airspeed :code:`CAS`
+   * Equivalent airspeed :code:`EAS`
    * Mach number :code:`M`
-   * true airspeed :code:`TAS`
-   * calibrated airspeed :code:`CAS`
-   * equivalent airspeed :code:`EAS`
-   * dynamic pressure :code:`q_inf`
-   * impact pressure :code:`q_c`
-   * stagnation pressure :code:`p_0`
-   * stagnation temperature :code:`T_0`
+   * Dynamic pressure :code:`q_inf`
+   * Impact pressure :code:`q_c`
+   * Stagnation pressure :code:`p_0`
+   * Stagnation temperature :code:`T_0`
    * Reynolds number per unit length :code:`Re_by_L`
 
 #. :code:`len` *length-scale* quantities:
@@ -273,10 +273,10 @@ abbreviated output:
     sound_speed           a       = 1024.5 ft/s
     kinematic_viscosity   nu      = 2.8509×10⁻⁴ ft²/s
     -----------------  Airspeed Quantities  -----------------
-    mach_number           M       = 0.55344
     true_airspeed         TAS     = 566.99 ft/s
     calibrated_airspeed   CAS     = 401.94 ft/s
     equivalent_airspeed   EAS     = 393.26 ft/s
+    mach_number           M       = 0.55344
     reynolds_per_length   Re_by_L = 1.6573×10⁵ 1/in
     -----------------   Length Quantities   -----------------
     length_scale          L       = 4 ft

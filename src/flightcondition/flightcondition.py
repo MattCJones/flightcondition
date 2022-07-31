@@ -12,7 +12,9 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import atleast_1d, ones, sqrt, shape
+import warnings
+
+from numpy import atleast_1d, ones, sqrt, shape, arcsin, isnan
 
 from flightcondition.atmosphere import Atmosphere, AccessByName,\
     DimensionalData
@@ -34,6 +36,7 @@ class Airspeed(DimensionalData):
     p_0: unit.Quantity
     T_0: unit.Quantity
     Re_by_L: unit.Quantity
+    mu_M: unit.Quantity
 
     varnames = {
         'M': 'mach_number',
@@ -45,6 +48,7 @@ class Airspeed(DimensionalData):
         'p_0': 'stagnation_pressure',
         'T_0': 'stagnation_temperature',
         'Re_by_L': 'reynolds_per_length',
+        'mu_M': 'mach_angle',
     }
 
     def tostring(self, full_output=True, US_units=None, max_var_chars=0,
@@ -62,59 +66,67 @@ class Airspeed(DimensionalData):
         """
 
         pp_ = '~P' if pretty_print else ''
-        M_str = f"M       = {self.M:10.5g{pp_}}"
+
+        M_str    = f"M       = {self.M:10.5g{pp_}}"
+        mu_M_str = f"mu_M    = {self.mu_M.to('deg'):10.5g{pp_}}"
+
         if US_units:
-            TAS_str = f"TAS     = {self.TAS.to('ft/s'):10.5g{pp_}}"
-            if self.CAS is None:  # print None when assumptions violated
-                CAS_str = f"CAS     = None"
-                q_c_str = f"q_c     = None"
-                p_0_str = f"p_0     = None"
-            else:
-                CAS_str = f"CAS     = {self.CAS.to('ft/s'):10.5g{pp_}}"
-                q_c_str = f"q_c     = {self.q_c.to('lbf/ft^2'):10.5g{pp_}}"
-                p_0_str = f"p_0     = {self.p_0.to('lbf/ft^2'):10.5g{pp_}}"
-            EAS_str = f"EAS     = {self.EAS.to('ft/s'):10.5g{pp_}}"
-            q_str   = f"q_inf   = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
-            T_0_str = f"T_0     = {self.T_0.to('degR'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
+            self.TAS.ito('ft/s')
+            if self.CAS is not None:  # print None when assumptions violated
+                self.CAS.ito('ft/s')
+                self.q_c.ito('lbf/ft^2')
+                self.p_0.ito('lbf/ft^2')
+            self.EAS.ito('ft/s')
+            self.q_inf.ito('lbf/ft^2')
+            self.T_0.ito('degR')
+            self.Re_by_L.ito('1/in')
         else:  # SI units
-            TAS_str = f"TAS     = {self.TAS.to('m/s'):10.5g{pp_}}"
-            if self.CAS is None:  # print None when assumptions violated
-                CAS_str = f"CAS     = None"
-                q_c_str = f"q_c     = None"
-                p_0_str = f"p_0     = None"
-            else:
-                CAS_str = f"CAS     = {self.CAS.to('m/s'):10.5g{pp_}}"
-                q_c_str = f"q_c     = {self.q_c.to('Pa'):10.5g{pp_}}"
-                p_0_str = f"p_0     = {self.p_0.to('Pa'):10.5g{pp_}}"
-            EAS_str = f"EAS     = {self.EAS.to('m/s'):10.5g{pp_}}"
-            q_str   = f"q_inf   = {self.q_inf.to('Pa'):10.5g{pp_}}"
-            T_0_str = f"T_0     = {self.T_0.to('degK'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g{pp_}}"
+            self.TAS.ito('m/s')
+            if self.CAS is not None:  # print None when assumptions violated
+                self.CAS.ito('m/s')
+                self.q_c.ito('Pa')
+                self.p_0.ito('Pa')
+            self.EAS.ito('m/s')
+            self.q_inf.ito('Pa')
+            self.T_0.ito('degK')
+            self.Re_by_L.ito('1/mm')
+
+        TAS_str = f"TAS     = {self.TAS:10.5g{pp_}}"
+        if self.CAS is None:  # print None when assumptions violated
+            CAS_str = f"CAS     = None (non-isentropic)"
+            q_c_str = f"q_c     = None (non-isentropic)"
+            p_0_str = f"p_0     = None (non-isentropic)"
+        else:
+            CAS_str = f"CAS     = {self.CAS:10.5g{pp_}}"
+            q_c_str = f"q_c     = {self.q_c:10.5g{pp_}}"
+            p_0_str = f"p_0     = {self.p_0:10.5g{pp_}}"
+        EAS_str     = f"EAS     = {self.EAS:10.5g{pp_}}"
+        q_str       = f"q_inf   = {self.q_inf:10.5g{pp_}}"
+        T_0_str     = f"T_0     = {self.T_0:10.5g{pp_}}"
+        Re_by_L_str = f"Re_by_L = {self.Re_by_L:10.5g{pp_}}"
 
         # Insert longer variable name into output
         max_var_chars = max([
             max([len(v) for v in self.varnames.values()]),
             max_var_chars
         ])
-        M_str   = f"{self.varnames['M']:{max_var_chars}s} {M_str}"
-        TAS_str = f"{self.varnames['TAS']:{max_var_chars}s} {TAS_str}"
-        CAS_str = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}"
-        EAS_str = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}"
-        q_str   = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}"
-        q_c_str = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}"
-        p_0_str = f"{self.varnames['p_0']:{max_var_chars}s} {p_0_str}"
-        T_0_str = f"{self.varnames['T_0']:{max_var_chars}s} {T_0_str}"
+        TAS_str     = f"{self.varnames['TAS']:{max_var_chars}s} {TAS_str}\n"
+        CAS_str     = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}\n"
+        EAS_str     = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}\n"
+        M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
+        mu_M_str    = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
+        q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
+        q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
+        p_0_str     = f"{self.varnames['p_0']:{max_var_chars}s} {p_0_str}\n"
+        T_0_str     = f"{self.varnames['T_0']:{max_var_chars}s} {T_0_str}\n"
         Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
                        f"{Re_by_L_str}")
 
         if full_output:
-            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}\n{q_str}"
-                        f"\n{q_c_str}\n{p_0_str}\n{T_0_str}\n{Re_by_L_str}")
+            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}{q_str}"
+                        f"{q_c_str}{p_0_str}{T_0_str}{Re_by_L_str}")
         else:
-            repr_str = (f"{M_str}\n{TAS_str}\n{CAS_str}\n{EAS_str}"
-                        f"\n{Re_by_L_str}")
+            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
 
         return repr_str
 
@@ -250,7 +262,7 @@ class FlightCondition(DimensionalData):
 
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
-        self.atm = Atmosphere(h)
+        self.atm = Atmosphere(h, **kwargs)
 
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
@@ -335,6 +347,7 @@ class FlightCondition(DimensionalData):
             )
 
         # Compute derived airspeed quantities
+        self.vel.mu_M = __class__._mach_angle(self.vel.M)
         self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
         self.vel.p_0 = self._stagnation_pressure(M=self.vel.M, p=self.atm.p)
         self.vel.T_0 = self._stagnation_temperature(M=self.vel.M, T=self.atm.T)
@@ -430,7 +443,7 @@ class FlightCondition(DimensionalData):
             pressure: Stagnation pressure
         """
         y = Phys.gamma_air
-        if M <= 1:  # isentropic flow
+        if atleast_1d(M).any() <= 1:  # isentropic flow
             p_0 = p*(1 + ((y-1)/2)*M**2)**(y/(y-1))
         else:  # return None for M>1 since breaks isentropic flow assumption
             p_0 = None
@@ -828,3 +841,20 @@ class FlightCondition(DimensionalData):
         Re_by_length_unit = TAS/nu_inf
         Re_by_length_unit.ito(f"1/{length_unit}")
         return Re_by_length_unit
+
+    @staticmethod
+    def _mach_angle(M):
+        """Compute Mach angle
+
+        Args:
+            a (speed): speed of sound
+            TAS (speed): true airspeed
+
+        Returns:
+            angle: mach angle
+        """
+        with warnings.catch_warnings():  # catch nan warning for subsonic cases
+            warnings.simplefilter("ignore")
+            mu_M = arcsin(1/M)
+            mu_M.ito('deg')
+        return mu_M
