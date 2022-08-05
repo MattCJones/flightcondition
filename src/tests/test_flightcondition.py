@@ -11,11 +11,13 @@ Email: matt.c.jones.aoe@gmail.com
 
 # flake8: noqa E203
 
-import pytest
+import warnings
 import re
 
 from shlex import split
 from subprocess import run
+
+import pytest
 
 from numpy import array
 
@@ -117,7 +119,7 @@ def test_access_byname():
     L = 5.34 * unit('ft')
     h_geom = 44.5 * unit('km')
     M_ = 0.93 * dimless
-    fc = FlightCondition(h_geom, M=M_, L=L)
+    fc = FlightCondition(h_geom, M=M_, L=L, unit_system="US")
 
     # Check that sub-objects .byname works properly
     assert fc.atm.p == fc.atm.byname.pressure
@@ -171,8 +173,10 @@ def test_mach_bounds():
     fc = FlightCondition(h_geom, M=0.42*dimless)
 
     M_below_min = fc._mach_min - (0.00001*dimless)
-    with pytest.raises(ValueError) as e_info:
-        FlightCondition(h_geom, M=M_below_min)
+    with warnings.catch_warnings():  # catch warning from sqrt
+        warnings.simplefilter("ignore")
+        with pytest.raises(ValueError) as e_info:
+            FlightCondition(h_geom, M=M_below_min)
 
     M_above_max = fc._mach_max*1.01
     with pytest.raises(ValueError) as e_info:
@@ -191,7 +195,7 @@ def test_command_line_interface():
 .*h\s+= 23 \w+
 .*
 [-]+\s+Airspeed Quantities\s+[-]+
-.*EAS\s+= 393.26 ft/s
+.*EAS\s+= 233 kt
 .*
 [-]+\s+Length Quantities\s+[-]+
 .*L\s+= 4 ft

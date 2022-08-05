@@ -143,7 +143,7 @@ class Atmosphere(DimensionalData):
         #print(f"\n{atm}")
 
         # Uncomment to print while specifying abbreviated output in US units:
-        #print(f"\n{atm.tostring(full_output=False, US_units=True)}")
+        #print(f"\n{atm.tostring(full_output=False, unit_system="US")}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
@@ -246,12 +246,13 @@ class Atmosphere(DimensionalData):
             """Layer base pressure :math:`p_{base}` """
             return self._p_base
 
-    def __init__(self, h=None, **kwargs):
+    def __init__(self, h=None, unit_system="", **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
         """
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]
@@ -271,6 +272,16 @@ class Atmosphere(DimensionalData):
         self._h = self._process_input_altitude(h)
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)
+
+        # Process unit system
+        if unit_system not in dir(unit.sys):  # check if usable system
+            if check_US_length_units(h):
+                self.unit_system = "US"
+            else:
+                self.unit_system = "SI"
+        else:
+            self.unit_system = unit_system
+        unit.default_system = self.unit_system  # 'US', 'imperial'
 
         # Allow access to variables using full names
         super().__init__()
@@ -303,10 +314,6 @@ class Atmosphere(DimensionalData):
                 f"({self._h_min:.5g} < h < {self._h_max:.5g})"
             )
 
-        self.US_units = check_US_length_units(h)
-        if self.US_units:
-            unit.default_system = 'US'  # 'US', 'imperial'
-
         return h
 
     @to_base_units_wrapper
@@ -322,22 +329,21 @@ class Atmosphere(DimensionalData):
         Kn = self.MFP/ell
         return Kn
 
-    def tostring(self, full_output=True, US_units=None, max_var_chars=0,
+    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            US_units (bool): Set to True for US units and False for SI
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation of class object
         """
-        US_units = self.US_units if US_units is None else US_units
         pp_ = '~P' if pretty_print else ''
-        if US_units:
+        if unit_system == "US":
             h_str   = f"h       = {self.h.to('kft'):10.5g{pp_}}"
             H_str   = f"H       = {self.H.to('kft'):10.5g{pp_}}"
             p_str   = f"p       = {self.p.to('lbf/ft^2'):10.5g{pp_}}"

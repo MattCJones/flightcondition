@@ -131,7 +131,7 @@ by its full name using :code:`.byname.mach_number`
     #print(f"{fc}")
 
     # Uncomment to print abbreviated output in US units:
-    #print(f"\n{fc.tostring(full_output=False, US_units=True)}")
+    #print(f"\n{fc.tostring(full_output=False, unit_system="US")}")
 
     # Access true, calibrated, equivalent airspeeds
     KTAS = fc.vel.TAS.to('knots')
@@ -206,7 +206,7 @@ Usage:
     #print(f"\n{atm}")
 
     # Uncomment to print while specifying abbreviated output in US units:
-    #print(f"\n{atm.tostring(full_output=False, US_units=True)}")
+    #print(f"\n{atm.tostring(full_output=False, unit_system="US")}")
 
     # See also the linspace() function from numpy, e.g.
     # h = linspace(0, 81.0, 82) * unit('km')

@@ -10,8 +10,10 @@ Email: matt.c.jones.aoe@gmail.com
 """
 import importlib.metadata
 
-from .flightcondition import FlightCondition
 from .atmosphere import Atmosphere
+from .flightcondition import FlightCondition
+from .isentropicflow import IsentropicFlow
+from .normalshock import NormalShock
 from .units import unit, dimless, printv
 
 __version__ = importlib.metadata.version('flightcondition')

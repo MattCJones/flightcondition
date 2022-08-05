@@ -12,13 +12,12 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-import warnings
-
-from numpy import atleast_1d, ones, sqrt, shape, arcsin, isnan
+from numpy import atleast_1d, ones, sqrt, shape, arcsin, nan
 
 from flightcondition.atmosphere import Atmosphere, AccessByName,\
     DimensionalData
 from flightcondition.constants import PhysicalConstants as Phys
+from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
     check_dimensioned, check_length_dimensioned, check_US_length_units,\
     to_base_units_wrapper
@@ -33,8 +32,8 @@ class Airspeed(DimensionalData):
     EAS: unit.Quantity
     q_inf: unit.Quantity
     q_c: unit.Quantity
-    p_0: unit.Quantity
-    T_0: unit.Quantity
+    p0: unit.Quantity
+    T0: unit.Quantity
     Re_by_L: unit.Quantity
     mu_M: unit.Quantity
 
@@ -45,19 +44,19 @@ class Airspeed(DimensionalData):
         'EAS': 'equivalent_airspeed',
         'q_inf': 'dynamic_pressure',
         'q_c': 'impact_pressure',
-        'p_0': 'stagnation_pressure',
-        'T_0': 'stagnation_temperature',
+        'p0': 'stagnation_pressure',
+        'T0': 'stagnation_temperature',
         'Re_by_L': 'reynolds_per_length',
         'mu_M': 'mach_angle',
     }
 
-    def tostring(self, full_output=True, US_units=None, max_var_chars=0,
+    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            US_units (bool): Set to True for US units and False for SI
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
@@ -70,39 +69,32 @@ class Airspeed(DimensionalData):
         M_str    = f"M       = {self.M:10.5g{pp_}}"
         mu_M_str = f"mu_M    = {self.mu_M.to('deg'):10.5g{pp_}}"
 
-        if US_units:
-            self.TAS.ito('ft/s')
-            if self.CAS is not None:  # print None when assumptions violated
-                self.CAS.ito('ft/s')
-                self.q_c.ito('lbf/ft^2')
-                self.p_0.ito('lbf/ft^2')
-            self.EAS.ito('ft/s')
+        if unit_system == "US":
+            self.TAS.ito('knots')
+            self.CAS.ito('knots')
+            self.q_c.ito('lbf/ft^2')
+            self.p0.ito('lbf/ft^2')
+            self.EAS.ito('knots')
             self.q_inf.ito('lbf/ft^2')
-            self.T_0.ito('degR')
+            self.T0.ito('degR')
             self.Re_by_L.ito('1/in')
-        else:  # SI units
+        else:  # default to SI units
             self.TAS.ito('m/s')
-            if self.CAS is not None:  # print None when assumptions violated
-                self.CAS.ito('m/s')
-                self.q_c.ito('Pa')
-                self.p_0.ito('Pa')
+            self.CAS.ito('m/s')
+            self.q_c.ito('Pa')
+            self.p0.ito('Pa')
             self.EAS.ito('m/s')
             self.q_inf.ito('Pa')
-            self.T_0.ito('degK')
+            self.T0.ito('degK')
             self.Re_by_L.ito('1/mm')
 
-        TAS_str = f"TAS     = {self.TAS:10.5g{pp_}}"
-        if self.CAS is None:  # print None when assumptions violated
-            CAS_str = f"CAS     = None (non-isentropic)"
-            q_c_str = f"q_c     = None (non-isentropic)"
-            p_0_str = f"p_0     = None (non-isentropic)"
-        else:
-            CAS_str = f"CAS     = {self.CAS:10.5g{pp_}}"
-            q_c_str = f"q_c     = {self.q_c:10.5g{pp_}}"
-            p_0_str = f"p_0     = {self.p_0:10.5g{pp_}}"
+        TAS_str     = f"TAS     = {self.TAS:10.5g{pp_}}"
+        CAS_str     = f"CAS     = {self.CAS:10.5g{pp_}}"
+        q_c_str     = f"q_c     = {self.q_c:10.5g{pp_}}"
+        p0_str      = f"p0      = {self.p0:10.5g{pp_}}"
         EAS_str     = f"EAS     = {self.EAS:10.5g{pp_}}"
         q_str       = f"q_inf   = {self.q_inf:10.5g{pp_}}"
-        T_0_str     = f"T_0     = {self.T_0:10.5g{pp_}}"
+        T0_str      = f"T0      = {self.T0:10.5g{pp_}}"
         Re_by_L_str = f"Re_by_L = {self.Re_by_L:10.5g{pp_}}"
 
         # Insert longer variable name into output
@@ -117,14 +109,14 @@ class Airspeed(DimensionalData):
         mu_M_str    = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
         q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
         q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
-        p_0_str     = f"{self.varnames['p_0']:{max_var_chars}s} {p_0_str}\n"
-        T_0_str     = f"{self.varnames['T_0']:{max_var_chars}s} {T_0_str}\n"
+        p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
+        T0_str      = f"{self.varnames['T0']:{max_var_chars}s} {T0_str}\n"
         Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
                        f"{Re_by_L_str}")
 
         if full_output:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}{q_str}"
-                        f"{q_c_str}{p_0_str}{T_0_str}{Re_by_L_str}")
+                        f"{q_c_str}{p0_str}{T0_str}{Re_by_L_str}")
         else:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
 
@@ -141,13 +133,13 @@ class Length(DimensionalData):
         'Re': 'reynolds_number',
     }
 
-    def tostring(self, full_output=True, US_units=None, max_var_chars=0,
+    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            US_units (bool): Set to True for US units and False for SI
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
@@ -157,9 +149,9 @@ class Length(DimensionalData):
 
         pp_ = '~P' if pretty_print else ''
         Re_str = f"Re      = {self.Re:10.5g{pp_}}"
-        if US_units:
+        if unit_system == "US":
             L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
-        else:  # SI units
+        else:  # default to SI units
             L_str = f"L       = {self.L.to('m'):10.5g{pp_}}"
 
         # Insert longer variable name into output
@@ -195,7 +187,7 @@ class FlightCondition(DimensionalData):
         #print(f"{fc}")
 
         # Uncomment to print abbreviated output in US units:
-        #print(f"\n{fc.tostring(full_output=False, US_units=True)}")
+        #print(f"\n{fc.tostring(full_output=False, unit_system="US")}")
 
         # Access true, calibrated, equivalent airspeeds
         KTAS = fc.vel.TAS.to('knots')
@@ -237,7 +229,7 @@ class FlightCondition(DimensionalData):
 
     def __init__(
         self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
-        **kwargs,
+        unit_system="", **kwargs,
     ):
         """Constructor based on altitude and input airspeed in terms of Mach
         number, TAS, CAS, or EAS.  Input at least one format of airspeed at the
@@ -255,6 +247,7 @@ class FlightCondition(DimensionalData):
                 'equivalent_airspeed'
             L (length): Length scale - aliases are 'ell', 'len', 'length',
                 'length_scale', 'l'
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
         """
         # Set up classes for airspeed quantities and length quantities
         self.vel = Airspeed()
@@ -262,7 +255,7 @@ class FlightCondition(DimensionalData):
 
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
-        self.atm = Atmosphere(h, **kwargs)
+        self.atm = Atmosphere(h=h, unit_system=unit_system, **kwargs)
 
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
@@ -271,7 +264,7 @@ class FlightCondition(DimensionalData):
         self._delta = p_inf/p_inf_h0
 
         # Determine if US units or not
-        self.US_units = self.atm.US_units
+        self.unit_system = self.atm.unit_system
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -349,15 +342,16 @@ class FlightCondition(DimensionalData):
         # Compute derived airspeed quantities
         self.vel.mu_M = __class__._mach_angle(self.vel.M)
         self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
-        self.vel.p_0 = self._stagnation_pressure(M=self.vel.M, p=self.atm.p)
-        self.vel.T_0 = self._stagnation_temperature(M=self.vel.M, T=self.atm.T)
+        self.vel.p0 = self._stagnation_pressure(M=self.vel.M,
+                                                p=self.atm.p)
+        self.vel.T0 = self._stagnation_temperature(M=self.vel.M, T=self.atm.T)
         self.vel.Re_by_L = self._reynolds_per_length()
 
         # Compute length-scale-based quantities
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
         if L is None:
-            L_unit = unit('ft') if self.US_units else unit('m')
+            L_unit = unit('ft') if self.unit_system == "US" else unit('m')
             self.len.L = 1.0 * L_unit
         else:  # length scale is input by user
             self.len.L = L
@@ -368,7 +362,8 @@ class FlightCondition(DimensionalData):
             # If altitude is 0, but length scale is input, determine if US
             # units based on the input length scale
             if self.atm.h.magnitude.all() == 0:
-                self.US_units = check_US_length_units(L)
+                if check_US_length_units(L):
+                    self.unit_system = "US"
 
         # Assign lengths scale and compute quantities
         self.len.Re = self._reynolds_number(self.len.L)
@@ -423,8 +418,8 @@ class FlightCondition(DimensionalData):
             temperature: Stagnation temperature
         """
         y = Phys.gamma_air
-        T_0 = T*(1 + ((y-1)/2)*M**2)
-        return T_0
+        T0 = T*(1 + ((y-1)/2)*M**2)
+        return T0
 
     @staticmethod
     def _stagnation_pressure(M, p):
@@ -442,12 +437,37 @@ class FlightCondition(DimensionalData):
         Returns:
             pressure: Stagnation pressure
         """
-        y = Phys.gamma_air
-        if atleast_1d(M).any() <= 1:  # isentropic flow
-            p_0 = p*(1 + ((y-1)/2)*M**2)**(y/(y-1))
-        else:  # return None for M>1 since breaks isentropic flow assumption
-            p_0 = None
-        return p_0
+        p0 = IsentropicFlow.p0_by_p(M)*p
+        return p0
+
+    # @staticmethod  # DEPRECATED
+    # def _stagnation_pressure_normal_shock(M, p):
+    #     """Equation for stagnation pressure, with normal shock if flow is
+    #     supersonic.
+
+    #     Assumes:
+    #         Adiabatic
+
+    #     Args:
+    #         M (dimless): Mach number
+    #         p (pressure): Static pressure
+
+    #     Returns:
+    #         pressure: Stagnation pressure
+    #     """
+    #     y = Phys.gamma_air
+
+    #     # Create new array and split computation to subsonic and supersonic
+    #     p0 = M.magnitude*p*0
+
+    #     sub = M < 1  # subsonic filter
+    #     p0_sub = __class__._stagnation_pressure(M, p)
+    #     p0[sub] = p0_sub[sub]
+
+    #     sup = M >= 1  # supersonic filter
+    #     p0[sup] = NormalShock.p02_by_p01(M[sup])*p0_sub[sup]
+
+    #     return p0
 
     @staticmethod
     def _impact_pressure(M, p):
@@ -460,35 +480,29 @@ class FlightCondition(DimensionalData):
         Returns:
             pressure: Impact pressure
         """
-        # P_0 = p + q_c
-        p_0 = __class__._stagnation_pressure(M=M, p=p)
-        if p_0 is not None:
-            q_c = p_0 - p
-        else:
-            q_c = None
+        # p0 = p + q_c
+        p0 = __class__._stagnation_pressure(M=M, p=p)
+        q_c = p0 - p
         return q_c
 
-    @staticmethod
-    def _isentropic_mach(p_0, p):
-        """Isentropic flow equation for Mach number.
+    # @staticmethod  # DEPRECATED
+    # def _isentropic_mach(p0, p):
+    #     """Isentropic flow equation for Mach number.
 
-        Assumes:
-            Adiabatic
-            Reversible
+    #     Assumes:
+    #         Adiabatic
+    #         Reversible
 
-        Args:
-            p_0 (pressure): Stagnation pressure
-            p (pressure): Static pressure
+    #     Args:
+    #         p0 (pressure): Stagnation pressure
+    #         p (pressure): Static pressure
 
-        Returns:
-            dimless: Mach number
-        """
-        y = Phys.gamma_air
-        if p_0 is not None:
-            M = sqrt((2/(y-1))*((p_0/p + 1)**((y-1)/y) - 1))
-        else:
-            M = None
-        return M
+    #     Returns:
+    #         dimless: Mach number
+    #     """
+    #     y = Phys.gamma_air
+    #     M = sqrt((2/(y-1))*((p0/p + 1)**((y-1)/y) - 1))
+    #     return M
 
     @staticmethod
     def _mach_number(U, a):
@@ -554,32 +568,32 @@ class FlightCondition(DimensionalData):
         """Print tostring() function to stdout. """
         print(self.tostring(*args, **kwargs))
 
-    def tostring(self, full_output=True, US_units=None, pretty_print=True):
+    def tostring(self, full_output=True, unit_system="", pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            US_units (bool): Set to True for US units and False for SI
+            unit_system (str): Set to 'US' for US units or 'SI' for SI
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation
         """
-        US_units = self.US_units if US_units is None else US_units
-        alti_str = self.atm.tostring(full_output, US_units,
+        unit_system = "US" if unit_system == "" else unit_system
+        alti_str = self.atm.tostring(full_output, unit_system,
                                      pretty_print=pretty_print)
         max_var_chars = max([
             max([len(v) for v in self.vel.varnames.values()]),
             max([len(v) for v in self.atm.varnames.values()])
         ])
-        spee_str = self.vel.tostring(full_output, US_units,
+        spee_str = self.vel.tostring(full_output, unit_system,
                                      max_var_chars=max_var_chars,
                                      pretty_print=pretty_print)
-        leng_str = self.len.tostring(full_output, US_units,
+        leng_str = self.len.tostring(full_output, unit_system,
                                      max_var_chars=max_var_chars,
                                      pretty_print=pretty_print)
 
-        unit_str = "US" if US_units else "SI"
+        unit_str = unit_system
         ext_str = "extended output" if full_output else "abbreviated output"
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
         line_str = "========================================================="
@@ -698,8 +712,9 @@ class FlightCondition(DimensionalData):
         a_h0 = self._atm0.a
         p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
-        M_ = __class__._isentropic_mach(p_0=q_c, p=p_h0)
-        CAS = __class__._mach_airspeed(M_, a_h0)
+        # M_should = __class__._isentropic_mach(p0=q_c, p=p_h0)  # DEPRECATED
+        M = IsentropicFlow.M_from_p0_by_p((q_c+p_h0)/p_h0)
+        CAS = __class__._mach_airspeed(M, a_h0)  # subsonic
         return CAS
 
     @to_base_units_wrapper
@@ -714,7 +729,8 @@ class FlightCondition(DimensionalData):
         """
         p_inf = self.atm.p
         # Isentropic flow equation
-        M = __class__._isentropic_mach(p_0=q_c, p=p_inf)
+        # M_should = __class__._isentropic_mach(p0=q_c, p=p_inf)  # DEPRECATED
+        M = IsentropicFlow.M_from_p0_by_p((q_c+p_inf)/p_inf)
 
         return M
 
@@ -843,18 +859,27 @@ class FlightCondition(DimensionalData):
         return Re_by_length_unit
 
     @staticmethod
+    @to_base_units_wrapper
     def _mach_angle(M):
         """Compute Mach angle
 
         Args:
-            a (speed): speed of sound
-            TAS (speed): true airspeed
+            a (speed): Sound speed
+            TAS (speed): True airspeed
 
         Returns:
             angle: mach angle
         """
-        with warnings.catch_warnings():  # catch nan warning for subsonic cases
-            warnings.simplefilter("ignore")
-            mu_M = arcsin(1/M)
-            mu_M.ito('deg')
+        # Create new array and split computation to subsonic and supersonic
+        M = atleast_1d(M)
+        mu_M = M*0.0
+
+        sub = M < 1  # subsonic filter
+        if sub.any():
+            mu_M[sub] = nan
+
+        sup = M >= 1  # supersonic filter
+        mu_M[sup] = arcsin(1.0/M[sup])
+
+        mu_M.ito('deg')
         return mu_M
