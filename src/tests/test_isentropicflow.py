@@ -9,7 +9,7 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import sqrt
+import numpy as np
 
 from common import assert_field
 from flightcondition import IsentropicFlow, dimless
@@ -23,7 +23,7 @@ rho0_by_rho_truth_arr = [1/0.88517013, 1/0.63393814, 1/0.07622631] * dimless
 
 gamma_air = Phys.gamma_air
 R_air = Phys.R_air
-a0_by_a_truth_arr = sqrt(T0_by_T_truth_arr)
+a0_by_a_truth_arr = np.sqrt(T0_by_T_truth_arr)
 
 A_star_by_A_truth_arr = [1/1.33984375, 1.0, 1/4.23456790] * dimless
 

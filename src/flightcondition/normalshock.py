@@ -12,7 +12,7 @@ Email: matt.c.jones.aoe@gmail.com
 
 # flake8: noqa E201
 
-from numpy import sqrt
+import numpy as np
 
 from flightcondition.constants import PhysicalConstants as Phys
 
@@ -30,7 +30,7 @@ class NormalShock:
         Returns:
             float: Mach number downstream of shock
         """
-        M2 = sqrt( (M1**2*(y-1) + 2) / (2*y*M1**2 - (y-1)) )
+        M2 = np.sqrt( (M1**2*(y-1) + 2) / (2*y*M1**2 - (y-1)) )
         return M2
 
     @staticmethod

@@ -12,10 +12,10 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
-from numpy import atleast_1d, ones, sqrt, shape, arcsin, nan
+import numpy as np
 
 from flightcondition.atmosphere import Atmosphere, AccessByName,\
-    DimensionalData
+    DimensionalData, _len1array_to_scalar
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
@@ -106,7 +106,10 @@ class Airspeed(DimensionalData):
         CAS_str     = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}\n"
         EAS_str     = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}\n"
         M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
-        mu_M_str    = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
+        if np.isnan(np.atleast_1d(self.mu_M)).all():
+            mu_M_str = ""
+        else:
+            mu_M_str    = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
         q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
         q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
         p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
@@ -330,7 +333,7 @@ class FlightCondition(DimensionalData):
             raise TypeError("Input M, TAS, CAS, or EAS")
 
         # Check that computations are within valid Mach number limits
-        M = atleast_1d(self.vel.M)
+        M = np.atleast_1d(self.vel.M)
         self._mach_min = 0 * dimless
         self._mach_max = 30 * dimless
         if (M < self._mach_min).any() or (self._mach_max < M).any():
@@ -501,7 +504,7 @@ class FlightCondition(DimensionalData):
     #         dimless: Mach number
     #     """
     #     y = Phys.gamma_air
-    #     M = sqrt((2/(y-1))*((p0/p + 1)**((y-1)/y) - 1))
+    #     M = np.sqrt((2/(y-1))*((p0/p + 1)**((y-1)/y) - 1))
     #     return M
 
     @staticmethod
@@ -552,13 +555,13 @@ class FlightCondition(DimensionalData):
         # Require altitude and speed arrays to be equal or singular speed array
         wrongsize_msg = ("Input arrays for altitude and airspeed must either "
                          "equal in size or one must be singular.")
-        if shape(self.atm.h):  # if altitude is an array
-            if shape(inpvar):  # if inpvar is an array
+        if np.shape(self.atm.h):  # if altitude is an array
+            if np.shape(inpvar):  # if inpvar is an array
                 if not inpvar.size == self.atm.h.size:
                     if not inpvar.size == 1 and not self.atm.h.size == 1:
                         raise TypeError(wrongsize_msg)
 
-            sizedarr = ones(shape(self.atm.h))*inpvar
+            sizedarr = np.ones(np.shape(self.atm.h))*inpvar
         else:
             sizedarr = inpvar
 
@@ -648,7 +651,7 @@ class FlightCondition(DimensionalData):
             dimless: Mach number
         """
         a_inf_h0 = self._atm0.a
-        M = EAS/(a_inf_h0*sqrt(self._delta))
+        M = EAS/(a_inf_h0*np.sqrt(self._delta))
         return M
 
     @to_base_units_wrapper
@@ -662,7 +665,7 @@ class FlightCondition(DimensionalData):
             speed: Equivalent airspeed
         """
         a_inf_h0 = self._atm0.a
-        EAS = M*(a_inf_h0*sqrt(self._delta))
+        EAS = M*(a_inf_h0*np.sqrt(self._delta))
         return EAS
 
     @to_base_units_wrapper
@@ -761,7 +764,7 @@ class FlightCondition(DimensionalData):
             speed: Equivalent airspeed
         """
         a_inf_h0 = self._atm0.a
-        EAS = M*(a_inf_h0*sqrt(self._delta))
+        EAS = M*(a_inf_h0*np.sqrt(self._delta))
         return EAS
 
     @to_base_units_wrapper
@@ -859,7 +862,7 @@ class FlightCondition(DimensionalData):
         return Re_by_length_unit
 
     @staticmethod
-    @to_base_units_wrapper
+    @_len1array_to_scalar
     def _mach_angle(M):
         """Compute Mach angle
 
@@ -871,15 +874,15 @@ class FlightCondition(DimensionalData):
             angle: mach angle
         """
         # Create new array and split computation to subsonic and supersonic
-        M = atleast_1d(M)
+        M = np.atleast_1d(M)
         mu_M = M*0.0
 
         sub = M < 1  # subsonic filter
         if sub.any():
-            mu_M[sub] = nan
+            mu_M[sub] = np.nan
 
         sup = M >= 1  # supersonic filter
-        mu_M[sup] = arcsin(1.0/M[sup])
+        mu_M[sup] = np.arcsin(1.0/M[sup])
 
         mu_M.ito('deg')
         return mu_M

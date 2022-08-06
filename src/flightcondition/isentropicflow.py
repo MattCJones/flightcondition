@@ -12,7 +12,7 @@ Email: matt.c.jones.aoe@gmail.com
 
 # flake8: noqa E201
 
-from numpy import sqrt
+import numpy as np
 
 from flightcondition.constants import PhysicalConstants as Phys
 
@@ -65,7 +65,7 @@ class IsentropicFlow:
         Returns:
             float: ratio of stagnation sound speed to static sound speed
         """
-        a0_by_a = sqrt(__class__.T0_by_T(M, y))
+        a0_by_a = np.sqrt(__class__.T0_by_T(M, y))
         return a0_by_a
 
     @staticmethod
@@ -126,5 +126,5 @@ class IsentropicFlow:
             float: Mach number
         """
         # Derive from: T0_by_T = 1 + ((y-1)/2)*M**2
-        M = sqrt( (T0_by_T - 1)/((y-1)/2) )
+        M = np.sqrt( (T0_by_T - 1)/((y-1)/2) )
         return M

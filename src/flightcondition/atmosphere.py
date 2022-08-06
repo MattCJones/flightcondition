@@ -11,8 +11,8 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-from numpy import atleast_1d, exp, ndarray, pi, shape, size, str_, sqrt,\
-    zeros_like
+
+import numpy as np
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
@@ -33,8 +33,8 @@ def _len1array_to_scalar(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         output = func(*args, **kwargs)
-        if isinstance(output.magnitude, ndarray):
-            if size(output) == 1:
+        if isinstance(output.magnitude, np.ndarray):
+            if np.size(output) == 1:
                 return output[0]
         return output
     return wrapper
@@ -54,7 +54,7 @@ def _formatarr(unitstr):
         def wrapper(*args, **kwargs):
             arr = func(*args, **kwargs)
             arr *= unit(unitstr)
-            if size(arr) == 1:
+            if np.size(arr) == 1:
                 arr = arr[0]
             return arr
         return wrapper
@@ -71,7 +71,6 @@ def _property_decorators(func):
         @_len1array_to_scalar
     """
     return property(to_base_units_wrapper(_len1array_to_scalar(func)))
-    # return _len1array_to_scalar(to_base_units_wrapper(property(func)))
 
 
 class AccessByName():
@@ -183,13 +182,13 @@ class Atmosphere(DimensionalData):
                 H_arr (length): Geopotential altitude
 
             """
-            H_arr = atleast_1d(H_arr)
+            H_arr = np.atleast_1d(H_arr)
 
-            self._layer_name = [""]*size(H_arr)
-            self._H_base = zeros_like(H_arr) * unit('m')
-            self._T_base = zeros_like(H_arr) * unit('K')
-            self._T_grad = zeros_like(H_arr) * unit('K/m')
-            self._p_base = zeros_like(H_arr) * unit('Pa')
+            self._layer_name = [""]*np.size(H_arr)
+            self._H_base = np.zeros_like(H_arr) * unit('m')
+            self._T_base = np.zeros_like(H_arr) * unit('K')
+            self._T_grad = np.zeros_like(H_arr) * unit('K/m')
+            self._p_base = np.zeros_like(H_arr) * unit('Pa')
 
             for idx, H in enumerate(H_arr):
                 jdx = __class__._layer_idx(H)
@@ -220,7 +219,7 @@ class Atmosphere(DimensionalData):
         @property
         def name(self):
             """Layer name """
-            if size(self._layer_name) == 1:
+            if np.size(self._layer_name) == 1:
                 layername = self._layer_name[0]
             else:
                 layername = self._layer_name
@@ -299,13 +298,13 @@ class Atmosphere(DimensionalData):
             length: Geometric altitude
         """
         tofloat = 1.0
-        h = atleast_1d(alt) * tofloat
+        h = np.atleast_1d(alt) * tofloat
 
         check_dimensioned(h)
         h = h.magnitude * unit(str(h.units))  # force local unit registry
         check_length_dimensioned(h)
 
-        if len(shape(h)) > 1:
+        if len(np.shape(h)) > 1:
             raise TypeError("Input must be scalar or 1-D array.")
 
         if (h < self._h_min).any() or (self._h_max < h).any():
@@ -386,7 +385,7 @@ class Atmosphere(DimensionalData):
         MFP_str = f"{self.varnames['MFP']:{max_var_chars}s} {MFP_str}"
 
         if full_output:
-            if type(self.layer.name) is str_:  # singular string
+            if type(self.layer.name) is np.str_:  # singular string
                 trunc_layer_name = self.layer.name
             else:
                 trunc_layer_name = "[" + " ".join([
@@ -448,21 +447,21 @@ class Atmosphere(DimensionalData):
     @_property_decorators
     def p(self):
         """Air pressure :math:`p` """
-        H_base = atleast_1d(self.layer.H_base)
-        T_base = atleast_1d(self.layer.T_base)
-        T_grad = atleast_1d(self.layer.T_grad)
-        p_base = atleast_1d(self.layer.p_base)
+        H_base = np.atleast_1d(self.layer.H_base)
+        T_base = np.atleast_1d(self.layer.T_base)
+        T_grad = np.atleast_1d(self.layer.T_grad)
+        p_base = np.atleast_1d(self.layer.p_base)
 
-        H = atleast_1d(self.H)
-        T = atleast_1d(self.T)
+        H = np.atleast_1d(self.H)
+        T = np.atleast_1d(self.T)
         g_0 = Phys.g
         R_air = Phys.R_air
 
-        p = zeros_like(H) * unit('Pa')
+        p = np.zeros_like(H) * unit('Pa')
 
         # Pressure equation changes between T_grad == 0 and T_grad != 0
         s = T_grad == 0
-        p[s] = p_base[s]*exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
+        p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
 
         s = T_grad != 0
         p[s] = p_base[s]*(
@@ -474,9 +473,9 @@ class Atmosphere(DimensionalData):
     @_property_decorators
     def T(self):
         """Ambient air temperature :math:`T` """
-        T_grad = atleast_1d(self.layer.T_grad)
-        H_base = atleast_1d(self.layer.H_base)
-        T_base = atleast_1d(self.layer.T_base)
+        T_grad = np.atleast_1d(self.layer.T_grad)
+        H_base = np.atleast_1d(self.layer.H_base)
+        T_base = np.atleast_1d(self.layer.T_base)
         T = T_base + T_grad*(self.H - H_base)
         return T
 
@@ -495,7 +494,7 @@ class Atmosphere(DimensionalData):
         T = self.T
         gamma_air = Phys.gamma_air
         R_air = Phys.R_air
-        a = sqrt(gamma_air*R_air*T)
+        a = np.sqrt(gamma_air*R_air*T)
         return a
 
     @_property_decorators
@@ -546,5 +545,5 @@ class Atmosphere(DimensionalData):
         sigma = Phys.collision_diam_air
 
         n = N_A*p/(R*T)  # number density
-        MFP = 1/(sqrt(2)*pi*sigma**2*n)
+        MFP = 1/(np.sqrt(2)*np.pi*sigma**2*n)
         return MFP
