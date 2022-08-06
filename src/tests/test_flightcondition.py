@@ -41,8 +41,8 @@ def test_TAS():
     EAS_truth = array([300, 183.6448]) * unit('knots')
     assert_field(fc.vel.EAS, EAS_truth)
 
-    mach_truth = array([0.4535, 0.5090]) * dimless
-    assert_field(fc.vel.M, mach_truth)
+    M_truth = array([0.4535, 0.5090]) * dimless
+    assert_field(fc.vel.M, M_truth)
 
 
 def test_CAS():
@@ -59,8 +59,8 @@ def test_CAS():
     EAS_truth = array([300, 285.0357]) * unit('knots')
     assert_field(fc.vel.EAS, EAS_truth)
 
-    mach_truth = array([0.4535, 0.7900]) * dimless
-    assert_field(fc.vel.M, mach_truth)
+    M_truth = array([0.4535, 0.7900]) * dimless
+    assert_field(fc.vel.M, M_truth)
 
 
 def test_EAS():
@@ -77,8 +77,8 @@ def test_EAS():
     EAS_truth = array([300, 300]) * unit('knots')
     assert_field(fc.vel.EAS, EAS_truth)
 
-    mach_truth = array([0.4535, 0.8314]) * dimless
-    assert_field(fc.vel.M, mach_truth)
+    M_truth = array([0.4535, 0.8314]) * dimless
+    assert_field(fc.vel.M, M_truth)
 
 
 def test_mach():
@@ -95,8 +95,26 @@ def test_mach():
     EAS_truth = array([582.1012, 317.5222]) * unit('knots')
     assert_field(fc.vel.EAS, EAS_truth)
 
-    mach_truth = array([0.88, 0.88]) * dimless
-    assert_field(fc.vel.M, mach_truth)
+    M_truth = array([0.88, 0.88]) * dimless
+    assert_field(fc.vel.M, M_truth)
+
+
+def test_other_vel_properties():
+    """Test other velocity property calculations. """
+
+    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'))
+
+    q_c_truth = array([320.6898, 121.7655]) * unit('lbf/ft^2')
+    assert_field(fc.vel.q_c, q_c_truth)
+
+    p0_truth = array([2436.9064, 751.4328]) * unit('lbf/ft^2')
+    assert_field(fc.vel.p0, p0_truth)
+
+    T0_truth = array([540.0069, 433.1758]) * unit('degR')
+    assert_field(fc.vel.T0, T0_truth)
+
+    Re_by_L_truth = array([2.6837e+5, 1.2096e+5]) * unit('1/in')
+    assert_field(fc.vel.Re_by_L, Re_by_L_truth)
 
 
 def test_reynolds_number():

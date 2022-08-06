@@ -106,16 +106,17 @@ class Airspeed(DimensionalData):
         CAS_str     = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}\n"
         EAS_str     = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}\n"
         M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
-        if np.isnan(np.atleast_1d(self.mu_M)).all():
-            mu_M_str = ""
-        else:
-            mu_M_str    = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
         q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
         q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
         p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
         T0_str      = f"{self.varnames['T0']:{max_var_chars}s} {T0_str}\n"
         Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
                        f"{Re_by_L_str}")
+
+        if np.isnan(np.atleast_1d(self.mu_M)).all():
+            mu_M_str = ""
+        else:
+            mu_M_str = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
 
         if full_output:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}{q_str}"
