@@ -18,12 +18,20 @@ from flightcondition.units import unit, dimless
 
 class PhysicalConstants():
     """Dimensionalized constants for general physics.
+    Air properties assume a calorically perfect gas in non-extreme conditions
+    (approximately: T < 400 K and p < 20 psi).
 
     Attributes:
         g (acceleration): Acceleration due to gravity
         R (energy/temperature/mol): Universal gas constant
-        R_air (energy/temperature/mass): Gas constant for air
-        gamma_air (dimless): Ratio of specific heats for air
+        R_air (energy/temperature/mass): Gas constant for air (non-extreme
+            conditions)
+        Cp_air (energy/temperature/mass): Specific heat at constant pressure
+            for air (non-extreme conditions)
+        Cv_air (energy/temperature/mass): Specific heat at constant volume
+            for air (non-extreme conditions)
+        gamma_air (dimless): Ratio of specific heats for air (low temperature
+            and pressure conditions)
         collision_diam_air (length): Effective collision diameter of an air
             molecule
         N_A (1/mol): Avogadro's constant
@@ -31,8 +39,11 @@ class PhysicalConstants():
     """
     g = 9.80665 * unit('m/s^2')
     R = 8.31432 * unit('N m / (mol K)')
-    R_air = 287.05287 * unit('J/(K*kg)')
+    R_air = 287.05287 * unit('J/(K kg)')
+    Cp_air = 1.005e3 * unit('J/(K kg)')
+    Cv_air = 0.718e3 * unit('J/(K kg)')
     gamma_air = 1.4 * dimless
+    Pr_air = 0.7 * dimless
     collision_diam_air = 0.365e-9 * unit('m')
     N_A = 6.02257e23 * unit('1/mol')
     R_earth = 6.356766e3 * unit('km')

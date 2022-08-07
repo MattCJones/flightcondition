@@ -10,6 +10,8 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
+import warnings
+
 from functools import wraps
 
 import numpy as np
@@ -142,7 +144,7 @@ class Atmosphere(DimensionalData):
         #print(f"\n{atm}")
 
         # Uncomment to print while specifying abbreviated output in US units:
-        #print(f"\n{atm.tostring(full_output=False, unit_system="US")}")
+        #print(f"\n{atm.tostring(full_output=False, unit_system='US')}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
@@ -275,12 +277,11 @@ class Atmosphere(DimensionalData):
         # Process unit system
         if unit_system not in dir(unit.sys):  # check if usable system
             if check_US_length_units(h):
-                self.unit_system = "US"
+                self.unit_system = 'US'
             else:
-                self.unit_system = "SI"
+                self.unit_system = 'SI'
         else:
             self.unit_system = unit_system
-        unit.default_system = self.unit_system  # 'US', 'imperial'
 
         # Allow access to variables using full names
         super().__init__()
@@ -328,7 +329,7 @@ class Atmosphere(DimensionalData):
         Kn = self.MFP/ell
         return Kn
 
-    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
+    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
@@ -342,7 +343,11 @@ class Atmosphere(DimensionalData):
             str: String representation of class object
         """
         pp_ = '~P' if pretty_print else ''
-        if unit_system == "US":
+
+        if unit_system is not None:
+            self.unit_system = unit_system
+
+        if self.unit_system == 'US':
             h_str   = f"h       = {self.h.to('kft'):10.5g{pp_}}"
             H_str   = f"H       = {self.H.to('kft'):10.5g{pp_}}"
             p_str   = f"p       = {self.p.to('lbf/ft^2'):10.5g{pp_}}"
@@ -433,6 +438,32 @@ class Atmosphere(DimensionalData):
         R_earth = Phys.R_earth
         h = R_earth*H/(R_earth - H)
         return h
+
+    @property
+    def unit_system(self):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Returns:
+            str: Unit system
+        """
+        return self._unit_system
+
+    @unit_system.setter
+    def unit_system(self, unit_system):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Args:
+            unit_system (str): Unit system
+        """
+        if unit_system not in dir(unit.sys):
+            warnings.warn(f"'{unit_system} is not available. Try one of the "
+                          f"following: {dir(unit.sys)}")
+            return
+        else:
+            self._unit_system = unit_system
+            unit.default_system = unit_system
 
     @_property_decorators
     def h(self):

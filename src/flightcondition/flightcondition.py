@@ -26,31 +26,35 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
 class Airspeed(DimensionalData):
     """Class to hold airspeed data. """
 
-    M: unit.Quantity
     TAS: unit.Quantity
     CAS: unit.Quantity
     EAS: unit.Quantity
-    q_inf: unit.Quantity
+    M: unit.Quantity
+    mu_M: unit.Quantity
+    qinf: unit.Quantity
     q_c: unit.Quantity
     p0: unit.Quantity
     T0: unit.Quantity
+    Tr_lamr: unit.Quantity
+    Tr_turb: unit.Quantity
     Re_by_L: unit.Quantity
-    mu_M: unit.Quantity
 
     varnames = {
-        'M': 'mach_number',
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
         'EAS': 'equivalent_airspeed',
+        'M': 'mach_number',
+        'mu_M': 'mach_angle',
         'q_inf': 'dynamic_pressure',
         'q_c': 'impact_pressure',
         'p0': 'stagnation_pressure',
         'T0': 'stagnation_temperature',
+        'Tr_lamr': 'recovery_temperature_laminar',
+        'Tr_turb': 'recovery_temperature_turbulent',
         'Re_by_L': 'reynolds_per_length',
-        'mu_M': 'mach_angle',
     }
 
-    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
+    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
@@ -63,13 +67,15 @@ class Airspeed(DimensionalData):
         Returns:
             str: String representation
         """
+        if unit_system is not None:
+            self.unit_system = unit_system
 
         pp_ = '~P' if pretty_print else ''
 
         M_str    = f"M       = {self.M:10.5g{pp_}}"
         mu_M_str = f"mu_M    = {self.mu_M.to('deg'):10.5g{pp_}}"
 
-        if unit_system == "US":
+        if self.unit_system == 'US':
             self.TAS.ito('knots')
             self.CAS.ito('knots')
             self.q_c.ito('lbf/ft^2')
@@ -77,6 +83,8 @@ class Airspeed(DimensionalData):
             self.EAS.ito('knots')
             self.q_inf.ito('lbf/ft^2')
             self.T0.ito('degR')
+            self.Tr_lamr.ito('degR')
+            self.Tr_turb.ito('degR')
             self.Re_by_L.ito('1/in')
         else:  # default to SI units
             self.TAS.ito('m/s')
@@ -86,6 +94,8 @@ class Airspeed(DimensionalData):
             self.EAS.ito('m/s')
             self.q_inf.ito('Pa')
             self.T0.ito('degK')
+            self.Tr_lamr.ito('degK')
+            self.Tr_turb.ito('degK')
             self.Re_by_L.ito('1/mm')
 
         TAS_str     = f"TAS     = {self.TAS:10.5g{pp_}}"
@@ -95,6 +105,8 @@ class Airspeed(DimensionalData):
         EAS_str     = f"EAS     = {self.EAS:10.5g{pp_}}"
         q_str       = f"q_inf   = {self.q_inf:10.5g{pp_}}"
         T0_str      = f"T0      = {self.T0:10.5g{pp_}}"
+        Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr:10.5g{pp_}}"
+        Tr_turb_str = f"Tr_turb = {self.Tr_turb:10.5g{pp_}}"
         Re_by_L_str = f"Re_by_L = {self.Re_by_L:10.5g{pp_}}"
 
         # Insert longer variable name into output
@@ -110,6 +122,10 @@ class Airspeed(DimensionalData):
         q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
         p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
         T0_str      = f"{self.varnames['T0']:{max_var_chars}s} {T0_str}\n"
+        Tr_lamr_str = (f"{self.varnames['Tr_lamr']:{max_var_chars}s} "
+                       f"{Tr_lamr_str}\n")
+        Tr_turb_str = (f"{self.varnames['Tr_turb']:{max_var_chars}s} "
+                       f"{Tr_turb_str}\n")
         Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
                        f"{Re_by_L_str}")
 
@@ -120,7 +136,8 @@ class Airspeed(DimensionalData):
 
         if full_output:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}{q_str}"
-                        f"{q_c_str}{p0_str}{T0_str}{Re_by_L_str}")
+                        f"{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}{Tr_turb_str}"
+                        f"{Re_by_L_str}")
         else:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
 
@@ -137,7 +154,7 @@ class Length(DimensionalData):
         'Re': 'reynolds_number',
     }
 
-    def tostring(self, full_output=True, unit_system="", max_var_chars=0,
+    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
@@ -150,10 +167,12 @@ class Length(DimensionalData):
         Returns:
             str: String representation
         """
+        if unit_system is not None:
+            self.unit_system = unit_system
 
         pp_ = '~P' if pretty_print else ''
         Re_str = f"Re      = {self.Re:10.5g{pp_}}"
-        if unit_system == "US":
+        if self.unit_system == 'US':
             L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
         else:  # default to SI units
             L_str = f"L       = {self.L.to('m'):10.5g{pp_}}"
@@ -191,7 +210,7 @@ class FlightCondition(DimensionalData):
         #print(f"{fc}")
 
         # Uncomment to print abbreviated output in US units:
-        #print(f"\n{fc.tostring(full_output=False, unit_system="US")}")
+        #print(f"\n{fc.tostring(full_output=False, unit_system='US')}")
 
         # Access true, calibrated, equivalent airspeeds
         KTAS = fc.vel.TAS.to('knots')
@@ -266,9 +285,6 @@ class FlightCondition(DimensionalData):
         p_inf = self.atm.p
         p_inf_h0 = self._atm0.p
         self._delta = p_inf/p_inf_h0
-
-        # Determine if US units or not
-        self.unit_system = self.atm.unit_system
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -349,13 +365,17 @@ class FlightCondition(DimensionalData):
         self.vel.p0 = self._stagnation_pressure(M=self.vel.M,
                                                 p=self.atm.p)
         self.vel.T0 = self._stagnation_temperature(M=self.vel.M, T=self.atm.T)
+        self.vel.Tr_lamr = self._recovery_temperature_laminar(M=self.vel.M,
+                                                              T=self.atm.T)
+        self.vel.Tr_turb = self._recovery_temperature_turbulent(M=self.vel.M,
+                                                                T=self.atm.T)
         self.vel.Re_by_L = self._reynolds_per_length()
 
         # Compute length-scale-based quantities
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
         if L is None:
-            L_unit = unit('ft') if self.unit_system == "US" else unit('m')
+            L_unit = unit('ft') if self.unit_system == 'US' else unit('m')
             self.len.L = 1.0 * L_unit
         else:  # length scale is input by user
             self.len.L = L
@@ -367,7 +387,7 @@ class FlightCondition(DimensionalData):
             # units based on the input length scale
             if self.atm.h.magnitude.all() == 0:
                 if check_US_length_units(L):
-                    self.unit_system = "US"
+                    self.unit_system = 'US'
 
         # Assign lengths scale and compute quantities
         self.len.Re = self._reynolds_number(self.len.L)
@@ -406,7 +426,7 @@ class FlightCondition(DimensionalData):
         self.byvar._populate_data(self.len, byvar_len)
 
     @staticmethod
-    def _stagnation_temperature(M, T):
+    def _stagnation_temperature(M, T, y=Phys.gamma_air):
         """Adiabatic flow equation for stagnation temperature, i.e. temperature
         brought to rest isentropically (note that the equation does not assume
         isentropic flow).
@@ -417,16 +437,59 @@ class FlightCondition(DimensionalData):
         Args:
             M (pressure): Mach number
             T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
 
         Returns:
             temperature: Stagnation temperature
         """
-        y = Phys.gamma_air
-        T0 = T*(1 + ((y-1)/2)*M**2)
+
+        T0 = IsentropicFlow.T0_by_T(M, y)*T
         return T0
 
     @staticmethod
-    def _stagnation_pressure(M, p):
+    def _recovery_temperature_laminar(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
+        """Adiabiatic wall temperature on infinite flat plate in laminar flow.
+
+        Assumes:
+            Adiabatic
+
+        Args:
+            M (pressure): Mach number
+            T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
+            Pr (dimless): Prandtl number
+
+        Returns:
+            temperature: Stagnation temperature
+        """
+        r = Pr**(1/2)
+        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
+        return T0
+
+    @staticmethod
+    def _recovery_temperature_turbulent(M, T, y=Phys.gamma_air,
+                                        Pr=Phys.Pr_air):
+        """Adiabiatic wall temperature on infinite flat plate in turbulent
+        flow.
+
+        Assumes:
+            Adiabatic
+
+        Args:
+            M (pressure): Mach number
+            T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
+            Pr (dimless): Prandtl number
+
+        Returns:
+            temperature: Stagnation temperature
+        """
+        r = Pr**(1/3)
+        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
+        return T0
+
+    @staticmethod
+    def _stagnation_pressure(M, p, y=Phys.gamma_air):
         """Equation for stagnation pressure, i.e. bringing flow to rest
         isentropically.
 
@@ -437,11 +500,12 @@ class FlightCondition(DimensionalData):
         Args:
             M (dimless): Mach number
             p (pressure): Static pressure
+            y (dimless): ratio of specific heats
 
         Returns:
             pressure: Stagnation pressure
         """
-        p0 = IsentropicFlow.p0_by_p(M)*p
+        p0 = IsentropicFlow.p0_by_p(M, y)*p
         return p0
 
     # @staticmethod  # DEPRECATED
@@ -572,7 +636,7 @@ class FlightCondition(DimensionalData):
         """Print tostring() function to stdout. """
         print(self.tostring(*args, **kwargs))
 
-    def tostring(self, full_output=True, unit_system="", pretty_print=True):
+    def tostring(self, full_output=True, unit_system=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
@@ -583,21 +647,23 @@ class FlightCondition(DimensionalData):
         Returns:
             str: String representation
         """
-        unit_system = "US" if unit_system == "" else unit_system
-        alti_str = self.atm.tostring(full_output, unit_system,
+        if unit_system is not None:
+            self.unit_system = unit_system
+
+        alti_str = self.atm.tostring(full_output, self.unit_system,
                                      pretty_print=pretty_print)
         max_var_chars = max([
             max([len(v) for v in self.vel.varnames.values()]),
             max([len(v) for v in self.atm.varnames.values()])
         ])
-        spee_str = self.vel.tostring(full_output, unit_system,
+        spee_str = self.vel.tostring(full_output, self.unit_system,
                                      max_var_chars=max_var_chars,
                                      pretty_print=pretty_print)
-        leng_str = self.len.tostring(full_output, unit_system,
+        leng_str = self.len.tostring(full_output, self.unit_system,
                                      max_var_chars=max_var_chars,
                                      pretty_print=pretty_print)
 
-        unit_str = unit_system
+        unit_str = self.unit_system
         ext_str = "extended output" if full_output else "abbreviated output"
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
         line_str = "========================================================="
@@ -612,6 +678,26 @@ class FlightCondition(DimensionalData):
                     )
 
         return repr_str
+
+    @property
+    def unit_system(self):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Returns:
+            str: Unit system
+        """
+        return self.atm.unit_system
+
+    @unit_system.setter
+    def unit_system(self, unit_system):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Args:
+            unit_system (str): Unit system
+        """
+        self.atm.unit_system = unit_system
 
     @to_base_units_wrapper
     def _M_from_TAS(self, TAS):

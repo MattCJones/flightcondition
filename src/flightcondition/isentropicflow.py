@@ -32,6 +32,7 @@ class IsentropicFlow:
 
         Args:
             M (float): Mach number
+            y (float): ratio of specific heats
 
         Returns:
             float: ratio of stagnation pressure to static pressure
@@ -41,17 +42,19 @@ class IsentropicFlow:
         return p0_by_p
 
     @staticmethod
-    def T0_by_T(M, y=Phys.gamma_air):
+    def T0_by_T(M, y=Phys.gamma_air, r=1):
         """Compute ratio of stagnation temperature (brought to rest
         isentropically) to static temperature.
 
         Args:
             M (float): Mach number
+            y (float): ratio of specific heats
+            r (float): recovery factor (if computing recovery temperature)
 
         Returns:
             float: ratio of stagnation temperature to static temperature
         """
-        T0_by_T = 1 + ((y-1)/2)*M**2
+        T0_by_T = 1 + r*((y-1)/2)*M**2
         return T0_by_T
 
     @staticmethod
@@ -75,6 +78,7 @@ class IsentropicFlow:
 
         Args:
             M (float): Mach number
+            y (float): ratio of specific heats
 
         Returns:
             float: ratio of stagnation density to static density
@@ -106,6 +110,7 @@ class IsentropicFlow:
 
         Args:
             p0_by_p (float): ratio of stagnation pressure to pressure
+            y (float): ratio of specific heats
 
         Returns:
             float: Mach number
@@ -121,6 +126,7 @@ class IsentropicFlow:
 
         Args:
             T0_by_T (float): ratio of stagnation temperature to temperature
+            y (float): ratio of specific heats
 
         Returns:
             float: Mach number

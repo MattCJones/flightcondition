@@ -28,7 +28,7 @@ def myapprox(test_arg):
     return pytest.approx(test_arg, rel=reltol)
 
 
-def assert_field(field_arr, field_truth_arr):
+def assert_field(field_arr, field_truth_arr, reltol=reltol):
     """Test that output field matches truth data.
 
     Args:

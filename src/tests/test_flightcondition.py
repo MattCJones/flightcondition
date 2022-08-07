@@ -102,7 +102,7 @@ def test_mach():
 def test_other_vel_properties():
     """Test other velocity property calculations. """
 
-    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'))
+    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'), unit_system='US')
 
     q_c_truth = array([320.6898, 121.7655]) * unit('lbf/ft^2')
     assert_field(fc.vel.q_c, q_c_truth)
@@ -111,7 +111,13 @@ def test_other_vel_properties():
     assert_field(fc.vel.p0, p0_truth)
 
     T0_truth = array([540.0069, 433.1758]) * unit('degR')
-    assert_field(fc.vel.T0, T0_truth)
+    assert_field(fc.vel.T0, T0_truth.to('degK'))
+
+    Tr_lamr_truth = array([536.8064, 429.9753]) * unit('degR')
+    assert_field(fc.vel.Tr_lamr, Tr_lamr_truth.to('degK'), reltol=0.001)
+
+    Tr_turb_truth = array([537.6599, 430.8287]) * unit('degR')
+    assert_field(fc.vel.Tr_turb, Tr_turb_truth.to('degK'), reltol=0.001)
 
     Re_by_L_truth = array([2.6837e+5, 1.2096e+5]) * unit('1/in')
     assert_field(fc.vel.Re_by_L, Re_by_L_truth)
@@ -137,7 +143,7 @@ def test_access_byname():
     L = 5.34 * unit('ft')
     h_geom = 44.5 * unit('km')
     M_ = 0.93 * dimless
-    fc = FlightCondition(h_geom, M=M_, L=L, unit_system="US")
+    fc = FlightCondition(h_geom, M=M_, L=L, unit_system='US')
 
     # Check that sub-objects .byname works properly
     assert fc.atm.p == fc.atm.byname.pressure
