@@ -270,7 +270,7 @@ class Atmosphere(DimensionalData):
         # Default to 0 kft
         if h is None:
             h = 0 * unit('ft')
-        self._h = self._process_input_altitude(h)
+        self.h = h
         self._H = self.H_from_h(self.h)
         self.layer = __class__.Layer(self.H)
 
@@ -286,48 +286,6 @@ class Atmosphere(DimensionalData):
         # Allow access to variables using full names
         super().__init__()
         self.byname._populate_data(varsobj=self, varnames_dict=self.varnames)
-
-    def _process_input_altitude(self, alt):
-        """Check that input is of type Quantity from pint package. Check that
-        input is length dimension.  Check bounds.  Format as array even if
-        scalar input.
-
-        Args:
-            alt (length): Input scalar or array of altitudes
-
-        Returns:
-            length: Geometric altitude
-        """
-        tofloat = 1.0
-        h = np.atleast_1d(alt) * tofloat
-
-        check_dimensioned(h)
-        h = h.magnitude * unit(str(h.units))  # force local unit registry
-        check_length_dimensioned(h)
-
-        if len(np.shape(h)) > 1:
-            raise TypeError("Input must be scalar or 1-D array.")
-
-        if (h < self._h_min).any() or (self._h_max < h).any():
-            raise ValueError(
-                f"Input altitude is out of bounds "
-                f"({self._h_min:.5g} < h < {self._h_max:.5g})"
-            )
-
-        return h
-
-    @to_base_units_wrapper
-    def knudsen_number(self, ell):
-        """Compute the Knudsen number :math:`K_n`
-
-        Args:
-            ell (length): Length scale
-
-        Returns:
-            dimless: Knudsen number
-        """
-        Kn = self.MFP/ell
-        return Kn
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
@@ -467,8 +425,41 @@ class Atmosphere(DimensionalData):
 
     @_property_decorators
     def h(self):
-        """Geometric altitude :math:`h` """
+        """Get geometric altitude :math:`h`
+
+        Returns:
+            length: Geometric altitude
+        """
         return self._h
+
+    @h.setter
+    def h(self, h):
+        """Set geometric altitude :math:`h`
+
+        Check that input is of type Quantity from pint package. Check that
+        input is length dimension.  Check bounds.  Format as array even if
+        scalar input.
+
+        Args:
+            h (length): Input scalar or array of altitudes
+        """
+        tofloat = 1.0
+        h = np.atleast_1d(h) * tofloat
+
+        check_dimensioned(h)
+        h = h.magnitude * unit(str(h.units))  # force local unit registry
+        check_length_dimensioned(h)
+
+        if len(np.shape(h)) > 1:
+            raise TypeError("Input must be scalar or 1-D array.")
+
+        if (h < self._h_min).any() or (self._h_max < h).any():
+            raise ValueError(
+                f"Input altitude is out of bounds "
+                f"({self._h_min:.5g} < h < {self._h_max:.5g})"
+            )
+
+        self._h = h
 
     @_property_decorators
     def H(self):
@@ -516,7 +507,7 @@ class Atmosphere(DimensionalData):
         p = self.p
         T = self.T
         R_air = Phys.R_air
-        rho = p/(R_air*T)
+        rho = p/(R_air*T)  # TODO 2022-08-07: separate out
         return rho
 
     @_property_decorators
@@ -525,7 +516,7 @@ class Atmosphere(DimensionalData):
         T = self.T
         gamma_air = Phys.gamma_air
         R_air = Phys.R_air
-        a = np.sqrt(gamma_air*R_air*T)
+        a = np.sqrt(gamma_air*R_air*T)  # TODO 2022-08-07: separate out
         return a
 
     @_property_decorators

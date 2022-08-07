@@ -15,9 +15,10 @@ Email: matt.c.jones.aoe@gmail.com
 import numpy as np
 
 from flightcondition.atmosphere import Atmosphere, AccessByName,\
-    DimensionalData, _len1array_to_scalar
+    DimensionalData, _len1array_to_scalar, _property_decorators
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.isentropicflow import IsentropicFlow
+from flightcondition.nondimensional import NonDimensional
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
     check_dimensioned, check_length_dimensioned, check_US_length_units,\
     to_base_units_wrapper
@@ -25,19 +26,6 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
 
 class Airspeed(DimensionalData):
     """Class to hold airspeed data. """
-
-    TAS: unit.Quantity
-    CAS: unit.Quantity
-    EAS: unit.Quantity
-    M: unit.Quantity
-    mu_M: unit.Quantity
-    qinf: unit.Quantity
-    q_c: unit.Quantity
-    p0: unit.Quantity
-    T0: unit.Quantity
-    Tr_lamr: unit.Quantity
-    Tr_turb: unit.Quantity
-    Re_by_L: unit.Quantity
 
     varnames = {
         'TAS': 'true_airspeed',
@@ -54,6 +42,17 @@ class Airspeed(DimensionalData):
         'Re_by_L': 'reynolds_per_length',
     }
 
+    def __init__(self, atm):
+        """Initialize.
+
+        Args:
+            atm (object): Atmosphere object
+        """
+        super().__init__()
+        self._atm = atm
+        h0 = 0 * unit('kft')
+        self._atm0 = Atmosphere(h0)
+
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
@@ -67,57 +66,43 @@ class Airspeed(DimensionalData):
         Returns:
             str: String representation
         """
-        if unit_system is not None:
-            self.unit_system = unit_system
-
         pp_ = '~P' if pretty_print else ''
 
         M_str    = f"M       = {self.M:10.5g{pp_}}"
         mu_M_str = f"mu_M    = {self.mu_M.to('deg'):10.5g{pp_}}"
 
-        if self.unit_system == 'US':
-            self.TAS.ito('knots')
-            self.CAS.ito('knots')
-            self.q_c.ito('lbf/ft^2')
-            self.p0.ito('lbf/ft^2')
-            self.EAS.ito('knots')
-            self.q_inf.ito('lbf/ft^2')
-            self.T0.ito('degR')
-            self.Tr_lamr.ito('degR')
-            self.Tr_turb.ito('degR')
-            self.Re_by_L.ito('1/in')
+        if unit_system == 'US':
+            EAS_str     = f"EAS     = {self.EAS.to('knots'):10.5g{pp_}}"
+            TAS_str     = f"TAS     = {self.TAS.to('knots'):10.5g{pp_}}"
+            CAS_str     = f"CAS     = {self.CAS.to('knots'):10.5g{pp_}}"
+            q_str       = f"q_inf   = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
+            q_c_str     = f"q_c     = {self.q_c.to('lbf/ft^2'):10.5g{pp_}}"
+            p0_str      = f"p0      = {self.p0.to('lbf/ft^2'):10.5g{pp_}}"
+            T0_str      = f"T0      = {self.T0.to('degR'):10.5g{pp_}}"
+            Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr.to('degR'):10.5g{pp_}}"
+            Tr_turb_str = f"Tr_turb = {self.Tr_turb.to('degR'):10.5g{pp_}}"
+            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
         else:  # default to SI units
-            self.TAS.ito('m/s')
-            self.CAS.ito('m/s')
-            self.q_c.ito('Pa')
-            self.p0.ito('Pa')
-            self.EAS.ito('m/s')
-            self.q_inf.ito('Pa')
-            self.T0.ito('degK')
-            self.Tr_lamr.ito('degK')
-            self.Tr_turb.ito('degK')
-            self.Re_by_L.ito('1/mm')
-
-        TAS_str     = f"TAS     = {self.TAS:10.5g{pp_}}"
-        CAS_str     = f"CAS     = {self.CAS:10.5g{pp_}}"
-        q_c_str     = f"q_c     = {self.q_c:10.5g{pp_}}"
-        p0_str      = f"p0      = {self.p0:10.5g{pp_}}"
-        EAS_str     = f"EAS     = {self.EAS:10.5g{pp_}}"
-        q_str       = f"q_inf   = {self.q_inf:10.5g{pp_}}"
-        T0_str      = f"T0      = {self.T0:10.5g{pp_}}"
-        Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr:10.5g{pp_}}"
-        Tr_turb_str = f"Tr_turb = {self.Tr_turb:10.5g{pp_}}"
-        Re_by_L_str = f"Re_by_L = {self.Re_by_L:10.5g{pp_}}"
+            TAS_str     = f"TAS     = {self.TAS.to('m/s'):10.5g{pp_}}"
+            CAS_str     = f"CAS     = {self.CAS.to('m/s'):10.5g{pp_}}"
+            EAS_str     = f"EAS     = {self.EAS.to('m/s'):10.5g{pp_}}"
+            q_str       = f"q_inf   = {self.q_inf.to('Pa'):10.5g{pp_}}"
+            q_c_str     = f"q_c     = {self.q_c.to('Pa'):10.5g{pp_}}"
+            p0_str      = f"p0      = {self.p0.to('Pa'):10.5g{pp_}}"
+            T0_str      = f"T0      = {self.T0.to('degK'):10.5g{pp_}}"
+            Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr.to('degK'):10.5g{pp_}}"
+            Tr_turb_str = f"Tr_turb = {self.Tr_turb.to('degK'):10.5g{pp_}}"
+            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g{pp_}}"
 
         # Insert longer variable name into output
         max_var_chars = max([
             max([len(v) for v in self.varnames.values()]),
             max_var_chars
         ])
+        M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
         TAS_str     = f"{self.varnames['TAS']:{max_var_chars}s} {TAS_str}\n"
         CAS_str     = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}\n"
         EAS_str     = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}\n"
-        M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
         q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
         q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
         p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
@@ -143,16 +128,458 @@ class Airspeed(DimensionalData):
 
         return repr_str
 
+    def _checkandsize(self, inpvar, default_dim=None):
+        """Check that input is correctly typed, then size input array. If
+        scalar, leave as scalar.
+
+        Args:
+            inpvar (object): Input array (or scalar)
+            default_dim (dimension): default dimension if input is unitless
+
+        Returns:
+            object: Sized array (or scalar)
+        """
+        if default_dim is not None:
+            inpvar *= default_dim
+        check_dimensioned(inpvar)
+
+        # Force local unit registry
+        inpvar = inpvar.magnitude * unit(str(inpvar.units))
+
+        # Require altitude and speed arrays to be equal or singular speed array
+        wrongsize_msg = ("Input arrays for altitude and airspeed must either "
+                         "equal in size or one must be singular.")
+        if np.shape(self._atm.h):  # if altitude is an array
+            if np.shape(inpvar):  # if inpvar is an array
+                if not inpvar.size == self._atm.h.size:
+                    if not inpvar.size == 1 and not self._atm.h.size == 1:
+                        raise TypeError(wrongsize_msg)
+
+            sizedarr = np.ones(np.shape(self._atm.h))*inpvar
+        else:
+            sizedarr = inpvar
+
+        tofloat = 1.0
+        sizedarr *= tofloat
+
+        return sizedarr
+
+    @staticmethod
+    def _impact_pressure(M, p):
+        """Equation for impact pressure
+
+        Args:
+            M (dimless): Mach number
+            p (pressure): Static pressure
+
+        Returns:
+            pressure: Impact pressure
+        """
+        # p0 = p + q_c
+        p0 = Airspeed._stagnation_pressure(M=M, p=p)
+        q_c = p0 - p
+        return q_c
+
+    @to_base_units_wrapper
+    def _M_from_TAS(self, TAS):
+        """Compute Mach number from true airspeed.
+
+        Args:
+            TAS (speed): True airspeed
+
+        Returns:
+            dimless: Mach number
+        """
+        a_inf = self._atm.a
+        M = NonDimensional.mach_number(U=TAS, a=a_inf)
+        return M
+
+    @to_base_units_wrapper
+    def _TAS_from_M(self, M):
+        """Compute true airspeed from Mach number.
+
+        Args:
+            M (dimless): Mach number
+
+        Returns:
+            speed: True airspeed
+        """
+        a_inf = self._atm.a
+        TAS = NonDimensional.mach_airspeed(M, a_inf)
+        return TAS
+
+    @to_base_units_wrapper
+    def _M_from_EAS(self, EAS):
+        """Computer Mach number from equivalent airspeed.
+
+        Args:
+            EAS (speed): Equivalent airspeed
+
+        Returns:
+            dimless: Mach number
+        """
+        a_inf_h0 = self._atm0.a
+        p_inf_h0 = self._atm0.p
+        p_inf = self._atm.p
+        delta = p_inf/p_inf_h0
+        M = EAS/(a_inf_h0*np.sqrt(delta))
+        return M
+
+    @to_base_units_wrapper
+    def _EAS_from_M(self, M):
+        """Computer Mach number from equivalent airspeed.
+
+        Args:
+            M (dimless): Mach number
+
+        Returns:
+            speed: Equivalent airspeed
+        """
+        a_inf_h0 = self._atm0.a
+        p_inf_h0 = self._atm0.p
+        p_inf = self._atm.p
+        delta = p_inf/p_inf_h0
+        EAS = M*(a_inf_h0*np.sqrt(delta))
+        return EAS
+
+    @to_base_units_wrapper
+    def _q_c_from_CAS(self, CAS):
+        """Compute impact pressure from calibrated airspeed (accounting for
+           compressibility).
+
+        Args:
+            CAS (speed): Calibrated airspeed
+
+        Returns:
+            pressure: Impact pressure
+        """
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
+        # Account for compressibility with the isentropic flow equation
+        M_ = NonDimensional.mach_number(U=CAS, a=a_h0)
+        q_c = __class__._impact_pressure(M=M_, p=p_h0)
+        return q_c
+
+    @to_base_units_wrapper
+    def _CAS_from_q_c(self, q_c):
+        """Compute calibrated airspeed from impact pressure (accounting for
+           compressibility).
+
+        Args:
+            CAS (speed): Calibrated airspeed
+
+        Returns:
+            pressure: Impact pressure
+
+        """
+        a_h0 = self._atm0.a
+        p_h0 = self._atm0.p
+        # Account for compressibility with the isentropic flow equation
+        # M_should = __class__._isentropic_mach(p0=q_c, p=p_h0)  # DEPRECATED
+        M = IsentropicFlow.M_from_p0_by_p((q_c+p_h0)/p_h0)
+        CAS = NonDimensional.mach_airspeed(M, a_h0)  # subsonic
+        return CAS
+
+    @to_base_units_wrapper
+    def _M_from_q_c(self, q_c):
+        """Compute Mach number from impact pressure.
+
+        Args:
+            q_c (pressure): Impact pressure
+
+        Returns:
+            dimless: Mach number
+        """
+        p_inf = self._atm.p
+        # Isentropic flow equation
+        # M_should = __class__._isentropic_mach(p0=q_c, p=p_inf)  # DEPRECATED
+        M = IsentropicFlow.M_from_p0_by_p((q_c+p_inf)/p_inf)
+
+        return M
+
+    @to_base_units_wrapper
+    def _q_c_from_M(self, M):
+        """Compute impact pressure from Mach number.
+
+        Args:
+            M: Mach number
+
+        Returns:
+            impact pressure
+        """
+        p_inf = self._atm.p
+        # Solve for impact pressure from isentropic flow equation:
+        q_c = __class__._impact_pressure(M=M, p=p_inf)
+        return q_c
+
+    @to_base_units_wrapper
+    def _EAS_from_TAS(self, TAS, M):
+        """Convert airspeed to true calibrated airspeed.
+
+        Args:
+            TAS (speed): True airspeed
+            M (dimless): Mach number
+
+        Returns:
+            speed: Equivalent airspeed
+        """
+        a_inf_h0 = self._atm0.a
+        p_inf_h0 = self._atm0.p
+        p_inf = self._atm.p
+        delta = p_inf/p_inf_h0
+        EAS = M*(a_inf_h0*np.sqrt(delta))
+        return EAS
+
+    @staticmethod
+    @_len1array_to_scalar
+    def _mach_angle(M):
+        """Compute Mach angle
+
+        Args:
+            M (dimless): Mach number
+
+        Returns:
+            angle: mach angle
+        """
+        # Create new array and split computation to subsonic and supersonic
+        M = np.atleast_1d(M)
+        mu_M = M*0.0
+
+        sub = M < 1  # subsonic filter
+        if sub.any():
+            mu_M[sub] = np.nan
+
+        sup = M >= 1  # supersonic filter
+        mu_M[sup] = np.arcsin(1.0/M[sup])
+
+        mu_M.ito('deg')
+        return mu_M
+
+    @staticmethod
+    @to_base_units_wrapper
+    def _q_inf_from_TAS(TAS, rho):
+        """Compute dynamic pressure from true airspeed.
+
+        Args:
+            TAS (speed): True airspeed
+            rho (density): Ambient density
+
+        Returns:
+            pressure: Dynamic pressure
+        """
+        q_inf = 0.5*rho*TAS**2
+        return q_inf
+
+    @staticmethod
+    def _stagnation_pressure(M, p, y=Phys.gamma_air):
+        """Equation for stagnation pressure, i.e. bringing flow to rest
+        isentropically.
+
+        Assumes:
+            Adiabatic
+            Reversible
+
+        Args:
+            M (dimless): Mach number
+            p (pressure): Static pressure
+            y (dimless): ratio of specific heats
+
+        Returns:
+            pressure: Stagnation pressure
+        """
+        p0 = IsentropicFlow.p0_by_p(M, y)*p
+        return p0
+
+    @staticmethod
+    def _stagnation_temperature(M, T, y=Phys.gamma_air):
+        """Adiabatic flow equation for stagnation temperature, i.e. temperature
+        brought to rest isentropically (note that the equation does not assume
+        isentropic flow).
+
+        Assumes:
+            Adiabatic
+
+        Args:
+            M (pressure): Mach number
+            T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
+
+        Returns:
+            temperature: Stagnation temperature
+        """
+
+        T0 = IsentropicFlow.T0_by_T(M, y)*T
+        return T0
+
+    @staticmethod
+    def _recovery_temperature_laminar(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
+        """Adiabiatic wall temperature on infinite flat plate in laminar flow.
+
+        Assumes:
+            Adiabatic
+
+        Args:
+            M (pressure): Mach number
+            T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
+            Pr (dimless): Prandtl number
+
+        Returns:
+            temperature: Stagnation temperature
+        """
+        r = Pr**(1/2)
+        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
+        return T0
+
+    @staticmethod
+    def _recovery_temperature_turbulent(M, T, y=Phys.gamma_air,
+                                        Pr=Phys.Pr_air):
+        """Adiabiatic wall temperature on infinite flat plate in turbulent
+        flow.
+
+        Assumes:
+            Adiabatic
+
+        Args:
+            M (pressure): Mach number
+            T (temperature): Static (ambient) temperature
+            y (dimless): ratio of specific heats
+            Pr (dimless): Prandtl number
+
+        Returns:
+            temperature: Stagnation temperature
+        """
+        r = Pr**(1/3)
+        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
+        return T0
+
+    @_property_decorators
+    def M(self):
+        """Get Mach number :math:`M` """
+        return self._M
+
+    @M.setter
+    def M(self, M):
+        """Mach number :math:`M` """
+        self._M = self._checkandsize(M, default_dim=dimless)
+        self._TAS = self._TAS_from_M(self.M)
+        self._EAS = self._EAS_from_TAS(self.TAS, self.M)
+        self._q_c = self._q_c_from_M(self.M)
+        self._CAS = self._CAS_from_q_c(self.q_c)
+
+    @_property_decorators
+    def TAS(self):
+        """Get true airspeed. """
+        return self._TAS
+
+    @TAS.setter
+    def TAS(self, TAS):
+        """Set true airspeed. """
+        self._TAS = self._checkandsize(TAS)
+        self._M = self._M_from_TAS(TAS)
+        self._EAS = self._EAS_from_TAS(self.TAS, self.M)
+        self._q_c = self._q_c_from_M(self.M)
+        self._CAS = self._CAS_from_q_c(self.q_c)
+
+    @_property_decorators
+    def CAS(self):
+        """Get calibrated airspeed. """
+        return self._CAS
+
+    @CAS.setter
+    def CAS(self, CAS):
+        """Calibrated airspeed. """
+        self._CAS = self._checkandsize(CAS)
+        self._q_c = self._q_c_from_CAS(self.CAS)
+        self._M = self._M_from_q_c(self.q_c)
+        self._TAS = self._TAS_from_M(self.M)
+        self._EAS = self._EAS_from_TAS(self.TAS, self.M)
+
+    @_property_decorators
+    def EAS(self):
+        """Get equivalent airspeed. """
+        return self._EAS
+
+    @EAS.setter
+    def EAS(self, EAS):
+        """Set equivalent airspeed. """
+        self._EAS = self._checkandsize(EAS)
+        self._M = self._M_from_EAS(self.EAS)
+        self._TAS = self._TAS_from_M(self.M)
+        self._q_c = self._q_c_from_M(self.M)
+        self._CAS = self._CAS_from_q_c(self.q_c)
+
+    @_property_decorators
+    def mu_M(self):
+        """Get Mach angle :math:`\\mu_M` """
+        return __class__._mach_angle(self.M)
+
+    @_property_decorators
+    def q_c(self):
+        """Get impact pressure :math:`q_c`"""
+        return self._q_c
+
+    @_property_decorators
+    def q_inf(self):
+        """Get dynamic pressure :math:`q_\\infty`"""
+        q_inf = __class__._q_inf_from_TAS(TAS=self.TAS, rho=self._atm.rho)
+        return q_inf
+
+    @_property_decorators
+    def p0(self):
+        """Get stagnation pressure :math:`p_0`"""
+        p0 = self._q_inf_from_TAS(TAS=self.TAS, rho=self._atm.rho)
+        p0 = __class__._stagnation_pressure(M=self.M, p=self._atm.p)
+        return p0
+
+    @_property_decorators
+    def T0(self):
+        """Get stagnation temperature :math:`T_0`"""
+        T0 = __class__._stagnation_temperature(M=self.M, T=self._atm.T)
+        return T0
+
+    @_property_decorators
+    def Tr_lamr(self):
+        """Get recovery temperature (laminar) :math:`Tr_{laminar}`"""
+        Tr_lamr = __class__._recovery_temperature_laminar(M=self.M,
+                                                          T=self._atm.T)
+        return Tr_lamr
+
+    @_property_decorators
+    def Tr_turb(self):
+        """Get recovery temperature (turbulent) :math:`Tr_{turbulent}`"""
+        Tr_turb = __class__._recovery_temperature_turbulent(M=self.M,
+                                                            T=self._atm.T)
+        return Tr_turb
+
+    @_property_decorators
+    def Re_by_L(self):
+        """Get Reynolds number per unit length :math:`Re_L`"""
+        length_unit = 'in' if self._atm.unit_system == 'US' else None
+        Re_by_L = NonDimensional.reynolds_per_length(U=self.TAS,
+                                                     nu=self._atm.nu,
+                                                     length_unit=length_unit)
+        return Re_by_L
+
 
 class Length(DimensionalData):
     """Class to hold length data. """
-
-    L: unit.Quantity
 
     varnames = {
         'L': 'length_scale',
         'Re': 'reynolds_number',
     }
+
+    def __init__(self, atm, vel):
+        """Initialize.
+
+        Args:
+            atm (object): Atmosphere object
+            vel (object): Airspeed object
+        """
+        super().__init__()
+        self._atm = atm
+        self._vel = vel
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
@@ -167,12 +594,9 @@ class Length(DimensionalData):
         Returns:
             str: String representation
         """
-        if unit_system is not None:
-            self.unit_system = unit_system
-
         pp_ = '~P' if pretty_print else ''
         Re_str = f"Re      = {self.Re:10.5g{pp_}}"
-        if self.unit_system == 'US':
+        if unit_system == 'US':
             L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
         else:  # default to SI units
             L_str = f"L       = {self.L.to('m'):10.5g{pp_}}"
@@ -191,6 +615,31 @@ class Length(DimensionalData):
             repr_str = (f"{L_str}\n{Re_str}")
 
         return repr_str
+
+    @_property_decorators
+    def L(self):
+        """Get length scale :math:`L`"""
+        return self._L
+
+    @L.setter
+    def L(self, L):
+        """Set length scale :math:`L`"""
+        # Verify that length input is dimensional length quantity
+        check_length_dimensioned(L)
+        self._L = L
+
+    @_property_decorators
+    def Re(self):
+        """Get Reynolds number :math:`Re`"""
+        Re = NonDimensional.reynolds_number(
+            U=self._vel.TAS, L=self.L, nu=self._atm.nu)
+        return Re
+
+    @_property_decorators
+    def Kn(self):
+        """Get Knudsen number :math:`K_n`"""
+        Kn = NonDimensional.knudsen_number(self.L, self._atm.MFP)
+        return Kn
 
 
 class FlightCondition(DimensionalData):
@@ -272,19 +721,9 @@ class FlightCondition(DimensionalData):
                 'length_scale', 'l'
             unit_system (str): Set to 'US' for US units or 'SI' for SI
         """
-        # Set up classes for airspeed quantities and length quantities
-        self.vel = Airspeed()
-        self.len = Length()
-
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
         self.atm = Atmosphere(h=h, unit_system=unit_system, **kwargs)
-
-        h0 = 0 * unit('kft')
-        self._atm0 = Atmosphere(h0)
-        p_inf = self.atm.p
-        p_inf_h0 = self._atm0.p
-        self._delta = p_inf/p_inf_h0
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -318,36 +757,45 @@ class FlightCondition(DimensionalData):
             EAS = None if KEAS is None else KEAS * unit('knots')
 
         # Compute airspeed-based quantities
+        self.vel = Airspeed(self.atm)
+
         # Use Mach=0 if no airspeed is input
         if M is None and TAS is None and CAS is None and EAS is None:
             M = 0*dimless
 
         if M is not None:
-            self.vel.M = self._checkandsize(M, default_dim=dimless)
-            self.vel.TAS = self._TAS_from_M(self.vel.M)
-            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
-            self.vel.q_c = self._q_c_from_M(self.vel.M)
-            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
+            self.vel.M = M
+            # self.vel.M = self._checkandsize(M, default_dim=dimless)
+            # self.vel.TAS = self._TAS_from_M(self.vel.M)
+            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
+            # self.vel.q_c = self._q_c_from_M(self.vel.M)
+            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif TAS is not None:
-            self.vel.TAS = self._checkandsize(TAS)
-            self.vel.M = self._M_from_TAS(TAS)
-            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
-            self.vel.q_c = self._q_c_from_M(self.vel.M)
-            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
+            self.vel.TAS = TAS
+            # self.vel.TAS = self._checkandsize(TAS)
+            # self.vel.M = self._M_from_TAS(TAS)
+            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
+            # self.vel.q_c = self._q_c_from_M(self.vel.M)
+            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif CAS is not None:
-            self.vel.CAS = self._checkandsize(CAS)
-            self.vel.q_c = self._q_c_from_CAS(self.vel.CAS)
-            self.vel.M = self._M_from_q_c(self.vel.q_c)
-            self.vel.TAS = self._TAS_from_M(self.vel.M)
-            self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
+            self.vel.CAS = CAS
+            # self.vel.CAS = self._checkandsize(CAS)
+            # self.vel.q_c = self._q_c_from_CAS(self.vel.CAS)
+            # self.vel.M = self._M_from_q_c(self.vel.q_c)
+            # self.vel.TAS = self._TAS_from_M(self.vel.M)
+            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
         elif EAS is not None:
-            self.vel.EAS = self._checkandsize(EAS)
-            self.vel.M = self._M_from_EAS(self.vel.EAS)
-            self.vel.TAS = self._TAS_from_M(self.vel.M)
-            self.vel.q_c = self._q_c_from_M(self.vel.M)
-            self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
+            self.vel.EAS = EAS
+            # self.vel.EAS = self._checkandsize(EAS)
+            # self.vel.M = self._M_from_EAS(self.vel.EAS)
+            # self.vel.TAS = self._TAS_from_M(self.vel.M)
+            # self.vel.q_c = self._q_c_from_M(self.vel.M)
+            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         else:
             raise TypeError("Input M, TAS, CAS, or EAS")
+
+        # if all(list(n is None for n in (M, TAS, CAS, EAS))):
+        #     raise TypeError("Input M, TAS, CAS, or EAS")
 
         # Check that computations are within valid Mach number limits
         M = np.atleast_1d(self.vel.M)
@@ -359,19 +807,9 @@ class FlightCondition(DimensionalData):
                 f"({self._mach_min:.5g} < M < {self._mach_max:.5g})"
             )
 
-        # Compute derived airspeed quantities
-        self.vel.mu_M = __class__._mach_angle(self.vel.M)
-        self.vel.q_inf = self._q_inf_from_TAS(self.vel.TAS)
-        self.vel.p0 = self._stagnation_pressure(M=self.vel.M,
-                                                p=self.atm.p)
-        self.vel.T0 = self._stagnation_temperature(M=self.vel.M, T=self.atm.T)
-        self.vel.Tr_lamr = self._recovery_temperature_laminar(M=self.vel.M,
-                                                              T=self.atm.T)
-        self.vel.Tr_turb = self._recovery_temperature_turbulent(M=self.vel.M,
-                                                                T=self.atm.T)
-        self.vel.Re_by_L = self._reynolds_per_length()
-
         # Compute length-scale-based quantities
+        self.len = Length(self.atm, self.vel)
+
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
         if L is None:
@@ -380,17 +818,11 @@ class FlightCondition(DimensionalData):
         else:  # length scale is input by user
             self.len.L = L
 
-            # Verify that length input is dimensional length quantity
-            check_length_dimensioned(self.len.L)
-
             # If altitude is 0, but length scale is input, determine if US
             # units based on the input length scale
             if self.atm.h.magnitude.all() == 0:
                 if check_US_length_units(L):
                     self.unit_system = 'US'
-
-        # Assign lengths scale and compute quantities
-        self.len.Re = self._reynolds_number(self.len.L)
 
         # Allow access to variables by their full names in vel and len objects
         super().__init__()
@@ -424,213 +856,6 @@ class FlightCondition(DimensionalData):
         for var, _ in self.len.varnames.items():
             byvar_len[var] = var
         self.byvar._populate_data(self.len, byvar_len)
-
-    @staticmethod
-    def _stagnation_temperature(M, T, y=Phys.gamma_air):
-        """Adiabatic flow equation for stagnation temperature, i.e. temperature
-        brought to rest isentropically (note that the equation does not assume
-        isentropic flow).
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-
-        T0 = IsentropicFlow.T0_by_T(M, y)*T
-        return T0
-
-    @staticmethod
-    def _recovery_temperature_laminar(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
-        """Adiabiatic wall temperature on infinite flat plate in laminar flow.
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-            Pr (dimless): Prandtl number
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-        r = Pr**(1/2)
-        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
-        return T0
-
-    @staticmethod
-    def _recovery_temperature_turbulent(M, T, y=Phys.gamma_air,
-                                        Pr=Phys.Pr_air):
-        """Adiabiatic wall temperature on infinite flat plate in turbulent
-        flow.
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-            Pr (dimless): Prandtl number
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-        r = Pr**(1/3)
-        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
-        return T0
-
-    @staticmethod
-    def _stagnation_pressure(M, p, y=Phys.gamma_air):
-        """Equation for stagnation pressure, i.e. bringing flow to rest
-        isentropically.
-
-        Assumes:
-            Adiabatic
-            Reversible
-
-        Args:
-            M (dimless): Mach number
-            p (pressure): Static pressure
-            y (dimless): ratio of specific heats
-
-        Returns:
-            pressure: Stagnation pressure
-        """
-        p0 = IsentropicFlow.p0_by_p(M, y)*p
-        return p0
-
-    # @staticmethod  # DEPRECATED
-    # def _stagnation_pressure_normal_shock(M, p):
-    #     """Equation for stagnation pressure, with normal shock if flow is
-    #     supersonic.
-
-    #     Assumes:
-    #         Adiabatic
-
-    #     Args:
-    #         M (dimless): Mach number
-    #         p (pressure): Static pressure
-
-    #     Returns:
-    #         pressure: Stagnation pressure
-    #     """
-    #     y = Phys.gamma_air
-
-    #     # Create new array and split computation to subsonic and supersonic
-    #     p0 = M.magnitude*p*0
-
-    #     sub = M < 1  # subsonic filter
-    #     p0_sub = __class__._stagnation_pressure(M, p)
-    #     p0[sub] = p0_sub[sub]
-
-    #     sup = M >= 1  # supersonic filter
-    #     p0[sup] = NormalShock.p02_by_p01(M[sup])*p0_sub[sup]
-
-    #     return p0
-
-    @staticmethod
-    def _impact_pressure(M, p):
-        """Equation for impact pressure
-
-        Args:
-            M (dimless): Mach number
-            p (pressure): Static pressure
-
-        Returns:
-            pressure: Impact pressure
-        """
-        # p0 = p + q_c
-        p0 = __class__._stagnation_pressure(M=M, p=p)
-        q_c = p0 - p
-        return q_c
-
-    # @staticmethod  # DEPRECATED
-    # def _isentropic_mach(p0, p):
-    #     """Isentropic flow equation for Mach number.
-
-    #     Assumes:
-    #         Adiabatic
-    #         Reversible
-
-    #     Args:
-    #         p0 (pressure): Stagnation pressure
-    #         p (pressure): Static pressure
-
-    #     Returns:
-    #         dimless: Mach number
-    #     """
-    #     y = Phys.gamma_air
-    #     M = np.sqrt((2/(y-1))*((p0/p + 1)**((y-1)/y) - 1))
-    #     return M
-
-    @staticmethod
-    def _mach_number(U, a):
-        """Compute Mach number
-
-        Args:
-            U (speed): Airspeed
-            a (speed): Sound speed
-
-        Returns:
-            dimless: Mach number
-        """
-        return U/a
-
-    @staticmethod
-    def _mach_airspeed(M, a):
-        """Compute airspeed from Mach number
-
-        Args:
-            M (dimless): Mach number
-            a (speed): Sound speed
-
-        Returns:
-            speed: Airspeed
-        """
-        U = M*a if M is not None else None
-        return U
-
-    def _checkandsize(self, inpvar, default_dim=None):
-        """Check that input is correctly typed, then size input array. If
-        scalar, leave as scalar.
-
-        Args:
-            inpvar (object): Input array (or scalar)
-            default_dim (dimension): default dimension if input is unitless
-
-        Returns:
-            object: Sized array (or scalar)
-        """
-        if default_dim is not None:
-            inpvar *= default_dim
-        check_dimensioned(inpvar)
-
-        # Force local unit registry
-        inpvar = inpvar.magnitude * unit(str(inpvar.units))
-
-        # Require altitude and speed arrays to be equal or singular speed array
-        wrongsize_msg = ("Input arrays for altitude and airspeed must either "
-                         "equal in size or one must be singular.")
-        if np.shape(self.atm.h):  # if altitude is an array
-            if np.shape(inpvar):  # if inpvar is an array
-                if not inpvar.size == self.atm.h.size:
-                    if not inpvar.size == 1 and not self.atm.h.size == 1:
-                        raise TypeError(wrongsize_msg)
-
-            sizedarr = np.ones(np.shape(self.atm.h))*inpvar
-        else:
-            sizedarr = inpvar
-
-        return sizedarr
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
@@ -700,161 +925,6 @@ class FlightCondition(DimensionalData):
         self.atm.unit_system = unit_system
 
     @to_base_units_wrapper
-    def _M_from_TAS(self, TAS):
-        """Compute Mach number from true airspeed.
-
-        Args:
-            TAS (speed): True airspeed
-
-        Returns:
-            dimless: Mach number
-        """
-        a_inf = self.atm.a
-        M = __class__._mach_number(U=TAS, a=a_inf)
-        return M
-
-    @to_base_units_wrapper
-    def _TAS_from_M(self, M):
-        """Compute true airspeed from Mach number.
-
-        Args:
-            M (dimless): Mach number
-
-        Returns:
-            speed: True airspeed
-        """
-        a_inf = self.atm.a
-        TAS = __class__._mach_airspeed(M, a_inf)
-        return TAS
-
-    @to_base_units_wrapper
-    def _M_from_EAS(self, EAS):
-        """Computer Mach number from equivalent airspeed.
-
-        Args:
-            EAS (speed): Equivalent airspeed
-
-        Returns:
-            dimless: Mach number
-        """
-        a_inf_h0 = self._atm0.a
-        M = EAS/(a_inf_h0*np.sqrt(self._delta))
-        return M
-
-    @to_base_units_wrapper
-    def _EAS_from_M(self, M):
-        """Computer Mach number from equivalent airspeed.
-
-        Args:
-            M (dimless): Mach number
-
-        Returns:
-            speed: Equivalent airspeed
-        """
-        a_inf_h0 = self._atm0.a
-        EAS = M*(a_inf_h0*np.sqrt(self._delta))
-        return EAS
-
-    @to_base_units_wrapper
-    def _q_inf_from_TAS(self, TAS):
-        """Compute dynamic pressure from true airspeed.
-
-        Args:
-            TAS (speed): True airspeed
-
-        Returns:
-            pressure: Dynamic pressure
-        """
-        rho_inf = self.atm.rho
-        q_inf = 0.5*rho_inf*TAS**2
-        return q_inf
-
-    @to_base_units_wrapper
-    def _q_c_from_CAS(self, CAS):
-        """Compute impact pressure from calibrated airspeed (accounting for
-           compressibility).
-
-        Args:
-            CAS (speed): Calibrated airspeed
-
-        Returns:
-            pressure: Impact pressure
-        """
-        a_h0 = self._atm0.a
-        p_h0 = self._atm0.p
-        # Account for compressibility with the isentropic flow equation
-        M_ = __class__._mach_number(U=CAS, a=a_h0)
-        q_c = __class__._impact_pressure(M=M_, p=p_h0)
-        return q_c
-
-    @to_base_units_wrapper
-    def _CAS_from_q_c(self, q_c):
-        """Compute calibrated airspeed from impact pressure (accounting for
-           compressibility).
-
-        Args:
-            CAS (speed): Calibrated airspeed
-
-        Returns:
-            pressure: Impact pressure
-
-        """
-        a_h0 = self._atm0.a
-        p_h0 = self._atm0.p
-        # Account for compressibility with the isentropic flow equation
-        # M_should = __class__._isentropic_mach(p0=q_c, p=p_h0)  # DEPRECATED
-        M = IsentropicFlow.M_from_p0_by_p((q_c+p_h0)/p_h0)
-        CAS = __class__._mach_airspeed(M, a_h0)  # subsonic
-        return CAS
-
-    @to_base_units_wrapper
-    def _M_from_q_c(self, q_c):
-        """Compute Mach number from impact pressure.
-
-        Args:
-            q_c (pressure): Impact pressure
-
-        Returns:
-            dimless: Mach number
-        """
-        p_inf = self.atm.p
-        # Isentropic flow equation
-        # M_should = __class__._isentropic_mach(p0=q_c, p=p_inf)  # DEPRECATED
-        M = IsentropicFlow.M_from_p0_by_p((q_c+p_inf)/p_inf)
-
-        return M
-
-    @to_base_units_wrapper
-    def _q_c_from_M(self, M):
-        """Compute impact pressure from Mach number.
-
-        Args:
-            M: Mach number
-
-        Returns:
-            impact pressure
-        """
-        p_inf = self.atm.p
-        # Solve for impact pressure from isentropic flow equation:
-        q_c = __class__._impact_pressure(M=M, p=p_inf)
-        return q_c
-
-    @to_base_units_wrapper
-    def _EAS_from_TAS(self, TAS, M):
-        """Convert airspeed to true calibrated airspeed.
-
-        Args:
-            TAS (speed): True airspeed
-            M (dimless): Mach number
-
-        Returns:
-            speed: Equivalent airspeed
-        """
-        a_inf_h0 = self._atm0.a
-        EAS = M*(a_inf_h0*np.sqrt(self._delta))
-        return EAS
-
-    @to_base_units_wrapper
     def redim_force(self, S_ref):
         """Factor to redimensionalize force from force coefficient e.g.,
 
@@ -891,85 +961,3 @@ class FlightCondition(DimensionalData):
         check_area_dimensioned(S_ref)
         check_length_dimensioned(L)
         return self.vel.q_inf * S_ref * L
-
-    @to_base_units_wrapper
-    def _reynolds_number(self, L):
-        """Compute Reynolds number for the flight condition.
-
-        Args:
-            L (length): Length scale
-
-        Returns:
-            dimless: Reynolds number
-        """
-        nu = self.atm.nu
-        TAS = self.vel.TAS
-        Re_L = TAS*L/nu
-        return Re_L
-
-    def _reynolds_per_length(self, length_unit='in'):
-        """Compute Reynolds number divided by length unit.
-
-        Reynolds number is,
-            Re = U_inf * L / nu
-
-        For some fluid dynamics solvers the user must input the Reynolds number
-        in terms of Reynolds number per-unit-length,
-            Re_by_L = Re_L / L_in_grid_units
-                      = U_inf * (L/L_in_grid_units) / nu
-
-        Assume the length scale is 5 feet.  When grid units are the same as
-        standard length units, such as feet vs. feet, the term
-        (L_in_grid_units/L) is unity, and does not change the Reynolds
-        number magnitude.  For example,
-            L/L_in_grid_units = (5 ft)/(5 ft) = 1 ft/ft
-
-        When grid units differ from standard length units, such as inches vs.
-        feet, the term (L_in_grid_units/L) becomes,
-            L/L_in_grid_units = (5 ft)/(60 in) = 1/12 ft/in
-        which is the conversion factor between feet and inches.
-
-        So, the Re_by_L term becomes
-            Re_by_L = Re_L * (1/12 1/in)
-
-        In this case, it is helpful to compute Reynolds number per-unit-length
-        in inches (length_unit='in').
-
-        Args:
-            length_unit (length): Desired length unit as string, ('in', 'mm',
-                'cm')
-
-        Returns:
-            dimless: Reynolds number
-        """
-        nu_inf = self.atm.nu
-        TAS = self.vel.TAS
-        Re_by_length_unit = TAS/nu_inf
-        Re_by_length_unit.ito(f"1/{length_unit}")
-        return Re_by_length_unit
-
-    @staticmethod
-    @_len1array_to_scalar
-    def _mach_angle(M):
-        """Compute Mach angle
-
-        Args:
-            a (speed): Sound speed
-            TAS (speed): True airspeed
-
-        Returns:
-            angle: mach angle
-        """
-        # Create new array and split computation to subsonic and supersonic
-        M = np.atleast_1d(M)
-        mu_M = M*0.0
-
-        sub = M < 1  # subsonic filter
-        if sub.any():
-            mu_M[sub] = np.nan
-
-        sup = M >= 1  # supersonic filter
-        mu_M[sup] = np.arcsin(1.0/M[sup])
-
-        mu_M.ito('deg')
-        return mu_M
