@@ -14,9 +14,10 @@ Email: matt.c.jones.aoe@gmail.com
 
 import numpy as np
 
-from flightcondition.atmosphere import AliasAttributes, Atmosphere,\
-    DimensionalData, _len1array_to_scalar, _property_decorators
+from flightcondition.atmosphere import Atmosphere
 from flightcondition.constants import PhysicalConstants as Phys
+from flightcondition.common import AliasAttributes, DimensionalData,\
+    _len1array_to_scalar, _property_decorators
 from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.nondimensional import NonDimensional
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
@@ -740,13 +741,14 @@ class FlightCondition(DimensionalData):
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
         if M is None:
             M = __class__._arg_from_alias(M_aliases, kwargs)
-        TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf']
+        TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf', 'VTAS',
+                       'vtas']
         if TAS is None:
             TAS = __class__._arg_from_alias(TAS_aliases, kwargs)
-        CAS_aliases = ['cas', 'calibrated_airspeed']
+        CAS_aliases = ['cas', 'calibrated_airspeed', 'VCAS', 'vcas']
         if CAS is None:
             CAS = __class__._arg_from_alias(CAS_aliases, kwargs)
-        EAS_aliases = ['eas', 'equivalent_airspeed']
+        EAS_aliases = ['eas', 'equivalent_airspeed', 'VEAS', 'veas']
         if EAS is None:
             EAS = __class__._arg_from_alias(EAS_aliases, kwargs)
         L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
