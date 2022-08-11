@@ -14,7 +14,7 @@ Email: matt.c.jones.aoe@gmail.com
 
 import numpy as np
 
-from flightcondition.atmosphere import Atmosphere, AccessByName,\
+from flightcondition.atmosphere import AliasAttributes, Atmosphere,\
     DimensionalData, _len1array_to_scalar, _property_decorators
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.isentropicflow import IsentropicFlow
@@ -48,7 +48,7 @@ class Airspeed(DimensionalData):
         Args:
             atm (object): Atmosphere object
         """
-        super().__init__()
+        # Link to Atmosphere data
         self._atm = atm
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
@@ -577,7 +577,7 @@ class Length(DimensionalData):
             atm (object): Atmosphere object
             vel (object): Airspeed object
         """
-        super().__init__()
+        # Link to Atmosphere and Airspeed data
         self._atm = atm
         self._vel = vel
 
@@ -695,7 +695,7 @@ class FlightCondition(DimensionalData):
         # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
         # Alternatively access quantities by their full name
-        print(fc.vel.TAS == fc.byname.true_airspeed)
+        print(fc.vel.TAS == fc.vel.byname.true_airspeed)
         # >>> [ True  True  True]
     """
 
@@ -721,6 +721,7 @@ class FlightCondition(DimensionalData):
                 'length_scale', 'l'
             unit_system (str): Set to 'US' for US units or 'SI' for SI
         """
+
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
         self.atm = Atmosphere(h=h, unit_system=unit_system, **kwargs)
@@ -728,32 +729,32 @@ class FlightCondition(DimensionalData):
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
         if M is None:
-            M = __class__.arg_from_alias(M_aliases, kwargs)
+            M = __class__._arg_from_alias(M_aliases, kwargs)
         TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf']
         if TAS is None:
-            TAS = __class__.arg_from_alias(TAS_aliases, kwargs)
+            TAS = __class__._arg_from_alias(TAS_aliases, kwargs)
         CAS_aliases = ['cas', 'calibrated_airspeed']
         if CAS is None:
-            CAS = __class__.arg_from_alias(CAS_aliases, kwargs)
+            CAS = __class__._arg_from_alias(CAS_aliases, kwargs)
         EAS_aliases = ['eas', 'equivalent_airspeed']
         if EAS is None:
-            EAS = __class__.arg_from_alias(EAS_aliases, kwargs)
+            EAS = __class__._arg_from_alias(EAS_aliases, kwargs)
         L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
         if L is None:
-            L = __class__.arg_from_alias(L_aliases, kwargs)
+            L = __class__._arg_from_alias(L_aliases, kwargs)
 
         # Check if KTAS, KCAS, or KEAS input and append knots unit if so
         KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']
         if TAS is None:
-            KTAS = __class__.arg_from_alias(KTAS_aliases, kwargs)
+            KTAS = __class__._arg_from_alias(KTAS_aliases, kwargs)
             TAS = None if KTAS is None else KTAS * unit('knots')
         KCAS_aliases = ['KCAS', 'kcas', 'knots_calibrated_airspeed']
         if CAS is None:
-            KCAS = __class__.arg_from_alias(KCAS_aliases, kwargs)
+            KCAS = __class__._arg_from_alias(KCAS_aliases, kwargs)
             CAS = None if KCAS is None else KCAS * unit('knots')
         KEAS_aliases = ['KEAS', 'keas', 'knots_equivalent_airspeed']
         if EAS is None:
-            KEAS = __class__.arg_from_alias(KEAS_aliases, kwargs)
+            KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
             EAS = None if KEAS is None else KEAS * unit('knots')
 
         # Compute airspeed-based quantities
@@ -765,37 +766,14 @@ class FlightCondition(DimensionalData):
 
         if M is not None:
             self.vel.M = M
-            # self.vel.M = self._checkandsize(M, default_dim=dimless)
-            # self.vel.TAS = self._TAS_from_M(self.vel.M)
-            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
-            # self.vel.q_c = self._q_c_from_M(self.vel.M)
-            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif TAS is not None:
             self.vel.TAS = TAS
-            # self.vel.TAS = self._checkandsize(TAS)
-            # self.vel.M = self._M_from_TAS(TAS)
-            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
-            # self.vel.q_c = self._q_c_from_M(self.vel.M)
-            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         elif CAS is not None:
             self.vel.CAS = CAS
-            # self.vel.CAS = self._checkandsize(CAS)
-            # self.vel.q_c = self._q_c_from_CAS(self.vel.CAS)
-            # self.vel.M = self._M_from_q_c(self.vel.q_c)
-            # self.vel.TAS = self._TAS_from_M(self.vel.M)
-            # self.vel.EAS = self._EAS_from_TAS(self.vel.TAS, self.vel.M)
         elif EAS is not None:
             self.vel.EAS = EAS
-            # self.vel.EAS = self._checkandsize(EAS)
-            # self.vel.M = self._M_from_EAS(self.vel.EAS)
-            # self.vel.TAS = self._TAS_from_M(self.vel.M)
-            # self.vel.q_c = self._q_c_from_M(self.vel.M)
-            # self.vel.CAS = self._CAS_from_q_c(self.vel.q_c)
         else:
             raise TypeError("Input M, TAS, CAS, or EAS")
-
-        # if all(list(n is None for n in (M, TAS, CAS, EAS))):
-        #     raise TypeError("Input M, TAS, CAS, or EAS")
 
         # Check that computations are within valid Mach number limits
         M = np.atleast_1d(self.vel.M)
@@ -824,38 +802,11 @@ class FlightCondition(DimensionalData):
                 if check_US_length_units(L):
                     self.unit_system = 'US'
 
-        # Allow access to variables by their full names in vel and len objects
-        super().__init__()
-        self.vel.byname._populate_data(varsobj=self.vel,
-                                       varnames_dict=self.vel.varnames)
-        self.len.byname._populate_data(varsobj=self.len,
-                                       varnames_dict=self.len.varnames)
-
-        # Access full names from base object
-        self.byname._populate_data(varsobj=self.atm,
-                                   varnames_dict=self.atm.varnames)
-        self.byname._populate_data(varsobj=self.vel,
-                                   varnames_dict=self.vel.varnames)
-        self.byname._populate_data(varsobj=self.len,
-                                   varnames_dict=self.len.varnames)
-
-        # Access all variables from .byvar. at base level
-        self.byvar = AccessByName()
-
-        byvar_atm = {}
-        for var, _ in self.atm.varnames.items():
-            byvar_atm[var] = var
-        self.byvar._populate_data(self.atm, byvar_atm)
-
-        byvar_vel = {}
-        for var, _ in self.vel.varnames.items():
-            byvar_vel[var] = var
-        self.byvar._populate_data(self.vel, byvar_vel)
-
-        byvar_len = {}
-        for var, _ in self.len.varnames.items():
-            byvar_len[var] = var
-        self.byvar._populate_data(self.len, byvar_len)
+        # # Initialize access by full quantity name through .byname.<name>
+        self.vel.byname = AliasAttributes(varsobj=self.vel,
+                                          varnames_dict=Airspeed.varnames)
+        self.len.byname = AliasAttributes(varsobj=self.len,
+                                          varnames_dict=Length.varnames)
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
@@ -878,8 +829,8 @@ class FlightCondition(DimensionalData):
         alti_str = self.atm.tostring(full_output, self.unit_system,
                                      pretty_print=pretty_print)
         max_var_chars = max([
-            max([len(v) for v in self.vel.varnames.values()]),
-            max([len(v) for v in self.atm.varnames.values()])
+            max([len(v) for v in Airspeed.varnames.values()]),
+            max([len(v) for v in Atmosphere.varnames.values()])
         ])
         spee_str = self.vel.tostring(full_output, self.unit_system,
                                      max_var_chars=max_var_chars,

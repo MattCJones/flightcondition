@@ -115,8 +115,8 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
 Quantities may be accessed using the specific :code:`atm`, :code:`vel`, or
 :code:`len` object or by using the aggregated :code:`byvar` object.  Quantities
 may also be accessed using their full name with the :code:`byname` object.  For
-example, Mach number can be accessed using :code:`.vel.M`, :code:`.byvar.M`, or
-by its full name using :code:`.byname.mach_number`
+example, Mach number can be accessed using :code:`.vel.M`,
+:code:`.vel.byvar.M`, or by its full name using :code:`.vel.byname.mach_number`
 
 **Example usage**:
 
@@ -167,7 +167,7 @@ by its full name using :code:`.byname.mach_number`
     # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
     # Alternatively access quantities by their full name
-    print(fc.vel.TAS == fc.byname.true_airspeed)
+    print(fc.vel.TAS == fc.vel.byname.true_airspeed)
     # >>> [ True  True  True]
 
 

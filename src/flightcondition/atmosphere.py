@@ -75,26 +75,56 @@ def _property_decorators(func):
     return property(to_base_units_wrapper(_len1array_to_scalar(func)))
 
 
-class AccessByName():
-    """Nested class to reference quantities by their full name. """
+class AliasAttributes():
+    """Nested alias class to reference quantities by prescribed aliases. """
 
-    def _populate_data(self, varsobj, varnames_dict):
+    def __init__(self, varsobj, varnames_dict):
         """Populate full names and link to variable
         Args:
-            varnames_dict: Dictionary that maps variables to their longer
+            varsobj (object): Object that holds all of the variables
+            varnames_dict (dict): Dictionary that maps variables to their alias
                 names
-            varsobj: Object that holds all of the variables
         """
+        # Avoid infinite loop when setting properties
+        super().__setattr__("varsobj", varsobj)
+        super().__setattr__("varnames_dict", varnames_dict)
+
+    def __dir__(self):
+        """Add tab completion for alias names. """
+        # Avoid infinite loop when loading varsobj and varnames_dict
+        varnames_dict = super().__getattribute__("varnames_dict")
+        return varnames_dict.values()
+
+    def __getattribute__(self, attr):
+        """Get referenced quantity
+
+        Args:
+            attr (str): attribute name
+        """
+        # Avoid infinite loop when loading varsobj and varnames_dict
+        varsobj = super().__getattribute__("varsobj")
+        varnames_dict = super().__getattribute__("varnames_dict")
         for var, varname in varnames_dict.items():
-            setattr(self, varname, getattr(varsobj, var))
+            if attr == varname:
+                return getattr(varsobj, var)
+
+    def __setattr__(self, attr, attrval):
+        """Set referenced quantity
+
+        Args:
+            attr (str): attribute name
+            attrval (quantity): attribute value
+        """
+        # Avoid infinite loop when loading varsobj and varnames_dict
+        varsobj = super().__getattribute__("varsobj")
+        varnames_dict = super().__getattribute__("varnames_dict")
+        for var, varname in varnames_dict.items():
+            if attr == varname:
+                return setattr(varsobj, var, attrval)
 
 
 class DimensionalData:
     """Parent class to hold dimensional data"""
-
-    def __init__(self):
-        """Initialize object. """
-        self.byname = AccessByName()
 
     def __str__(self):
         """Output string when object is printed.
@@ -113,7 +143,7 @@ class DimensionalData:
         return self.tostring(full_output=False)
 
     @staticmethod
-    def arg_from_alias(alias_list, kwargs_dict):
+    def _arg_from_alias(alias_list, kwargs_dict):
         """Determine argument from hidden alias list
 
         Args:
@@ -258,21 +288,19 @@ class Atmosphere(DimensionalData):
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]
         self._H_max = Atmo.H_base[-1]
-        self._h_min = __class__.h_from_H(self._H_min)
-        self._h_max = __class__.h_from_H(self._H_max)
+        self._h_min = __class__._h_from_H(self._H_min)
+        self._h_max = __class__._h_from_H(self._H_max)
 
         # Process altitude input
         # Check for hidden aliases
         h_aliases = ['alt', 'altitude']
         if h is None:
-            h = __class__.arg_from_alias(h_aliases, kwargs)
+            h = __class__._arg_from_alias(h_aliases, kwargs)
 
         # Default to 0 kft
         if h is None:
             h = 0 * unit('ft')
         self.h = h
-        self._H = self.H_from_h(self.h)
-        self.layer = __class__.Layer(self.H)
 
         # Process unit system
         if unit_system not in dir(unit.sys):  # check if usable system
@@ -283,9 +311,9 @@ class Atmosphere(DimensionalData):
         else:
             self.unit_system = unit_system
 
-        # Allow access to variables using full names
-        super().__init__()
-        self.byname._populate_data(varsobj=self, varnames_dict=self.varnames)
+        # Initialize access by full quantity name through .byname.<name>
+        self.byname = AliasAttributes(varsobj=self,
+                                      varnames_dict=__class__.varnames)
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
@@ -332,20 +360,20 @@ class Atmosphere(DimensionalData):
 
         # Insert longer variable name into output
         max_var_chars = max([
-            max([len(v) for v in self.varnames.values()]),
+            max([len(v) for v in __class__.varnames.values()]),
             max_var_chars
         ])
-        h_str   = f"{self.varnames['h']:{max_var_chars}s} {h_str}"
-        H_str   = f"{self.varnames['H']:{max_var_chars}s} {H_str}"
-        p_str   = f"{self.varnames['p']:{max_var_chars}s} {p_str}"
-        T_str   = f"{self.varnames['T']:{max_var_chars}s} {T_str}"
-        rho_str = f"{self.varnames['rho']:{max_var_chars}s} {rho_str}"
-        a_str   = f"{self.varnames['a']:{max_var_chars}s} {a_str}"
-        mu_str  = f"{self.varnames['mu']:{max_var_chars}s} {mu_str}"
-        nu_str  = f"{self.varnames['nu']:{max_var_chars}s} {nu_str}"
-        k_str   = f"{self.varnames['k']:{max_var_chars}s} {k_str}"
-        g_str   = f"{self.varnames['g']:{max_var_chars}s} {g_str}"
-        MFP_str = f"{self.varnames['MFP']:{max_var_chars}s} {MFP_str}"
+        h_str   = f"{__class__.varnames['h']:{max_var_chars}s} {h_str}"
+        H_str   = f"{__class__.varnames['H']:{max_var_chars}s} {H_str}"
+        p_str   = f"{__class__.varnames['p']:{max_var_chars}s} {p_str}"
+        T_str   = f"{__class__.varnames['T']:{max_var_chars}s} {T_str}"
+        rho_str = f"{__class__.varnames['rho']:{max_var_chars}s} {rho_str}"
+        a_str   = f"{__class__.varnames['a']:{max_var_chars}s} {a_str}"
+        mu_str  = f"{__class__.varnames['mu']:{max_var_chars}s} {mu_str}"
+        nu_str  = f"{__class__.varnames['nu']:{max_var_chars}s} {nu_str}"
+        k_str   = f"{__class__.varnames['k']:{max_var_chars}s} {k_str}"
+        g_str   = f"{__class__.varnames['g']:{max_var_chars}s} {g_str}"
+        MFP_str = f"{__class__.varnames['MFP']:{max_var_chars}s} {MFP_str}"
 
         if full_output:
             if type(self.layer.name) is np.str_:  # singular string
@@ -366,7 +394,7 @@ class Atmosphere(DimensionalData):
         return repr_str
 
     @staticmethod
-    def H_from_h(h):
+    def _H_from_h(h):
         """Convert geometric to geopotential altitude.
 
         :math:`H = \\frac{R_{earth} h}{R_{earth} + h}`
@@ -382,7 +410,7 @@ class Atmosphere(DimensionalData):
         return H
 
     @staticmethod
-    def h_from_H(H):
+    def _h_from_H(H):
         """Convert geopotential to geometric altitude.
 
         :math:`h = \\frac{R_{earth} H}{R_{earth} - H}`
@@ -459,7 +487,10 @@ class Atmosphere(DimensionalData):
                 f"({self._h_min:.5g} < h < {self._h_max:.5g})"
             )
 
+        # Update quantities
         self._h = h
+        self._H = self._H_from_h(self.h)
+        self.layer = __class__.Layer(self.H)
 
     @_property_decorators
     def H(self):

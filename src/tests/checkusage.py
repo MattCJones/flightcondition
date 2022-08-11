@@ -54,7 +54,7 @@ print(f"The Reynolds number is {fc.len.Re:.3g}")
 # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
 # Alternatively access quantities by their full name
-print(fc.vel.TAS == fc.byname.true_airspeed)
+print(fc.vel.TAS == fc.vel.byname.true_airspeed)
 # >>> [ True  True  True]
 
 
