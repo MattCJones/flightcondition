@@ -218,7 +218,7 @@ def test_command_line_interface():
 [-]+\s+Altitude Quantities\s+[-]+
 .*h\s+= 23 \w+
 .*
-[-]+\s+Airspeed Quantities\s+[-]+
+[-]+\s+Velocity Quantities\s+[-]+
 .*EAS\s+= 233 kt
 .*
 [-]+\s+Length Quantities\s+[-]+

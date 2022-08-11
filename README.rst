@@ -76,7 +76,7 @@ format, and an optional length scale.
 
 #. :code:`h` *geometric altitude* - aliases are :code:`alt`, :code:`altitude`
 
-#. Airspeed (pick one):
+#. Velocity (pick one):
 
    * :code:`TAS` *true airspeed* - aliases are :code:`tas`,
      :code:`true_airspeed`, :code:`U_inf`, :code:`V_inf`
@@ -113,10 +113,9 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Reynolds number :code:`Re`
 
 Quantities may be accessed using the specific :code:`atm`, :code:`vel`, or
-:code:`len` object or by using the aggregated :code:`byvar` object.  Quantities
-may also be accessed using their full name with the :code:`byname` object.  For
-example, Mach number can be accessed using :code:`.vel.M`,
-:code:`.vel.byvar.M`, or by its full name using :code:`.vel.byname.mach_number`
+:code:`len` object.  Quantities may also be accessed using their full name with
+the :code:`byname` object.  For example, Mach number can be accessed using
+:code:`.vel.M` or by its full name using :code:`.byname.mach_number`
 
 **Example usage**:
 
@@ -167,7 +166,7 @@ example, Mach number can be accessed using :code:`.vel.M`,
     # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
     # Alternatively access quantities by their full name
-    print(fc.vel.TAS == fc.vel.byname.true_airspeed)
+    print(fc.vel.TAS == fc.byname.true_airspeed)
     # >>> [ True  True  True]
 
 
@@ -272,7 +271,7 @@ abbreviated output:
     density               rho     = 1.1435×10⁻³ slug/ft³
     sound_speed           a       = 1024.5 ft/s
     kinematic_viscosity   nu      = 2.8509×10⁻⁴ ft²/s
-    -----------------  Airspeed Quantities  -----------------
+    -----------------  Velocity Quantities  -----------------
     true_airspeed         TAS     = 566.99 ft/s
     calibrated_airspeed   CAS     = 401.94 ft/s
     equivalent_airspeed   EAS     = 393.26 ft/s
@@ -290,9 +289,9 @@ Assumptions
 
 * Atmospheric quantities follow the `1993 International Standard Atmosphere
   <https://en.wikipedia.org/wiki/International_Standard_Atmosphere>`_ model.
-* Airspeed computations include varying degrees of the following assumptions.
+* Velocity computations include varying degrees of the following assumptions.
   If assumptions are broken for a particular quantity, that quantity returns
-  :code:`None`.
+  :code:`nan`.
 
   - Continuum flow (mean free path is much smaller than the characteristic
     length scale)

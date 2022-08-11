@@ -78,22 +78,26 @@ def _property_decorators(func):
 class AliasAttributes():
     """Nested alias class to reference quantities by prescribed aliases. """
 
-    def __init__(self, varsobj, varnames_dict):
+    def __init__(self, varsobj_arr, varnames_dict_arr):
         """Populate full names and link to variable
         Args:
-            varsobj (object): Object that holds all of the variables
-            varnames_dict (dict): Dictionary that maps variables to their alias
-                names
+            varsobj (list): List of objects that holds all of the variables
+            varnames_dict (list): List of dictionaries that maps variables to
+                their alias names
         """
         # Avoid infinite loop when setting properties
-        super().__setattr__("varsobj", varsobj)
-        super().__setattr__("varnames_dict", varnames_dict)
+        super().__setattr__("varsobj_arr", varsobj_arr)
+        super().__setattr__("varnames_dict_arr", varnames_dict_arr)
 
     def __dir__(self):
         """Add tab completion for alias names. """
         # Avoid infinite loop when loading varsobj and varnames_dict
-        varnames_dict = super().__getattribute__("varnames_dict")
-        return varnames_dict.values()
+        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
+        varnames_arr = []
+        for varnames_dict in varnames_dict_arr:
+            for varname in varnames_dict.values():
+                varnames_arr.append(varname)
+        return varnames_arr
 
     def __getattribute__(self, attr):
         """Get referenced quantity
@@ -102,11 +106,12 @@ class AliasAttributes():
             attr (str): attribute name
         """
         # Avoid infinite loop when loading varsobj and varnames_dict
-        varsobj = super().__getattribute__("varsobj")
-        varnames_dict = super().__getattribute__("varnames_dict")
-        for var, varname in varnames_dict.items():
-            if attr == varname:
-                return getattr(varsobj, var)
+        varsobj_arr = super().__getattribute__("varsobj_arr")
+        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
+        for varsobj, varnames_dict in zip(varsobj_arr, varnames_dict_arr):
+            for var, varname in varnames_dict.items():
+                if attr == varname:
+                    return getattr(varsobj, var)
 
     def __setattr__(self, attr, attrval):
         """Set referenced quantity
@@ -116,11 +121,12 @@ class AliasAttributes():
             attrval (quantity): attribute value
         """
         # Avoid infinite loop when loading varsobj and varnames_dict
-        varsobj = super().__getattribute__("varsobj")
-        varnames_dict = super().__getattribute__("varnames_dict")
-        for var, varname in varnames_dict.items():
-            if attr == varname:
-                return setattr(varsobj, var, attrval)
+        varsobj_arr = super().__getattribute__("varsobj_arr")
+        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
+        for varsobj, varnames_dict in zip(varsobj_arr, varnames_dict_arr):
+            for var, varname in varnames_dict.items():
+                if attr == varname:
+                    return setattr(varsobj, var, attrval)
 
 
 class DimensionalData:
@@ -312,8 +318,8 @@ class Atmosphere(DimensionalData):
             self.unit_system = unit_system
 
         # Initialize access by full quantity name through .byname.<name>
-        self.byname = AliasAttributes(varsobj=self,
-                                      varnames_dict=__class__.varnames)
+        self.byname = AliasAttributes(varsobj_arr=[self, ],
+                                      varnames_dict_arr=[__class__.varnames, ])
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):

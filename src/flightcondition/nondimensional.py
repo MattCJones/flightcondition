@@ -39,7 +39,7 @@ class NonDimensional:
         """Compute Mach number
 
         Args:
-            U (speed): Airspeed
+            U (speed): Velocity
             a (speed): Sound speed
 
         Returns:
@@ -56,7 +56,7 @@ class NonDimensional:
             a (speed): Sound speed
 
         Returns:
-            speed: Airspeed
+            speed: Velocity
         """
         U = M*a if M is not None else None
         return U

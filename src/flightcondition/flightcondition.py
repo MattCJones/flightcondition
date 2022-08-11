@@ -24,7 +24,7 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
     to_base_units_wrapper
 
 
-class Airspeed(DimensionalData):
+class Velocity(DimensionalData):
     """Class to hold airspeed data. """
 
     varnames = {
@@ -180,7 +180,7 @@ class Airspeed(DimensionalData):
             pressure: Impact pressure
         """
         # p0 = p + q_c
-        p0 = Airspeed._stagnation_pressure(M=M, p=p)
+        p0 = Velocity._stagnation_pressure(M=M, p=p)
         q_c = p0 - p
         return q_c
 
@@ -579,9 +579,9 @@ class Length(DimensionalData):
 
         Args:
             atm (object): Atmosphere object
-            vel (object): Airspeed object
+            vel (object): Velocity object
         """
-        # Link to Atmosphere and Airspeed data
+        # Link to Atmosphere and Velocity data
         self._atm = atm
         self._vel = vel
 
@@ -705,7 +705,7 @@ class FlightCondition(DimensionalData):
         # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
         # Alternatively access quantities by their full name
-        print(fc.vel.TAS == fc.vel.byname.true_airspeed)
+        print(fc.vel.TAS == fc.byname.true_airspeed)
         # >>> [ True  True  True]
     """
 
@@ -768,7 +768,7 @@ class FlightCondition(DimensionalData):
             EAS = None if KEAS is None else KEAS * unit('knots')
 
         # Compute airspeed-based quantities
-        self.vel = Airspeed(self.atm)
+        self.vel = Velocity(self.atm)
 
         # Use Mach=0 if no airspeed is input
         if M is None and TAS is None and CAS is None and EAS is None:
@@ -812,11 +812,25 @@ class FlightCondition(DimensionalData):
                 if check_US_length_units(L):
                     self.unit_system = 'US'
 
-        # # Initialize access by full quantity name through .byname.<name>
-        self.vel.byname = AliasAttributes(varsobj=self.vel,
-                                          varnames_dict=Airspeed.varnames)
-        self.len.byname = AliasAttributes(varsobj=self.len,
-                                          varnames_dict=Length.varnames)
+        # Initialize access by full quantity name through .byname.<name>
+        self.vel.byname = AliasAttributes(
+            varsobj_arr=[self.vel, ], varnames_dict_arr=[Velocity.varnames, ]
+        )
+        self.len.byname = AliasAttributes(
+            varsobj_arr=[self.len, ], varnames_dict_arr=[Length.varnames, ]
+        )
+
+        self.varnames = {}
+        self.varnames.update(Atmosphere.varnames)
+        self.varnames.update(Velocity.varnames)
+        self.varnames.update(Length.varnames)
+
+        self.byname = AliasAttributes(
+            varsobj_arr=[self.atm, self.vel, self.len, ],
+            varnames_dict_arr=[Atmosphere.varnames,
+                               Velocity.varnames,
+                               Length.varnames, ]
+        )
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
@@ -839,7 +853,7 @@ class FlightCondition(DimensionalData):
         alti_str = self.atm.tostring(full_output, self.unit_system,
                                      pretty_print=pretty_print)
         max_var_chars = max([
-            max([len(v) for v in Airspeed.varnames.values()]),
+            max([len(v) for v in Velocity.varnames.values()]),
             max([len(v) for v in Atmosphere.varnames.values()])
         ])
         spee_str = self.vel.tostring(full_output, self.unit_system,
@@ -854,7 +868,7 @@ class FlightCondition(DimensionalData):
         head_str = (f"    Flight Condition ({unit_str} units, {ext_str})")
         line_str = "========================================================="
         alti_hdr = "-----------------  Altitude Quantities  -----------------"
-        spee_hdr = "-----------------  Airspeed Quantities  -----------------"
+        spee_hdr = "-----------------  Velocity Quantities  -----------------"
         leng_hdr = "-----------------   Length Quantities   -----------------"
 
         repr_str = (f"{line_str}\n{head_str}\n{line_str}"
