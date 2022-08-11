@@ -66,6 +66,10 @@ class Airspeed(DimensionalData):
         Returns:
             str: String representation
         """
+        # Set default unit system
+        if unit_system is None:
+            unit_system = self._atm.unit_system
+
         pp_ = '~P' if pretty_print else ''
 
         M_str    = f"M       = {self.M:10.5g{pp_}}"
@@ -594,8 +598,14 @@ class Length(DimensionalData):
         Returns:
             str: String representation
         """
+        # Set default unit system
+        if unit_system is None:
+            unit_system = self._atm.unit_system
+
         pp_ = '~P' if pretty_print else ''
+
         Re_str = f"Re      = {self.Re:10.5g{pp_}}"
+
         if unit_system == 'US':
             L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
         else:  # default to SI units
