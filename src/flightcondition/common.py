@@ -128,7 +128,6 @@ class DimensionalData:
         """
         return ""
 
-
     @staticmethod
     def _arg_from_alias(alias_list, kwargs_dict):
         """Determine argument from hidden alias list

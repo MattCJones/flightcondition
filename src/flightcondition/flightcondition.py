@@ -822,16 +822,28 @@ class FlightCondition(DimensionalData):
             varsobj_arr=[self.len, ], varnames_dict_arr=[Length.varnames, ]
         )
 
+        # Set references at base level too
+        varsobj_arr = [self.atm, self.vel, self.len, ]
+        varnames_dict_arr = [Atmosphere.varnames,
+                             Velocity.varnames,
+                             Length.varnames, ]
+        own_dict_arr = [
+            {key: key for key in dict_.keys()} for dict_ in varnames_dict_arr
+        ]
+
+        self.byvar = AliasAttributes(
+            varsobj_arr=varsobj_arr,
+            varnames_dict_arr=own_dict_arr
+        )
+
         self.varnames = {}
         self.varnames.update(Atmosphere.varnames)
         self.varnames.update(Velocity.varnames)
         self.varnames.update(Length.varnames)
 
         self.byname = AliasAttributes(
-            varsobj_arr=[self.atm, self.vel, self.len, ],
-            varnames_dict_arr=[Atmosphere.varnames,
-                               Velocity.varnames,
-                               Length.varnames, ]
+            varsobj_arr=varsobj_arr,
+            varnames_dict_arr=varnames_dict_arr
         )
 
     def tostring(self, full_output=True, unit_system=None, pretty_print=True):
