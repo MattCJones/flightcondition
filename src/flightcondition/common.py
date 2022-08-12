@@ -128,12 +128,41 @@ class DimensionalData:
         """
         return ""
 
+    def _vartostr(self, var, var_str, to_units, max_var_chars=0,
+                  fmt_val="10.5g", pretty_print=False):
+        """Formatted variable string with variable, full name, and value.
+        Shortens array output to fit better on screen.
+
+        Args:
+            var (Quantity): Variable
+            var_str (str): Variable string
+            to_units (str): Units to convert to
+            fmt_val (str): String for formatting value
+            pretty_print (bool): Pretty print format
+
+        Returns:
+            str: formatted string
+        """
+        pp_ = "~P" if pretty_print else ""
+        var_name = self.varnames[var_str]
+        var.ito(to_units)
+        if np.size(var) > 6:
+            mag = var.magnitude
+            var_val_str = (f"[{mag[0]:{fmt_val}} {mag[1]:{fmt_val}} "
+                           f"{mag[2]:{fmt_val}} ... {mag[-3]:{fmt_val}} "
+                           f"{mag[-2]:{fmt_val}} {mag[-1]:{fmt_val}}] "
+                           f"{var.units:{pp_}}")
+        else:
+            var_val_str = f"{var:{fmt_val}{pp_}}"
+        var_str = f"{var_name:{max_var_chars}s} {var_str:7s} = {var_val_str}"
+        return var_str
+
     @staticmethod
     def _arg_from_alias(alias_list, kwargs_dict):
         """Determine argument from hidden alias list
 
         Args:
-            alias_list (dict): list of possible argument aliases
+            alias_list (dict): List of possible argument aliases
 
         Returns:
             unit.Quantity: argument

@@ -71,63 +71,91 @@ class Velocity(DimensionalData):
         if unit_system is None:
             unit_system = self._byalt.unit_system
 
-        pp_ = '~P' if pretty_print else ''
-
-        M_str    = f"M       = {self.M:10.5g{pp_}}"
-        mu_M_str = f"mu_M    = {self.mu_M.to('deg'):10.5g{pp_}}"
-
         if unit_system == 'US':
-            EAS_str     = f"EAS     = {self.EAS.to('knots'):10.5g{pp_}}"
-            TAS_str     = f"TAS     = {self.TAS.to('knots'):10.5g{pp_}}"
-            CAS_str     = f"CAS     = {self.CAS.to('knots'):10.5g{pp_}}"
-            q_str       = f"q_inf   = {self.q_inf.to('lbf/ft^2'):10.5g{pp_}}"
-            q_c_str     = f"q_c     = {self.q_c.to('lbf/ft^2'):10.5g{pp_}}"
-            p0_str      = f"p0      = {self.p0.to('lbf/ft^2'):10.5g{pp_}}"
-            T0_str      = f"T0      = {self.T0.to('degR'):10.5g{pp_}}"
-            Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr.to('degR'):10.5g{pp_}}"
-            Tr_turb_str = f"Tr_turb = {self.Tr_turb.to('degR'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/in'):10.5g{pp_}}"
+            EAS_units   = 'knots'
+            TAS_units   = 'knots'
+            CAS_units   = 'knots'
+            q_inf_units     = 'lbf/ft^2'
+            q_c_units     = 'lbf/ft^2'
+            p0_units    = 'lbf/ft^2'
+            T0_units    = 'degR'
+            Tr_lamr_units = 'degR'
+            Tr_turb_units = 'degR'
+            Re_by_L_units = '1/in'
         else:  # default to SI units
-            TAS_str     = f"TAS     = {self.TAS.to('m/s'):10.5g{pp_}}"
-            CAS_str     = f"CAS     = {self.CAS.to('m/s'):10.5g{pp_}}"
-            EAS_str     = f"EAS     = {self.EAS.to('m/s'):10.5g{pp_}}"
-            q_str       = f"q_inf   = {self.q_inf.to('Pa'):10.5g{pp_}}"
-            q_c_str     = f"q_c     = {self.q_c.to('Pa'):10.5g{pp_}}"
-            p0_str      = f"p0      = {self.p0.to('Pa'):10.5g{pp_}}"
-            T0_str      = f"T0      = {self.T0.to('degK'):10.5g{pp_}}"
-            Tr_lamr_str = f"Tr_lamr = {self.Tr_lamr.to('degK'):10.5g{pp_}}"
-            Tr_turb_str = f"Tr_turb = {self.Tr_turb.to('degK'):10.5g{pp_}}"
-            Re_by_L_str = f"Re_by_L = {self.Re_by_L.to('1/mm'):10.5g{pp_}}"
+            TAS_units   = 'm/s'
+            CAS_units   = 'm/s'
+            EAS_units   = 'm/s'
+            q_inf_units     = 'Pa'
+            q_c_units     = 'Pa'
+            p0_units    = 'Pa'
+            T0_units    = 'degK'
+            Tr_lamr_units = 'degK'
+            Tr_turb_units = 'degK'
+            Re_by_L_units = '1/mm'
 
         # Insert longer variable name into output
         max_var_chars = max([
             max([len(v) for v in self.varnames.values()]),
             max_var_chars
         ])
-        M_str       = f"{self.varnames['M']:{max_var_chars}s} {M_str}\n"
-        TAS_str     = f"{self.varnames['TAS']:{max_var_chars}s} {TAS_str}\n"
-        CAS_str     = f"{self.varnames['CAS']:{max_var_chars}s} {CAS_str}\n"
-        EAS_str     = f"{self.varnames['EAS']:{max_var_chars}s} {EAS_str}\n"
-        q_str       = f"{self.varnames['q_inf']:{max_var_chars}s} {q_str}\n"
-        q_c_str     = f"{self.varnames['q_c']:{max_var_chars}s} {q_c_str}\n"
-        p0_str      = f"{self.varnames['p0']:{max_var_chars}s} {p0_str}\n"
-        T0_str      = f"{self.varnames['T0']:{max_var_chars}s} {T0_str}\n"
-        Tr_lamr_str = (f"{self.varnames['Tr_lamr']:{max_var_chars}s} "
-                       f"{Tr_lamr_str}\n")
-        Tr_turb_str = (f"{self.varnames['Tr_turb']:{max_var_chars}s} "
-                       f"{Tr_turb_str}\n")
-        Re_by_L_str = (f"{self.varnames['Re_by_L']:{max_var_chars}s} "
-                       f"{Re_by_L_str}")
+        M_str = self._vartostr(
+            var=self.M, var_str='M', to_units='',
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        TAS_str = self._vartostr(
+            var=self.TAS, var_str='TAS', to_units=TAS_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        CAS_str = self._vartostr(
+            var=self.CAS, var_str='CAS', to_units=CAS_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        EAS_str = self._vartostr(
+            var=self.EAS, var_str='EAS', to_units=EAS_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        q_inf_str = self._vartostr(
+            var=self.q_inf, var_str='q_inf', to_units=q_inf_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        q_c_str = self._vartostr(
+            var=self.q_c, var_str='q_c', to_units=q_c_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        p0_str = self._vartostr(
+            var=self.p0, var_str='p0', to_units=p0_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        T0_str = self._vartostr(
+            var=self.T0, var_str='T0', to_units=T0_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        Tr_lamr_str = self._vartostr(
+            var=self.Tr_lamr, var_str='Tr_lamr', to_units=Tr_lamr_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        Tr_turb_str = self._vartostr(
+            var=self.Tr_turb, var_str='Tr_turb', to_units=Tr_turb_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print) + "\n"
+        Re_by_L_str = self._vartostr(
+            var=self.Re_by_L, var_str='Re_by_L', to_units=Re_by_L_units,
+            max_var_chars=max_var_chars, fmt_val="10.4e",
+            pretty_print=pretty_print)
 
         if np.isnan(np.atleast_1d(self.mu_M)).all():
             mu_M_str = ""
         else:
-            mu_M_str = f"{self.varnames['mu_M']:{max_var_chars}s} {mu_M_str}\n"
+            mu_M_str = self._vartostr(
+                var=self.mu_M, var_str='mu_M', to_units='deg',
+                max_var_chars=max_var_chars, fmt_val="10.5g",
+                pretty_print=pretty_print) + "\n"
 
         if full_output:
-            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}{q_str}"
-                        f"{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}{Tr_turb_str}"
-                        f"{Re_by_L_str}")
+            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}"
+                        f"{q_inf_str}{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}"
+                        f"{Tr_turb_str}{Re_by_L_str}")
         else:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
 
@@ -603,22 +631,24 @@ class Length(DimensionalData):
         if unit_system is None:
             unit_system = self._byalt.unit_system
 
-        pp_ = '~P' if pretty_print else ''
-
-        Re_str = f"Re      = {self.Re:10.5g{pp_}}"
-
         if unit_system == 'US':
-            L_str = f"L       = {self.L.to('ft'):10.5g{pp_}}"
+            L_units = 'ft'
         else:  # default to SI units
-            L_str = f"L       = {self.L.to('m'):10.5g{pp_}}"
+            L_units = 'm'
 
         # Insert longer variable name into output
         max_var_chars = max([
             max([len(v) for v in self.varnames.values()]),
             max_var_chars
         ])
-        L_str = f"{self.varnames['L']:{max_var_chars}s} {L_str}"
-        Re_str = f"{self.varnames['Re']:{max_var_chars}s} {Re_str}"
+        L_str = self._vartostr(
+            var=self.L, var_str='L', to_units=L_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
+        Re_str = self._vartostr(
+            var=self.Re, var_str='Re', to_units='',
+            max_var_chars=max_var_chars, fmt_val="10.4e",
+            pretty_print=pretty_print)
 
         if full_output:
             repr_str = (f"{L_str}\n{Re_str}")
@@ -877,16 +907,16 @@ class FlightCondition(DimensionalData):
 
         unit_str = self.unit_system
         ext_str = "full_output=True" if full_output else "full_output=False"
-        head_str = f"   Flight Condition (unit_system={unit_str}, {ext_str})"
-        line_str = "========================================================="
-        alti_hdr = "-----------------  Altitude Quantities  -----------------"
-        spee_hdr = "-----------------  Velocity Quantities  -----------------"
-        leng_hdr = "-----------------   Length Quantities   -----------------"
+        top_hdr = f"   Flight Condition (unit_system={unit_str}, {ext_str})"
+        lin_str = "==========================================================="
+        alt_hdr = "------------------  Altitude Quantities  ------------------"
+        vel_hdr = "------------------  Velocity Quantities  ------------------"
+        len_hdr = "------------------   Length Quantities   ------------------"
 
-        repr_str = (f"{line_str}\n{head_str}\n{line_str}"
-                    f"\n{alti_hdr}" f"\n{alti_str}"
-                    f"\n{spee_hdr}" f"\n{spee_str}"
-                    f"\n{leng_hdr}" f"\n{leng_str}"
+        repr_str = (f"{lin_str}\n{top_hdr}\n{lin_str}"
+                    f"\n{alt_hdr}" f"\n{alti_str}"
+                    f"\n{vel_hdr}" f"\n{spee_str}"
+                    f"\n{len_hdr}" f"\n{leng_str}"
                     )
 
         return repr_str

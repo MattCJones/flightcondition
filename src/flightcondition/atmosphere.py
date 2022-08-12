@@ -215,52 +215,74 @@ class Atmosphere(DimensionalData):
         Returns:
             str: String representation of class object
         """
-        pp_ = '~P' if pretty_print else ''
-
         if unit_system is not None:
             self.unit_system = unit_system
 
         if self.unit_system == 'US':
-            h_str   = f"h       = {self.h.to('kft'):10.5g{pp_}}"
-            H_str   = f"H       = {self.H.to('kft'):10.5g{pp_}}"
-            p_str   = f"p       = {self.p.to('lbf/ft^2'):10.5g{pp_}}"
-            T_str   = f"T       = {self.T.to('degR'):10.5g{pp_}}"
-            rho_str = f"rho     = {self.rho.to('slug/ft^3'):10.4e{pp_}}"
-            a_str   = f"a       = {self.a.to('ft/s'):10.5g{pp_}}"
-            mu_str  = f"mu      = {self.mu.to('lbf/ft^2 s'):10.4e{pp_}}"
-            nu_str  = f"nu      = {self.nu.to('ft^2/s'):10.4e{pp_}}"
-            k_str   = f"k       = {self.k.to('slug ft/s^3/degR'):10.4e{pp_}}"
-            g_str   = f"g       = {self.g.to('ft/s^2'):10.5g{pp_}}"
-            MFP_str = f"MFP     = {self.MFP.to('ft'):10.4e{pp_}}"
+            h_units   = 'kft'
+            H_units   = 'kft'
+            p_units   = 'lbf/ft^2'
+            T_units   = 'degR'
+            rho_units = 'slug/ft^3'
+            a_units   = 'ft/s'
+            mu_units  = 'lbf/ft^2 s'
+            nu_units  = 'ft^2/s'
+            k_units   = 'slug ft/s^3/degR'
+            g_units   = 'ft/s^2'
+            MFP_units = 'ft'
         else:  # SI units
-            h_str   = f"h       = {self.h.to('km'):10.5g{pp_}}"
-            H_str   = f"H       = {self.H.to('km'):10.5g{pp_}}"
-            p_str   = f"p       = {self.p.to('Pa'):10.5g{pp_}}"
-            T_str   = f"T       = {self.T.to('degK'):10.5g{pp_}}"
-            rho_str = f"rho     = {self.rho.to('kg/m^3'):10.4e{pp_}}"
-            a_str   = f"a       = {self.a.to('m/s'):10.5g{pp_}}"
-            mu_str  = f"mu      = {self.mu.to('Pa s'):10.4e{pp_}}"
-            nu_str  = f"nu      = {self.nu.to('m^2/s'):10.4e{pp_}}"
-            k_str   = f"k       = {self.k.to('W/m/K'):10.4e{pp_}}"
-            g_str   = f"g       = {self.g.to('m/s^2'):10.5g{pp_}}"
-            MFP_str = f"MFP     = {self.MFP.to('m'):10.4e{pp_}}"
+            h_units   = 'km'
+            H_units   = 'km'
+            p_units   = 'Pa'
+            T_units   = 'degK'
+            rho_units = 'kg/m^3'
+            a_units   = 'm/s'
+            mu_units  = 'Pa s'
+            nu_units  = 'm^2/s'
+            k_units   = 'W/m/K'
+            g_units   = 'm/s^2'
+            MFP_units = 'm'
 
         # Insert longer variable name into output
         max_var_chars = max([
             max([len(v) for v in __class__.varnames.values()]),
             max_var_chars
         ])
-        h_str   = f"{__class__.varnames['h']:{max_var_chars}s} {h_str}"
-        H_str   = f"{__class__.varnames['H']:{max_var_chars}s} {H_str}"
-        p_str   = f"{__class__.varnames['p']:{max_var_chars}s} {p_str}"
-        T_str   = f"{__class__.varnames['T']:{max_var_chars}s} {T_str}"
-        rho_str = f"{__class__.varnames['rho']:{max_var_chars}s} {rho_str}"
-        a_str   = f"{__class__.varnames['a']:{max_var_chars}s} {a_str}"
-        mu_str  = f"{__class__.varnames['mu']:{max_var_chars}s} {mu_str}"
-        nu_str  = f"{__class__.varnames['nu']:{max_var_chars}s} {nu_str}"
-        k_str   = f"{__class__.varnames['k']:{max_var_chars}s} {k_str}"
-        g_str   = f"{__class__.varnames['g']:{max_var_chars}s} {g_str}"
-        MFP_str = f"{__class__.varnames['MFP']:{max_var_chars}s} {MFP_str}"
+        h_str = self._vartostr(var=self.h, var_str='h', to_units=h_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        H_str = self._vartostr(var=self.H, var_str='H', to_units=H_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        p_str = self._vartostr(var=self.p, var_str='p', to_units=p_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        T_str = self._vartostr(var=self.T, var_str='T', to_units=T_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        rho_str = self._vartostr(var=self.rho, var_str='rho',
+                                 to_units=rho_units,
+                                 max_var_chars=max_var_chars,
+                                 fmt_val="10.5g", pretty_print=pretty_print)
+        a_str = self._vartostr(var=self.a, var_str='a', to_units=a_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        mu_str = self._vartostr(var=self.mu, var_str='mu', to_units=mu_units,
+                                max_var_chars=max_var_chars,
+                                fmt_val="10.4e", pretty_print=pretty_print)
+        nu_str = self._vartostr(var=self.nu, var_str='nu', to_units=nu_units,
+                                max_var_chars=max_var_chars,
+                                fmt_val="10.4e", pretty_print=pretty_print)
+        k_str = self._vartostr(var=self.k, var_str='k', to_units=k_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.4e", pretty_print=pretty_print)
+        g_str = self._vartostr(var=self.g, var_str='g', to_units=g_units,
+                               max_var_chars=max_var_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        MFP_str = self._vartostr(var=self.MFP, var_str='MFP',
+                                 to_units=MFP_units,
+                                 max_var_chars=max_var_chars,
+                                 fmt_val="10.4e", pretty_print=pretty_print)
 
         if full_output:
             if type(self.layer.name) is np.str_:  # singular string
