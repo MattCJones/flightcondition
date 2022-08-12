@@ -74,6 +74,18 @@ class AliasAttributes():
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
+    varnames = {}
+
+    def __eq__(self, otherobj):
+        """Check equality.
+        Returns:
+            dict: Dictionary representation of object
+        """
+        if otherobj.__class__ is not self.__class__:
+            return NotImplemented
+
+        return self.asdict() == otherobj.asdict()
+
     def __str__(self):
         """Output string when object is printed.
 
@@ -89,6 +101,33 @@ class DimensionalData:
             str: Full string output
         """
         return self.tostring(full_output=False)
+
+    def asdict(self):
+        """Return class data as dictionary.
+        Returns:
+            dict: Class data
+        """
+        obj_dict = {}
+        for var, varname in self.varnames.items():
+            obj_dict[var] = getattr(self, var)
+        return obj_dict
+
+    def print(self, *args, **kwargs):
+        """Print tostring() function to stdout. """
+        print(self.tostring(*args, **kwargs))
+
+    def tostring(self, full_output=True):
+        """Override this function to output string representation of class
+        object
+
+        Args:
+            full_output (bool): Set to True for full output
+
+        Returns:
+            str: String representation
+        """
+        return ""
+
 
     @staticmethod
     def _arg_from_alias(alias_list, kwargs_dict):

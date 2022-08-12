@@ -834,10 +834,6 @@ class FlightCondition(DimensionalData):
                                Length.varnames, ]
         )
 
-    def print(self, *args, **kwargs):
-        """Print tostring() function to stdout. """
-        print(self.tostring(*args, **kwargs))
-
     def tostring(self, full_output=True, unit_system=None, pretty_print=True):
         """String representation of data structure.
 

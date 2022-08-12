@@ -22,6 +22,103 @@ from flightcondition.units import unit, check_dimensioned,\
     check_length_dimensioned, check_US_length_units
 
 
+class Layer(DimensionalData):
+    """Class to compute and store layer data. """
+
+    varnames = {
+        'name': 'layer_name',
+        'H_base': 'base_geopotential_height',
+        'T_base': 'base_geopotential_temperature',
+        'T_grad': 'temperature_gradient',
+        'p_base': 'base_static_pressure',
+    }
+
+    def __init__(self, H_arr):
+        """Initialize Layer nested class.
+
+        Args:
+            H_arr (length): Geopotential altitude
+
+        """
+        H_arr = np.atleast_1d(H_arr)
+
+        self._layer_name = [""]*np.size(H_arr)
+        self._H_base = np.zeros_like(H_arr) * unit('m')
+        self._T_base = np.zeros_like(H_arr) * unit('K')
+        self._T_grad = np.zeros_like(H_arr) * unit('K/m')
+        self._p_base = np.zeros_like(H_arr) * unit('Pa')
+
+        for idx, H in enumerate(H_arr):
+            jdx = __class__._layer_idx(H)
+            self._layer_name[idx] = Atmo.layer_names[jdx]
+            self._H_base[idx] = Atmo.H_base[jdx]
+            self._T_base[idx] = Atmo.T_base[jdx]
+            self._T_grad[idx] = Atmo.T_grad[jdx]
+            self._p_base[idx] = Atmo.p_base[jdx]
+
+        # Initialize access by full quantity name through .byname.<name>
+        self.byname = AliasAttributes(varsobj_arr=[self, ],
+                                      varnames_dict_arr=[__class__.varnames, ])
+
+    @staticmethod
+    def _layer_idx(H):
+        """Find index for layer data.
+
+        Args:
+            H_arr (length): Geopotential altitude
+
+        Returns:
+            int: Index of layer
+        """
+        idx = None
+        for idx, H_base in enumerate(Atmo.H_base[:-1]):
+            H_base_np1 = Atmo.H_base[idx+1]
+            if H_base <= H < H_base_np1:
+                return idx
+        else:  # no break
+            raise ValueError("H out of bounds.")
+
+    def tostring(self, full_output=True):
+        """Output string representation of class object.
+
+        Args:
+            full_output (bool): Set to True for full output
+
+        Returns:
+            str: String representation
+        """
+        return str(super().asdict())
+
+    @property
+    def name(self):
+        """Layer name """
+        if np.size(self._layer_name) == 1:
+            layername = self._layer_name[0]
+        else:
+            layername = self._layer_name
+        return layername
+
+    @_property_decorators
+    def H_base(self):
+        """Layer base geopotential altitude :math:`H_{base}` """
+        return self._H_base
+
+    @_property_decorators
+    def T_base(self):
+        """Layer base temperature :math:`T_{base}` """
+        return self._T_base
+
+    @_property_decorators
+    def T_grad(self):
+        """Layer base temperature gradient :math:`T_{grad}` """
+        return self._T_grad
+
+    @_property_decorators
+    def p_base(self):
+        """Layer base pressure :math:`p_{base}` """
+        return self._p_base
+
+
 class Atmosphere(DimensionalData):
     """Compute quantities from International Civil Aviation Organization (ICAO)
     1993, which extends the US 1976 Standard Atmospheric Model to 80 km.
@@ -67,79 +164,6 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    class Layer():
-        """Nested class to compute and store layer data. """
-
-        def __init__(self, H_arr):
-            """Initialize Layer nested class.
-
-            Args:
-                H_arr (length): Geopotential altitude
-
-            """
-            H_arr = np.atleast_1d(H_arr)
-
-            self._layer_name = [""]*np.size(H_arr)
-            self._H_base = np.zeros_like(H_arr) * unit('m')
-            self._T_base = np.zeros_like(H_arr) * unit('K')
-            self._T_grad = np.zeros_like(H_arr) * unit('K/m')
-            self._p_base = np.zeros_like(H_arr) * unit('Pa')
-
-            for idx, H in enumerate(H_arr):
-                jdx = __class__._layer_idx(H)
-                self._layer_name[idx] = Atmo.layer_names[jdx]
-                self._H_base[idx] = Atmo.H_base[jdx]
-                self._T_base[idx] = Atmo.T_base[jdx]
-                self._T_grad[idx] = Atmo.T_grad[jdx]
-                self._p_base[idx] = Atmo.p_base[jdx]
-
-        @staticmethod
-        def _layer_idx(H):
-            """Find index for layer data.
-
-            Args:
-                H_arr (length): Geopotential altitude
-
-            Returns:
-                int: Index of layer
-            """
-            idx = None
-            for idx, H_base in enumerate(Atmo.H_base[:-1]):
-                H_base_np1 = Atmo.H_base[idx+1]
-                if H_base <= H < H_base_np1:
-                    return idx
-            else:  # no break
-                raise ValueError("H out of bounds.")
-
-        @property
-        def name(self):
-            """Layer name """
-            if np.size(self._layer_name) == 1:
-                layername = self._layer_name[0]
-            else:
-                layername = self._layer_name
-            return layername
-
-        @_property_decorators
-        def H_base(self):
-            """Layer base geopotential altitude :math:`H_{base}` """
-            return self._H_base
-
-        @_property_decorators
-        def T_base(self):
-            """Layer base temperature :math:`T_{base}` """
-            return self._T_base
-
-        @_property_decorators
-        def T_grad(self):
-            """Layer base temperature gradient :math:`T_{grad}` """
-            return self._T_grad
-
-        @_property_decorators
-        def p_base(self):
-            """Layer base pressure :math:`p_{base}` """
-            return self._p_base
-
     def __init__(self, h=None, unit_system="", **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
@@ -177,31 +201,6 @@ class Atmosphere(DimensionalData):
         # Initialize access by full quantity name through .byname.<name>
         self.byname = AliasAttributes(varsobj_arr=[self, ],
                                       varnames_dict_arr=[__class__.varnames, ])
-
-    def __dict__(self):
-        """Object returned as a dictionary.  Also returned from `vars(obj)`.
-
-        Returns:
-            dict: Returned dictionary
-        """
-        return self.asdict()
-
-    def __eq__(self, otherobj):
-        """Check equality.
-        Returns:
-            dict: Dictionary representation of object
-        """
-        return self.__dict__ == otherobj.__dict__
-
-    def asdict(self):
-        """Return class data as dictionary.
-        Returns:
-            dict: Class data
-        """
-        obj_dict = {}
-        for var, varname in self.varnames.items():
-            obj_dict[var] = getattr(self, var)
-        return obj_dict
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
@@ -313,10 +312,27 @@ class Atmosphere(DimensionalData):
         h = R_earth*H/(R_earth - H)
         return h
 
+    @staticmethod
+    @unit.wraps(unit('W/m/K').units, unit.K)
+    def _thermal_conductivity(T_K):
+        """Compute thermal conductivity.
+
+        Args:
+            T_K (temperature): Dimensional Temperature at altitude, which is
+                automatically converted to Kelvin
+
+        Returns:
+            power/length/temperature: Geometric altitude in W/m/K
+        """
+        # Empirical formula requires T in Kelvin
+        c1 = 0.002648151
+        k = c1*T_K**1.5 / (T_K + (245.4*10**(-12/T_K)))
+        return k
+
     @property
     def unit_system(self):
-        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
-        by dir(unit.sys).
+        """Get unit system to use: 'SI', 'US', etc.  Available unit systems
+        given by dir(unit.sys).
 
         Returns:
             str: Unit system
@@ -325,8 +341,8 @@ class Atmosphere(DimensionalData):
 
     @unit_system.setter
     def unit_system(self, unit_system):
-        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
-        by dir(unit.sys).
+        """Set unit system to use: 'SI', 'US', etc.  Available unit systems
+        given by dir(unit.sys).
 
         Args:
             unit_system (str): Unit system
@@ -378,7 +394,7 @@ class Atmosphere(DimensionalData):
         # Update quantities
         self._h = h
         self._H = self._H_from_h(self.h)
-        self.layer = __class__.Layer(self.H)
+        self.layer = Layer(self.H)
 
     @_property_decorators
     def H(self):
@@ -458,13 +474,7 @@ class Atmosphere(DimensionalData):
     @_property_decorators
     def k(self):
         """Ambient thermal conductivity :math:`k` """
-        # Empirical formula requires T in Kelvin
-        T_K = self.T.to('K').magnitude
-        c1 = 0.002648151
-        k_ = c1*T_K**1.5 / (T_K + (245.4*10**(-12/T_K)))
-
-        # Re-assign to dimensioned variable
-        k = k_ * unit('W/m/K')
+        k = __class__._thermal_conductivity(self.T)
         return k
 
     @_property_decorators
