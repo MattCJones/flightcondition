@@ -21,16 +21,16 @@ fc = FlightCondition(3*unit('km'), M=0.5)
 #print(f"\n{fc.tostring(full_output=False, unit_system="US")}")
 
 # Access true, calibrated, equivalent airspeeds
-KTAS = fc.vel.TAS.to('knots')
-KCAS = fc.vel.CAS.to('knots')
-KEAS = fc.vel.EAS.to('knots')
+KTAS = fc.byvel.TAS.to('knots')
+KCAS = fc.byvel.CAS.to('knots')
+KEAS = fc.byvel.EAS.to('knots')
 print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
       f" which is {KCAS.magnitude:.4g} KCAS,"
       f" or {KEAS.magnitude:.4g} KEAS")
 # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
 
 # Access atmospheric data (see Atmosphere class for more)
-atm = fc.atm  # access Atmosphere object
+atm = fc.byalt  # access Atmosphere object
 h, p, T, rho, nu, a = atm.h, atm.p, atm.T, atm.rho, atm.nu, atm.a
 print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
 # >>> The ambient temperature at 3 km is 268.7 K
@@ -48,13 +48,13 @@ fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
 # Compute additional derived quantities
 # Explore the class data structure for all options
 print(f"\nThe dynamic pressure in psi is "
-      f"{fc.vel.q_inf.to('psi'):.3g}")
+      f"{fc.byvel.q_inf.to('psi'):.3g}")
 # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
 print(f"The Reynolds number is {fc.len.Re:.3g}")
 # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
 # Alternatively access quantities by their full name
-print(fc.vel.TAS == fc.vel.byname.true_airspeed)
+print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
 # >>> [ True  True  True]
 
 

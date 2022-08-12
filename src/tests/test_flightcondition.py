@@ -33,16 +33,16 @@ def test_TAS():
     fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'))
 
     TAS_truth = array([300, 300]) * unit('knots')
-    assert_field(fc.vel.TAS, TAS_truth)
+    assert_field(fc.byvel.TAS, TAS_truth)
 
     CAS_truth = array([300, 187.7518]) * unit('knots')
-    assert_field(fc.vel.CAS, CAS_truth)
+    assert_field(fc.byvel.CAS, CAS_truth)
 
     EAS_truth = array([300, 183.6448]) * unit('knots')
-    assert_field(fc.vel.EAS, EAS_truth)
+    assert_field(fc.byvel.EAS, EAS_truth)
 
     M_truth = array([0.4535, 0.5090]) * dimless
-    assert_field(fc.vel.M, M_truth)
+    assert_field(fc.byvel.M, M_truth)
 
 
 def test_CAS():
@@ -51,16 +51,16 @@ def test_CAS():
     fc = FlightCondition(h_geom_arr, CAS=300*unit('knots'))
 
     TAS_truth = array([300, 465.6309]) * unit('knots')
-    assert_field(fc.vel.TAS, TAS_truth)
+    assert_field(fc.byvel.TAS, TAS_truth)
 
     CAS_truth = array([300, 300]) * unit('knots')
-    assert_field(fc.vel.CAS, CAS_truth)
+    assert_field(fc.byvel.CAS, CAS_truth)
 
     EAS_truth = array([300, 285.0357]) * unit('knots')
-    assert_field(fc.vel.EAS, EAS_truth)
+    assert_field(fc.byvel.EAS, EAS_truth)
 
     M_truth = array([0.4535, 0.7900]) * dimless
-    assert_field(fc.vel.M, M_truth)
+    assert_field(fc.byvel.M, M_truth)
 
 
 def test_EAS():
@@ -69,16 +69,16 @@ def test_EAS():
     fc = FlightCondition(h_geom_arr, EAS=300*unit('knots'))
 
     TAS_truth = array([300, 490.0764]) * unit('knots')
-    assert_field(fc.vel.TAS, TAS_truth)
+    assert_field(fc.byvel.TAS, TAS_truth)
 
     CAS_truth = array([300, 317.3602]) * unit('knots')
-    assert_field(fc.vel.CAS, CAS_truth)
+    assert_field(fc.byvel.CAS, CAS_truth)
 
     EAS_truth = array([300, 300]) * unit('knots')
-    assert_field(fc.vel.EAS, EAS_truth)
+    assert_field(fc.byvel.EAS, EAS_truth)
 
     M_truth = array([0.4535, 0.8314]) * dimless
-    assert_field(fc.vel.M, M_truth)
+    assert_field(fc.byvel.M, M_truth)
 
 
 def test_mach():
@@ -87,16 +87,16 @@ def test_mach():
     fc = FlightCondition(h_geom_arr, M=0.88*dimless)
 
     TAS_truth = array([582.1012, 518.7004]) * unit('knots')
-    assert_field(fc.vel.TAS, TAS_truth)
+    assert_field(fc.byvel.TAS, TAS_truth)
 
     CAS_truth = array([582.1012, 337.977]) * unit('knots')
-    assert_field(fc.vel.CAS, CAS_truth)
+    assert_field(fc.byvel.CAS, CAS_truth)
 
     EAS_truth = array([582.1012, 317.5222]) * unit('knots')
-    assert_field(fc.vel.EAS, EAS_truth)
+    assert_field(fc.byvel.EAS, EAS_truth)
 
     M_truth = array([0.88, 0.88]) * dimless
-    assert_field(fc.vel.M, M_truth)
+    assert_field(fc.byvel.M, M_truth)
 
 
 def test_other_vel_properties():
@@ -105,22 +105,22 @@ def test_other_vel_properties():
     fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'), unit_system='US')
 
     q_c_truth = array([320.6898, 121.7655]) * unit('lbf/ft^2')
-    assert_field(fc.vel.q_c, q_c_truth)
+    assert_field(fc.byvel.q_c, q_c_truth)
 
     p0_truth = array([2436.9064, 751.4328]) * unit('lbf/ft^2')
-    assert_field(fc.vel.p0, p0_truth)
+    assert_field(fc.byvel.p0, p0_truth)
 
     T0_truth = array([540.0069, 433.1758]) * unit('degR')
-    assert_field(fc.vel.T0, T0_truth.to('degK'))
+    assert_field(fc.byvel.T0, T0_truth.to('degK'))
 
     Tr_lamr_truth = array([536.8064, 429.9753]) * unit('degR')
-    assert_field(fc.vel.Tr_lamr, Tr_lamr_truth.to('degK'), reltol=0.001)
+    assert_field(fc.byvel.Tr_lamr, Tr_lamr_truth.to('degK'), reltol=0.001)
 
     Tr_turb_truth = array([537.6599, 430.8287]) * unit('degR')
-    assert_field(fc.vel.Tr_turb, Tr_turb_truth.to('degK'), reltol=0.001)
+    assert_field(fc.byvel.Tr_turb, Tr_turb_truth.to('degK'), reltol=0.001)
 
     Re_by_L_truth = array([2.6837e+5, 1.2096e+5]) * unit('1/in')
-    assert_field(fc.vel.Re_by_L, Re_by_L_truth)
+    assert_field(fc.byvel.Re_by_L, Re_by_L_truth)
 
 
 def test_reynolds_number():
@@ -131,7 +131,7 @@ def test_reynolds_number():
     M_ = 0.93 * dimless
     fc = FlightCondition(h_geom, M=M_, L=L)
 
-    Re_test = fc.len.Re.magnitude
+    Re_test = fc.bylen.Re.magnitude
     Re_truth = 62278
 
     assert Re_test == myapprox(Re_truth)
@@ -146,30 +146,30 @@ def test_access_byname():
     fc = FlightCondition(h_geom, M=M_, L=L, unit_system='US')
 
     # Check that sub-objects .byname works properly
-    assert fc.atm.p == fc.atm.byname.pressure
-    assert fc.atm.T == fc.atm.byname.temperature
-    assert fc.atm.rho == fc.atm.byname.density
-    assert fc.atm.nu == fc.atm.byname.kinematic_viscosity
+    assert fc.byalt.p == fc.byalt.byname.pressure
+    assert fc.byalt.T == fc.byalt.byname.temperature
+    assert fc.byalt.rho == fc.byalt.byname.density
+    assert fc.byalt.nu == fc.byalt.byname.kinematic_viscosity
 
-    assert fc.vel.M == fc.vel.byname.mach_number
-    assert fc.vel.TAS == fc.vel.byname.true_airspeed
-    assert fc.vel.CAS == fc.vel.byname.calibrated_airspeed
-    assert fc.vel.EAS == fc.vel.byname.equivalent_airspeed
+    assert fc.byvel.M == fc.byvel.byname.mach_number
+    assert fc.byvel.TAS == fc.byvel.byname.true_airspeed
+    assert fc.byvel.CAS == fc.byvel.byname.calibrated_airspeed
+    assert fc.byvel.EAS == fc.byvel.byname.equivalent_airspeed
 
-    assert fc.len.Re == fc.len.byname.reynolds_number
+    assert fc.bylen.Re == fc.bylen.byname.reynolds_number
 
     # # Check that base object .byname works properly
-    # assert fc.byname.pressure == fc.atm.byname.pressure
-    # assert fc.byname.temperature == fc.atm.byname.temperature
-    # assert fc.byname.density == fc.atm.byname.density
-    # assert fc.byname.kinematic_viscosity == fc.atm.byname.kinematic_viscosity
+    # assert fc.byname.pressure == fc.byalt.byname.pressure
+    # assert fc.byname.temperature == fc.byalt.byname.temperature
+    # assert fc.byname.density == fc.byalt.byname.density
+    # assert fc.byname.kinematic_viscosity == fc.byalt.byname.kinematic_viscosity
 
-    # assert fc.byname.mach_number == fc.vel.byname.mach_number
-    # assert fc.byname.true_airspeed == fc.vel.byname.true_airspeed
-    # assert fc.byname.calibrated_airspeed == fc.vel.byname.calibrated_airspeed
-    # assert fc.byname.equivalent_airspeed == fc.vel.byname.equivalent_airspeed
+    # assert fc.byname.mach_number == fc.byvel.byname.mach_number
+    # assert fc.byname.true_airspeed == fc.byvel.byname.true_airspeed
+    # assert fc.byname.calibrated_airspeed == fc.byvel.byname.calibrated_airspeed
+    # assert fc.byname.equivalent_airspeed == fc.byvel.byname.equivalent_airspeed
 
-    # assert fc.byname.reynolds_number == fc.len.byname.reynolds_number
+    # assert fc.byname.reynolds_number == fc.bylen.byname.reynolds_number
 
 
 def test_input_altitude_bounds():
@@ -209,7 +209,7 @@ def test_mach_bounds():
 
 def test_command_line_interface():
     """Test that command line interface is running properly. """
-    cmd_str = "flightcondition --alt 23 kft --EAS 233 kt --len 4 ft"
+    cmd_str = "flightcondition --h 23 kft --EAS 233 kt --L 4 ft"
     out = run(split(cmd_str), capture_output=True)
     out_str = out.stdout.decode()
     out_regex = r"""[=]+

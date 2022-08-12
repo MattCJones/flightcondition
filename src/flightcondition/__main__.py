@@ -35,14 +35,25 @@ def _parse_args(args_arr):
         formatter_class=argparse.RawDescriptionHelpFormatter, prog=RUNCMD,
         description=SHORT_DESCRIPTION)
     parser.add_argument(
-        '--altitude', dest='altitude', metavar='', nargs=2, type=str,
+        '--h', dest='altitude', metavar='', nargs=2, type=str,
         default=[0, 'kft'],
-        help="altitude and length unit, default='0 kft'")
+        help=("altitude and length unit, default='0 kft'; aliases include: "
+              "--altitude --Altitude"))
     parser.add_argument(
-        '-M', '--Mach', dest='M', metavar='', nargs=None, type=float,
-        default=None, help="Mach number, e.g. '0.5'")
+        '--altitude', dest='altitude', metavar='', nargs=2,
+        type=str, default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--Altitude', dest='altitude', metavar='', nargs=2,
+        type=str, default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--M', dest='M', metavar='', nargs=None, type=float, default=None,
+        help=("Mach number, e.g. '0.5'; aliases include: "
+              "--mach-number --Mach"))
     parser.add_argument(
         '--mach-number', dest='M', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--Mach', dest='M', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
@@ -63,8 +74,16 @@ def _parse_args(args_arr):
         '--KEAS', dest='KEAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        '-L', '--length-scale', dest='length_scale', metavar='', nargs=2,
-        type=str, default=None, help="length scale, e.g. '10 ft'")
+        '--L', dest='length_scale', metavar='', nargs=2,
+        type=str, default=None,
+        help=("length scale, e.g. '10 ft'; aliases include: "
+              "--length-scale --Length --ell"))
+    parser.add_argument(
+        '--length-scale', dest='length_scale', metavar='', nargs=2,
+        type=str, default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--Length', dest='length_scale', metavar='', nargs=2,
+        type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--ell', dest='length_scale', metavar='', nargs=2,
         type=str, default=None, help=argparse.SUPPRESS)

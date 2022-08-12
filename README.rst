@@ -87,7 +87,7 @@ format, and an optional length scale.
    * :code:`M` *mach number* - aliases are :code:`mach`, :code:`Mach`,
      :code:`M_inf`, :code:`mach_number`
 
-#. :code:`L` *length scale* (optional) - aliases are :code:`ell`, :code:`len`,
+#. :code:`L` *length scale* (optional) - aliases are :code:`ell`, :code:`bylen`,
    :code:`length`, :code:`length_scale`, :code:`l`
 
 See also the :code:`KTAS`, :code:`KCAS`, and :code:`KEAS` syntactic sugar.  For
@@ -95,8 +95,8 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
 
 **Outputs** include:
 
-#. :code:`atm` *atmospheric* quantities - see :code:`Atmosphere` class below.
-#. :code:`vel` *airspeed* quantities:
+#. :code:`byalt` *altitude* quantities - see :code:`Atmosphere` class below.
+#. :code:`byvel` *velocity* quantities:
 
    * True airspeed :code:`TAS`
    * Calibrated airspeed :code:`CAS`
@@ -108,14 +108,14 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Stagnation temperature :code:`T_0`
    * Reynolds number per unit length :code:`Re_by_L`
 
-#. :code:`len` *length-scale* quantities:
+#. :code:`bylen` *length-scale* quantities:
    
    * Reynolds number :code:`Re`
 
-Quantities may be accessed using the specific :code:`atm`, :code:`vel`, or
-:code:`len` object.  Quantities may also be accessed using their full name with
+Quantities may be accessed using the specific :code:`byalt`, :code:`byvel`, or
+:code:`bylen` object.  Quantities may also be accessed using their full name with
 the :code:`byname` object.  For example, Mach number can be accessed using
-:code:`.vel.M` or by its full name using :code:`.byname.mach_number`
+:code:`.byvel.M` or by its full name using :code:`.byname.mach_number`
 
 **Example usage**:
 
@@ -133,16 +133,16 @@ the :code:`byname` object.  For example, Mach number can be accessed using
     #print(f"\n{fc.tostring(full_output=False, unit_system="US")}")
 
     # Access true, calibrated, equivalent airspeeds
-    KTAS = fc.vel.TAS.to('knots')
-    KCAS = fc.vel.CAS.to('knots')
-    KEAS = fc.vel.EAS.to('knots')
+    KTAS = fc.byvel.TAS.to('knots')
+    KCAS = fc.byvel.CAS.to('knots')
+    KEAS = fc.byvel.EAS.to('knots')
     print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
         f" which is {KCAS.magnitude:.4g} KCAS,"
         f" or {KEAS.magnitude:.4g} KEAS")
     # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
 
     # Access atmospheric data (see Atmosphere class for more)
-    atm = fc.atm  # access Atmosphere object
+    atm = fc.byalt  # access Atmosphere object
     h, p, T, rho, nu, a = atm.h, atm.p, atm.T, atm.rho, atm.nu, atm.a
     print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
     # >>> The ambient temperature at 3 km is 268.7 K
@@ -160,13 +160,13 @@ the :code:`byname` object.  For example, Mach number can be accessed using
     # Compute additional derived quantities
     # Explore the class data structure for all options
     print(f"\nThe dynamic pressure in psi is "
-        f"{fc.vel.q_inf.to('psi'):.3g}")
+        f"{fc.byvel.q_inf.to('psi'):.3g}")
     # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
-    print(f"The Reynolds number is {fc.len.Re:.3g}")
+    print(f"The Reynolds number is {fc.bylen.Re:.3g}")
     # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
     # Alternatively access quantities by their full name
-    print(fc.vel.TAS == fc.byname.true_airspeed)
+    print(fc.byvel.TAS == fc.byname.true_airspeed)
     # >>> [ True  True  True]
 
 
@@ -257,7 +257,7 @@ abbreviated output:
 
 .. code-block:: bash
 
-    flightcondition --alt 23 kft --EAS 233 knots --len 4 ft --abbreviated
+    flightcondition --h 23 kft --EAS 233 knots --L 4 ft --abbreviated
 
 .. code-block:: bash
 
