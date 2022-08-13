@@ -381,6 +381,7 @@ class Velocity(DimensionalData):
 
     @staticmethod
     @_len1array_to_scalar
+    @unit.wraps(unit.rad, dimless.units)
     def _mach_angle(M):
         """Compute Mach angle
 
@@ -401,7 +402,6 @@ class Velocity(DimensionalData):
         sup = M >= 1  # supersonic filter
         mu_M[sup] = np.arcsin(1.0/M[sup])
 
-        mu_M.ito('deg')
         return mu_M
 
     @staticmethod

@@ -303,34 +303,36 @@ class Atmosphere(DimensionalData):
         return repr_str
 
     @staticmethod
-    def _H_from_h(h):
+    @unit.wraps(unit.m, (unit.m, unit.m))
+    def _H_from_h(h, R_earth=Phys.R_earth):
         """Convert geometric to geopotential altitude.
 
         :math:`H = \\frac{R_{earth} h}{R_{earth} + h}`
 
         Args:
             h (length): Geometric altitude
+            R_earth (length): Radius of the Earth
 
         Returns:
             length: Geopotential altitude
         """
-        R_earth = Phys.R_earth
         H = R_earth*h/(R_earth + h)
         return H
 
     @staticmethod
-    def _h_from_H(H):
+    @unit.wraps(unit.m, (unit.m, unit.m))
+    def _h_from_H(H, R_earth=Phys.R_earth):
         """Convert geopotential to geometric altitude.
 
         :math:`h = \\frac{R_{earth} H}{R_{earth} - H}`
 
         Args:
             H (length): Geopotential altitude
+            R_earth (length): Radius of the Earth
 
         Returns:
             length: Geometric altitude
         """
-        R_earth = Phys.R_earth
         h = R_earth*H/(R_earth - H)
         return h
 

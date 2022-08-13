@@ -50,7 +50,7 @@ fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
 print(f"\nThe dynamic pressure in psi is "
       f"{fc.byvel.q_inf.to('psi'):.3g}")
 # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
-print(f"The Reynolds number is {fc.len.Re:.3g}")
+print(f"The Reynolds number is {fc.bylen.Re:.3g}")
 # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
 # Alternatively access quantities by their full name
