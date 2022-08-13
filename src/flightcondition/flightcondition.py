@@ -161,7 +161,7 @@ class Velocity(DimensionalData):
 
         return repr_str
 
-    def _checkandsize(self, inpvar, default_dim=None):
+    def _check_and_size_input(self, inpvar, default_dim=None):
         """Check that input is correctly typed, then size input array. If
         scalar, leave as scalar.
 
@@ -193,7 +193,7 @@ class Velocity(DimensionalData):
             sizedarr = inpvar
 
         tofloat = 1.0
-        sizedarr *= tofloat
+        sizedarr = (sizedarr * tofloat)
 
         return sizedarr
 
@@ -494,7 +494,7 @@ class Velocity(DimensionalData):
     @M.setter
     def M(self, M):
         """Mach number :math:`M` """
-        self._M = self._checkandsize(M, default_dim=dimless)
+        self._M = self._check_and_size_input(M, default_dim=dimless)
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -508,7 +508,7 @@ class Velocity(DimensionalData):
     @TAS.setter
     def TAS(self, TAS):
         """Set true airspeed. """
-        self._TAS = self._checkandsize(TAS)
+        self._TAS = self._check_and_size_input(TAS)
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -522,7 +522,7 @@ class Velocity(DimensionalData):
     @CAS.setter
     def CAS(self, CAS):
         """Calibrated airspeed. """
-        self._CAS = self._checkandsize(CAS)
+        self._CAS = self._check_and_size_input(CAS)
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
         self._TAS = self._TAS_from_M(self.M)
@@ -536,7 +536,7 @@ class Velocity(DimensionalData):
     @EAS.setter
     def EAS(self, EAS):
         """Set equivalent airspeed. """
-        self._EAS = self._checkandsize(EAS)
+        self._EAS = self._check_and_size_input(EAS)
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -612,7 +612,7 @@ class Length(DimensionalData):
         """
         # Link to Atmosphere and Velocity data
         self._byalt = byalt
-        self._vel = byvel
+        self._byvel = byvel
 
     def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
                  pretty_print=True):
@@ -666,6 +666,7 @@ class Length(DimensionalData):
     def L(self, L):
         """Set length scale :math:`L`"""
         # Verify that length input is dimensional length quantity
+        L = self._byvel._check_and_size_input(L)
         check_length_dimensioned(L)
         self._L = L
 
@@ -673,7 +674,7 @@ class Length(DimensionalData):
     def Re(self):
         """Get Reynolds number :math:`Re`"""
         Re = NonDimensional.reynolds_number(
-            U=self._vel.TAS, L=self.L, nu=self._byalt.nu)
+            U=self._byvel.TAS, L=self.L, nu=self._byalt.nu)
         return Re
 
     @_property_decorators
