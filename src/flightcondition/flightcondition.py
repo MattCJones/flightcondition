@@ -54,13 +54,13 @@ class Velocity(DimensionalData):
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
 
-    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
+    def tostring(self, full_output=True, units=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
@@ -68,10 +68,10 @@ class Velocity(DimensionalData):
             str: String representation
         """
         # Set default unit system
-        if unit_system is None:
-            unit_system = self._byalt.unit_system
+        if units is None:
+            units = self._byalt.units
 
-        if unit_system == 'US':
+        if units == 'US':
             EAS_units   = 'knots'
             TAS_units   = 'knots'
             CAS_units   = 'knots'
@@ -605,7 +605,7 @@ class Velocity(DimensionalData):
     @_property_decorators
     def Re_by_L(self):
         """Get Reynolds number per unit length :math:`Re_L`"""
-        length_unit = 'in' if self._byalt.unit_system == 'US' else None
+        length_unit = 'in' if self._byalt.units == 'US' else None
         Re_by_L = NonDimensional.reynolds_per_length(U=self.TAS,
                                                      nu=self._byalt.nu,
                                                      length_unit=length_unit)
@@ -631,13 +631,13 @@ class Length(DimensionalData):
         self._byalt = byalt
         self._byvel = byvel
 
-    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
+    def tostring(self, full_output=True, units=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
@@ -645,10 +645,10 @@ class Length(DimensionalData):
             str: String representation
         """
         # Set default unit system
-        if unit_system is None:
-            unit_system = self._byalt.unit_system
+        if units is None:
+            units = self._byalt.units
 
-        if unit_system == 'US':
+        if units == 'US':
             L_units = 'ft'
         else:  # default to SI units
             L_units = 'm'
@@ -719,7 +719,7 @@ class FlightCondition(DimensionalData):
         #print(f"{fc}")
 
         # Uncomment to print abbreviated output in US units:
-        #print(f"\n{fc.tostring(full_output=False, unit_system='US')}")
+        #print(f"\n{fc.tostring(full_output=False, units='US')}")
 
         # Access true, calibrated, equivalent airspeeds
         KTAS = fc.byvel.TAS.to('knots')
@@ -761,7 +761,7 @@ class FlightCondition(DimensionalData):
 
     def __init__(
         self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
-        unit_system="", **kwargs,
+        units="", **kwargs,
     ):
         """Constructor based on altitude and input airspeed in terms of Mach
         number, TAS, CAS, or EAS.  Input at least one format of airspeed at the
@@ -779,12 +779,12 @@ class FlightCondition(DimensionalData):
                 'equivalent_airspeed'
             L (length): Length scale - aliases are 'ell', 'bylen', 'length',
                 'length_scale', 'l'
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
         """
 
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
-        self.byalt = Atmosphere(h=h, unit_system=unit_system, **kwargs)
+        self.byalt = Atmosphere(h=h, units=units, **kwargs)
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -852,7 +852,7 @@ class FlightCondition(DimensionalData):
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
         if L is None:
-            L_unit = unit('ft') if self.unit_system == 'US' else unit('m')
+            L_unit = unit('ft') if self.units == 'US' else unit('m')
             self.bylen.L = 1.0 * L_unit
         else:  # length scale is input by user
             self.bylen.L = L
@@ -861,7 +861,7 @@ class FlightCondition(DimensionalData):
             # units based on the input length scale
             if self.byalt.h.magnitude.all() == 0:
                 if check_US_length_units(L):
-                    self.unit_system = 'US'
+                    self.units = 'US'
 
         # Initialize access by full quantity name through .byname.<name>
         self.byvel.byname = AliasAttributes(
@@ -895,38 +895,38 @@ class FlightCondition(DimensionalData):
             varnames_dict_arr=varnames_dict_arr
         )
 
-    def tostring(self, full_output=True, unit_system=None, pretty_print=True):
+    def tostring(self, full_output=True, units=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation
         """
-        if unit_system is not None:
-            self.unit_system = unit_system
+        if units is not None:
+            self.units = units
 
         max_var_chars = max([
             max([len(v) for v in Atmosphere.varnames.values()]),
             max([len(v) for v in Velocity.varnames.values()]),
             max([len(v) for v in Length.varnames.values()]),
         ])
-        alti_str = self.byalt.tostring(full_output, self.unit_system,
+        alti_str = self.byalt.tostring(full_output, self.units,
                                        pretty_print=pretty_print,
                                        max_var_chars=max_var_chars)
-        spee_str = self.byvel.tostring(full_output, self.unit_system,
+        spee_str = self.byvel.tostring(full_output, self.units,
                                        max_var_chars=max_var_chars,
                                        pretty_print=pretty_print)
-        leng_str = self.bylen.tostring(full_output, self.unit_system,
+        leng_str = self.bylen.tostring(full_output, self.units,
                                        max_var_chars=max_var_chars,
                                        pretty_print=pretty_print)
 
-        unit_str = self.unit_system
+        unit_str = self.units
         ext_str = "full_output=True" if full_output else "full_output=False"
-        top_hdr = f"   Flight Condition (unit_system={unit_str}, {ext_str})"
+        top_hdr = f"   Flight Condition (units={unit_str}, {ext_str})"
         lin_str = "==========================================================="
         alt_hdr = "------------------  Altitude Quantities  ------------------"
         vel_hdr = "------------------  Velocity Quantities  ------------------"
@@ -941,24 +941,24 @@ class FlightCondition(DimensionalData):
         return repr_str
 
     @property
-    def unit_system(self):
+    def units(self):
         """Unit system to use: 'SI', 'US', etc.  Available unit systems given
         by dir(unit.sys).
 
         Returns:
             str: Unit system
         """
-        return self.byalt.unit_system
+        return self.byalt.units
 
-    @unit_system.setter
-    def unit_system(self, unit_system):
+    @units.setter
+    def units(self, units):
         """Unit system to use: 'SI', 'US', etc.  Available unit systems given
         by dir(unit.sys).
 
         Args:
-            unit_system (str): Unit system
+            units (str): Unit system
         """
-        self.byalt.unit_system = unit_system
+        self.byalt.units = units
 
     def redim_force(self, S_ref):
         """Factor to redimensionalize force from force coefficient e.g.,
@@ -978,9 +978,9 @@ class FlightCondition(DimensionalData):
         redim_force = self.byvel.q_inf * S_ref
 
         # Set to force unit since to_base_units() gives mass*length/time^2
-        if self.unit_system == 'US':
+        if self.units == 'US':
             redim_force.ito('lbf')
-        elif self.unit_system == 'SI':
+        elif self.units == 'SI':
             redim_force.ito('N')
 
         return redim_force
@@ -1005,9 +1005,9 @@ class FlightCondition(DimensionalData):
         redim_moment = self.byvel.q_inf * S_ref * L
 
         # Set to force unit since to_base_units() gives mass*length/time^2
-        if self.unit_system == 'US':
+        if self.units == 'US':
             redim_moment.ito('ft lbf')
-        elif self.unit_system == 'SI':
+        elif self.units == 'SI':
             redim_moment.ito('m N')
 
         return redim_moment

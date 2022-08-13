@@ -102,7 +102,7 @@ def test_mach():
 def test_other_vel_properties():
     """Test other velocity property calculations. """
 
-    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'), unit_system='US')
+    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'), units='US')
 
     q_c_truth = array([320.6898, 121.7655]) * unit('lbf/ft^2')
     assert_field(fc.byvel.q_c, q_c_truth)
@@ -143,7 +143,7 @@ def test_access_byname():
     L = 5.34 * unit('ft')
     h_geom = 44.5 * unit('km')
     M_ = 0.93 * dimless
-    fc = FlightCondition(h_geom, M=M_, L=L, unit_system='US')
+    fc = FlightCondition(h_geom, M=M_, L=L, units='US')
 
     # Check that sub-objects .byname works properly
     assert fc.byalt.p == fc.byalt.byname.pressure

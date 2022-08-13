@@ -88,7 +88,7 @@ def _parse_args(args_arr):
         '--ell', dest='length_scale', metavar='', nargs=2,
         type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
-        '--unit-system', dest='unit_system', metavar='', nargs=None,
+        '--units', dest='units', metavar='', nargs=None,
         type=str, default="", help=f"Unit system, i.e. {dir(unit.sys)}")
     parser.add_argument(
         '--abbreviated-output', dest='abbreviated_output', default=False,
@@ -129,7 +129,7 @@ def main():
     EAS_ = EAS_ if args.KEAS is None else args.KEAS*unit('knots')
     L_ = None if args.length_scale is None else _dimension(args.length_scale)
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_,
-                         unit_system=args.unit_system)
+                         units=args.units)
 
     # Print output but catch common unicode exception
     full_output = not args.abbreviated_output

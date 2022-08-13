@@ -134,7 +134,7 @@ class Atmosphere(DimensionalData):
         #print(f"\n{atm}")
 
         # Uncomment to print while specifying abbreviated output in US units:
-        #print(f"\n{atm.tostring(full_output=False, unit_system='US')}")
+        #print(f"\n{atm.tostring(full_output=False, units='US')}")
 
         # See also the linspace() function from numpy, e.g.
         # h = linspace(0, 81.0, 82) * unit('km')
@@ -164,13 +164,13 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    def __init__(self, h=None, unit_system="", **kwargs):
+    def __init__(self, h=None, units="", **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
         """
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]
@@ -190,35 +190,35 @@ class Atmosphere(DimensionalData):
         self.h = h
 
         # Process unit system
-        if unit_system not in dir(unit.sys):  # check if usable system
+        if units not in dir(unit.sys):  # check if usable system
             if check_US_length_units(h):
-                self.unit_system = 'US'
+                self.units = 'US'
             else:
-                self.unit_system = 'SI'
+                self.units = 'SI'
         else:
-            self.unit_system = unit_system
+            self.units = units
 
         # Initialize access by full quantity name through .byname.<name>
         self.byname = AliasAttributes(varsobj_arr=[self, ],
                                       varnames_dict_arr=[__class__.varnames, ])
 
-    def tostring(self, full_output=True, unit_system=None, max_var_chars=0,
+    def tostring(self, full_output=True, units=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
-            unit_system (str): Set to 'US' for US units or 'SI' for SI
+            units (str): Set to 'US' for US units or 'SI' for SI
             max_var_chars (int): Maximum number of characters in unit string
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation of class object
         """
-        if unit_system is not None:
-            self.unit_system = unit_system
+        if units is not None:
+            self.units = units
 
-        if self.unit_system == 'US':
+        if self.units == 'US':
             h_units   = 'kft'
             H_units   = 'kft'
             p_units   = 'lbf/ft^2'
@@ -354,30 +354,30 @@ class Atmosphere(DimensionalData):
         return k
 
     @property
-    def unit_system(self):
+    def units(self):
         """Get unit system to use: 'SI', 'US', etc.  Available unit systems
         given by dir(unit.sys).
 
         Returns:
             str: Unit system
         """
-        return self._unit_system
+        return self._units
 
-    @unit_system.setter
-    def unit_system(self, unit_system):
+    @units.setter
+    def units(self, units):
         """Set unit system to use: 'SI', 'US', etc.  Available unit systems
         given by dir(unit.sys).
 
         Args:
-            unit_system (str): Unit system
+            units (str): Unit system
         """
-        if unit_system not in dir(unit.sys):
-            warnings.warn(f"'{unit_system} is not available. Try one of the "
+        if units not in dir(unit.sys):
+            warnings.warn(f"'{units} is not available. Try one of the "
                           f"following: {dir(unit.sys)}")
             return
         else:
-            self._unit_system = unit_system
-            unit.default_system = unit_system
+            self._units = units
+            unit.default_system = units
 
     @_property_decorators
     def h(self):
