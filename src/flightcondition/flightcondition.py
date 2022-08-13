@@ -161,36 +161,52 @@ class Velocity(DimensionalData):
 
         return repr_str
 
-    def _check_and_size_input(self, inpvar, default_dim=None):
+    @staticmethod
+    def _compare_input_size(input_a, input_b):
+        """Enforce non-singular input arrays to be equal in size
+
+        Args:
+            input_a (object): Input A
+            input_b (object): Input B
+
+        Returns:
+            object: sized_arr
+        """
+        wrongsize_msg = ("Non-singular input arrays must be equal in size.")
+
+        if np.shape(input_b):  # if array
+            if np.shape(input_a):  # if array
+                if not input_a.size == 1 and not input_b.size == 1:
+                    if not input_a.size == input_b.size:
+                        raise TypeError(wrongsize_msg)
+            sizedarr = np.ones(np.shape(input_b))*input_a
+        else:
+            sizedarr = input_a
+        return sizedarr
+
+    def _check_and_size_input(self, input_var, input_alt=None, input_vel=None):
         """Check that input is correctly typed, then size input array. If
         scalar, leave as scalar.
 
         Args:
-            inpvar (object): Input array (or scalar)
-            default_dim (dimension): default dimension if input is unitless
+            input_var (object): Input array (or scalar)
+            input_alt (object): Input array of altitude level
+            input_vel (object): Input array of velocity level (when assessing
+                length scale as input_var)
 
         Returns:
             object: Sized array (or scalar)
         """
-        if default_dim is not None:
-            inpvar *= default_dim
-        check_dimensioned(inpvar)
+        check_dimensioned(input_var)
 
         # Force local unit registry
-        inpvar = inpvar.magnitude * unit(str(inpvar.units))
+        input_var = input_var.magnitude * unit(str(input_var.units))
 
-        # Require altitude and speed arrays to be equal or singular speed array
-        # TODO 2022-08-12: get this to work with length
-        wrongsize_msg = ("Non-singular input arrays must be equal in size.")
-        if np.shape(self._byalt.h):  # if altitude is an array
-            if np.shape(inpvar):  # if inpvar is an array
-                if not inpvar.size == self._byalt.h.size:
-                    if not inpvar.size == 1 and not self._byalt.h.size == 1:
-                        raise TypeError(wrongsize_msg)
-
-            sizedarr = np.ones(np.shape(self._byalt.h))*inpvar
-        else:
-            sizedarr = inpvar
+        # Require input, base, and secondary arrays to be singular or
+        # non-singular but equal in size
+        sizedarr = __class__._compare_input_size(input_var, input_alt)
+        if input_vel is not None:
+            sizedarr = __class__._compare_input_size(input_var, input_vel)
 
         tofloat = 1.0
         sizedarr = (sizedarr * tofloat)
@@ -494,7 +510,8 @@ class Velocity(DimensionalData):
     @M.setter
     def M(self, M):
         """Mach number :math:`M` """
-        self._M = self._check_and_size_input(M, default_dim=dimless)
+        M *= dimless  # add dimless for raw float input
+        self._M = self._check_and_size_input(M, input_alt=self._byalt.h)
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -508,7 +525,7 @@ class Velocity(DimensionalData):
     @TAS.setter
     def TAS(self, TAS):
         """Set true airspeed. """
-        self._TAS = self._check_and_size_input(TAS)
+        self._TAS = self._check_and_size_input(TAS, input_alt=self._byalt.h)
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -522,7 +539,7 @@ class Velocity(DimensionalData):
     @CAS.setter
     def CAS(self, CAS):
         """Calibrated airspeed. """
-        self._CAS = self._check_and_size_input(CAS)
+        self._CAS = self._check_and_size_input(CAS, input_alt=self._byalt.h)
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
         self._TAS = self._TAS_from_M(self.M)
@@ -536,7 +553,7 @@ class Velocity(DimensionalData):
     @EAS.setter
     def EAS(self, EAS):
         """Set equivalent airspeed. """
-        self._EAS = self._check_and_size_input(EAS)
+        self._EAS = self._check_and_size_input(EAS, input_alt=self._byalt.h)
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -666,7 +683,8 @@ class Length(DimensionalData):
     def L(self, L):
         """Set length scale :math:`L`"""
         # Verify that length input is dimensional length quantity
-        L = self._byvel._check_and_size_input(L)
+        L = self._byvel._check_and_size_input(L, input_alt=self._byalt.h,
+                                              input_vel=self._byvel.M)
         check_length_dimensioned(L)
         self._L = L
 
