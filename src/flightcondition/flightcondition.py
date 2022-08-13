@@ -180,8 +180,8 @@ class Velocity(DimensionalData):
         inpvar = inpvar.magnitude * unit(str(inpvar.units))
 
         # Require altitude and speed arrays to be equal or singular speed array
-        wrongsize_msg = ("Input arrays for altitude and airspeed must either "
-                         "equal in size or one must be singular.")
+        # TODO 2022-08-12: get this to work with length
+        wrongsize_msg = ("Non-singular input arrays must be equal in size.")
         if np.shape(self._byalt.h):  # if altitude is an array
             if np.shape(inpvar):  # if inpvar is an array
                 if not inpvar.size == self._byalt.h.size:
@@ -942,7 +942,6 @@ class FlightCondition(DimensionalData):
         """
         self.byalt.unit_system = unit_system
 
-    @to_base_units_wrapper
     def redim_force(self, S_ref):
         """Factor to redimensionalize force from force coefficient e.g.,
 
@@ -958,9 +957,16 @@ class FlightCondition(DimensionalData):
             force: Redimensionalization factor
         """
         check_area_dimensioned(S_ref)
-        return self.byvel.q_inf * S_ref
+        redim_force = self.byvel.q_inf * S_ref
 
-    @to_base_units_wrapper
+        # Set to force unit since to_base_units() gives mass*length/time^2
+        if self.unit_system == 'US':
+            redim_force.ito('lbf')
+        elif self.unit_system == 'SI':
+            redim_force.ito('N')
+
+        return redim_force
+
     def redim_moment(self, S_ref, L):
         """Factor to redimensionalize moment from moment coefficient e.g.,
 
@@ -978,4 +984,12 @@ class FlightCondition(DimensionalData):
         """
         check_area_dimensioned(S_ref)
         check_length_dimensioned(L)
-        return self.byvel.q_inf * S_ref * L
+        redim_moment = self.byvel.q_inf * S_ref * L
+
+        # Set to force unit since to_base_units() gives mass*length/time^2
+        if self.unit_system == 'US':
+            redim_moment.ito('ft lbf')
+        elif self.unit_system == 'SI':
+            redim_moment.ito('m N')
+
+        return redim_moment
