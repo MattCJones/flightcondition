@@ -48,8 +48,8 @@ class NonDimensional:
         return U/a
 
     @staticmethod
-    def mach_airspeed(M, a):
-        """Compute airspeed from Mach number
+    def mach_velocity(M, a):
+        """Compute velocity from Mach number
 
         Args:
             M (dimless): Mach number
@@ -67,15 +67,47 @@ class NonDimensional:
         forces.
 
         Args:
-            U (speed): Length scale
+            U (speed): Velocity
             L (length): Length scale
-            nu (length^2/time): kinematic viscosity
+            nu (length^2/time): Kinematic viscosity
 
         Returns:
             dimless: Reynolds number
         """
         Re_L = U*L/nu
         return Re_L
+
+    @staticmethod
+    def reynolds_number_velocity(Re_L, L, nu):
+        """Compute velocity from Reynolds number, length, and kinematic
+        viscosity.
+
+        Args:
+            Re_L (dimless): Reynolds number
+            L (length): Length scale
+            nu (length^2/time): Kinematic viscosity
+
+        Returns:
+            speed: Velocity
+        """
+        U = Re_L*nu/L
+        return U
+
+    @staticmethod
+    def reynolds_number_length(Re_L, U, nu):
+        """Compute length from Reynolds number, velocity, and kinematic
+        viscosity.
+
+        Args:
+            Re_L (dimless): Reynolds number
+            U (speed): Velocity
+            nu (length^2/time): Kinematic viscosity
+
+        Returns:
+            speed: Velocity
+        """
+        L = Re_L*nu/U
+        return L
 
     @staticmethod
     def reynolds_per_length(U, nu, length_unit='in'):
@@ -107,7 +139,7 @@ class NonDimensional:
         in inches (length_unit='in').
 
         Args:
-            U (speed): True airspeed
+            U (speed): Velocity
             nu (speed^2/length): Kinematic viscosity
             length_unit (length): Desired length unit as string, ('in', 'mm',
                 'cm')

@@ -12,6 +12,8 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
+import warnings
+
 import numpy as np
 
 from flightcondition.atmosphere import Atmosphere
@@ -21,8 +23,8 @@ from flightcondition.common import AliasAttributes, DimensionalData,\
 from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.nondimensional import NonDimensional
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
-    check_dimensioned, check_length_dimensioned, check_US_length_units,\
-    to_base_units_wrapper
+    check_dimensioned, check_dimensionless, check_length_dimensioned,\
+    check_US_length_units, to_base_units_wrapper
 
 
 class Velocity(DimensionalData):
@@ -254,7 +256,7 @@ class Velocity(DimensionalData):
             speed: True airspeed
         """
         a_inf = self._byalt.a
-        TAS = NonDimensional.mach_airspeed(M, a_inf)
+        TAS = NonDimensional.mach_velocity(M, a_inf)
         return TAS
 
     @to_base_units_wrapper
@@ -326,7 +328,7 @@ class Velocity(DimensionalData):
         # Account for compressibility with the isentropic flow equation
         # M_should = __class__._isentropic_mach(p0=q_c, p=p_h0)  # DEPRECATED
         M = IsentropicFlow.M_from_p0_by_p((q_c+p_h0)/p_h0)
-        CAS = NonDimensional.mach_airspeed(M, a_h0)  # subsonic
+        CAS = NonDimensional.mach_velocity(M, a_h0)  # subsonic
         return CAS
 
     @to_base_units_wrapper
@@ -695,6 +697,16 @@ class Length(DimensionalData):
             U=self._byvel.TAS, L=self.L, nu=self._byalt.nu)
         return Re
 
+    @Re.setter
+    def Re(self, Re):
+        """Set Reynolds number :math:`Re`
+        Set the true airspeed based on Reynolds number and length scale. """
+        Re *= dimless  # add dimless for raw float input
+        Re = self._byvel._check_and_size_input(
+            Re, input_alt=self._byalt.h, input_vel=self._byvel.M)
+        self._byvel.TAS = NonDimensional.reynolds_number_velocity(
+            Re_L=Re, L=self.L, nu=self._byalt.nu)
+
     @_property_decorators
     def Kn(self):
         """Get Knudsen number :math:`K_n`"""
@@ -760,25 +772,29 @@ class FlightCondition(DimensionalData):
     """
 
     def __init__(
-        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
+        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None, Re=None,
         units="", **kwargs,
     ):
-        """Constructor based on altitude and input airspeed in terms of Mach
-        number, TAS, CAS, or EAS.  Input at least one format of airspeed at the
-        desired altitude.  All inputs must be dimensional unit quantities.
+        """Constructor based on altitude and input velocity in terms of Mach
+        number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
+        length scale.  Reynolds number can be input as an alternative to either
+        velocity or length scale but not both.  All inputs must be dimensional
+        unit quantities.
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
-            M (dimless): Mach number - aliases are 'mach', 'Mach', 'M_inf',
-                'mach_number'
-            TAS (speed): True airspeed - aliases are 'tas', 'true_airspeed',
-                'U_inf', 'V_inf'
-            CAS (speed): Calibrated airspeed - aliases are 'cas',
+            M (dimless): Velocity as Mach number - aliases are 'mach', 'Mach',
+                'M_inf', 'mach_number'
+            TAS (speed): Velocity as true airspeed - aliases are 'tas',
+                'true_airspeed', 'U_inf', 'V_inf'
+            CAS (speed): Velocity as calibrated airspeed - aliases are 'cas',
                 'calibrated_airspeed'
-            EAS (speed): Equivalent airspeed - aliases are 'eas',
+            EAS (speed): Velocity as equivalent airspeed - aliases are 'eas',
                 'equivalent_airspeed'
             L (length): Length scale - aliases are 'ell', 'bylen', 'length',
                 'length_scale', 'l'
+            Re (dimless): Reynolds number - alternative to velocity or length
+                scale but not both - aliases are 'Re_L', 'reynolds_number'
             units (str): Set to 'US' for US units or 'SI' for SI
         """
 
@@ -803,6 +819,9 @@ class FlightCondition(DimensionalData):
         L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
         if L is None:
             L = __class__._arg_from_alias(L_aliases, kwargs)
+        Re_aliases = ['Re_L', 'reynolds_number']
+        if Re is None:
+            Re = __class__._arg_from_alias(Re_aliases, kwargs)
 
         # Check if KTAS, KCAS, or KEAS input and append knots unit if so
         KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']
@@ -818,10 +837,10 @@ class FlightCondition(DimensionalData):
             KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
             EAS = None if KEAS is None else KEAS * unit('knots')
 
-        # Compute airspeed-based quantities
+        # Compute velocity-based quantities
         self.byvel = Velocity(self.byalt)
 
-        # Use Mach=0 if no airspeed is input
+        # Use Mach=0 if no velocity is input
         if M is None and TAS is None and CAS is None and EAS is None:
             M = 0*dimless
 
@@ -833,6 +852,9 @@ class FlightCondition(DimensionalData):
             self.byvel.CAS = CAS
         elif EAS is not None:
             self.byvel.EAS = EAS
+        elif Re is not None:
+            # Velocity is set based on Re and L - set dummy speed for now
+            self.byvel.M = 0
         else:
             raise TypeError("Input M, TAS, CAS, or EAS")
 
@@ -852,8 +874,14 @@ class FlightCondition(DimensionalData):
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
         if L is None:
-            L_unit = unit('ft') if self.units == 'US' else unit('m')
-            self.bylen.L = 1.0 * L_unit
+            if Re is None:
+                L_unit = unit('ft') if self.units == 'US' else unit('m')
+                self.bylen.L = 1.0 * L_unit
+            else:
+                Re *= dimless
+                check_dimensionless(Re)
+                self.bylen.L = NonDimensional.reynolds_number_length(
+                    Re, self.byvel.TAS, self.byalt.nu)
         else:  # length scale is input by user
             self.bylen.L = L
 
@@ -862,6 +890,13 @@ class FlightCondition(DimensionalData):
             if self.byalt.h.magnitude.all() == 0:
                 if check_US_length_units(L):
                     self.units = 'US'
+
+        # Velocity is set based on Re and L
+        if Re is not None:
+            if M is None or TAS is None or CAS is None or EAS is None:
+                msg = "Overriding velocity based on Reynolds number."
+                warnings.warn(msg)
+            self.bylen.Re = Re  # velocity is set based on Re and L
 
         # Initialize access by full quantity name through .byname.<name>
         self.byvel.byname = AliasAttributes(

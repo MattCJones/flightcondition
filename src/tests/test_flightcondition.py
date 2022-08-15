@@ -137,6 +137,25 @@ def test_reynolds_number():
     assert Re_test == myapprox(Re_truth)
 
 
+def test_reynolds_number_velocity():
+    """Test Reynolds number calculations. """
+
+    L = 5.34 * unit('ft')
+    h_geom = 44.5 * unit('km')
+    M_ = 0.93 * dimless
+    fc = FlightCondition(h_geom, M=M_, L=L)
+
+    # Set velocity based on Reynolds number
+    Re_arr = [1e4, 1e5, 1e6]
+    fc.bylen.Re = Re_arr
+    M_truth = [0.14933, 1.4933, 14.933] * dimless
+    assert_field(fc.byvel.M, M_truth)
+
+    # Check setting Re at initlization
+    fc2 = FlightCondition(h_geom, L=L, Re=Re_arr)
+    assert_field(fc.byvel.TAS, fc2.byvel.TAS)
+
+
 def test_access_byname():
     """Test that quantities are properly accessible by name. """
 

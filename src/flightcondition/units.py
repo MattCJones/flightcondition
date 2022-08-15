@@ -56,6 +56,18 @@ def check_dimensioned(inp):
                         " dimensional type 'Quantity' from pint package.")
 
 
+def check_dimensionless(inp):
+    """Check that input is dimensionless type Quantity from pint package.
+
+    Args:
+        inp (object): Object to assert as length dimensional type
+
+    """
+    if not (inp.check('[]')):
+        raise TypeError("Input value is not correctly typed! Use dimensionless"
+                        " dimensional unit.")
+
+
 def check_length_dimensioned(inp):
     """Check that input is length dimension type Quantity from pint package.
 
