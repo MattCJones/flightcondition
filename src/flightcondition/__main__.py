@@ -91,7 +91,7 @@ def _parse_args(args_arr):
         '--units', dest='units', metavar='', nargs=None,
         type=str, default="", help=f"Unit system, i.e. {dir(unit.sys)}")
     parser.add_argument(
-        '--abbreviated-output', dest='abbreviated_output', default=False,
+        '--no-full-output', dest='no_full_output', default=False,
         action='store_true', help="display abbreviated output")
     parser.add_argument(  # hidden option to turn off pretty print
         '--no-pretty-print', dest='no_pretty_print', default=False,
@@ -132,7 +132,7 @@ def main():
                          units=args.units)
 
     # Print output but catch common unicode exception
-    full_output = not args.abbreviated_output
+    full_output = not args.no_full_output
     try:
         print(fc.tostring(full_output=full_output,
               pretty_print=(not args.no_pretty_print)))
