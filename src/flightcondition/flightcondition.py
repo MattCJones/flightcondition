@@ -840,10 +840,6 @@ class FlightCondition(DimensionalData):
         # Compute velocity-based quantities
         self.byvel = Velocity(self.byalt)
 
-        # Use Mach=0 if no velocity is input
-        if M is None and TAS is None and CAS is None and EAS is None:
-            M = 0*dimless
-
         if M is not None:
             self.byvel.M = M
         elif TAS is not None:
@@ -856,16 +852,17 @@ class FlightCondition(DimensionalData):
             # Velocity is set based on Re and L - set dummy speed for now
             self.byvel.M = 0
         else:
-            raise TypeError("Input M, TAS, CAS, or EAS")
+            # Use Mach=0 if no velocity is input
+            self.byvel.M = 0*dimless
 
         # Check that computations are within valid Mach number limits
-        M = np.atleast_1d(self.byvel.M)
+        M_ = np.atleast_1d(self.byvel.M)
         self._mach_min = 0 * dimless
         self._mach_max = 30 * dimless
-        if (M < self._mach_min).any() or (self._mach_max < M).any():
+        if (M_ < self._mach_min).any() or (self._mach_max < M_).any():
             raise ValueError(
                 f"Mach number is out of bounds "
-                f"({self._mach_min:.5g} < M < {self._mach_max:.5g})"
+                f"({self._mach_min:.5g} < M_ < {self._mach_max:.5g})"
             )
 
         # Compute length-scale-based quantities
@@ -893,7 +890,10 @@ class FlightCondition(DimensionalData):
 
         # Velocity is set based on Re and L
         if Re is not None:
-            if M is None or TAS is None or CAS is None or EAS is None:
+            if (M is not None
+                    or TAS is not None
+                    or CAS is not None
+                    or EAS is not None):
                 msg = "Overriding velocity based on Reynolds number."
                 warnings.warn(msg)
             self.bylen.Re = Re  # velocity is set based on Re and L
