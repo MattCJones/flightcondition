@@ -22,6 +22,8 @@ import pytest
 from numpy import array
 
 from flightcondition import Atmosphere, FlightCondition, unit, dimless
+from flightcondition.boundarylayer import BoundaryLayer
+from flightcondition.nondimensional import NonDimensional
 from common import assert_field, myapprox
 
 h_geom_arr = [0, 30e3] * unit('ft')
@@ -123,6 +125,60 @@ def test_other_vel_properties():
     assert_field(fc.byvel.Re_by_L, Re_by_L_truth)
 
 
+def test_other_len_properties():
+    """Test other length property calculations. """
+
+    fc = FlightCondition(h_geom_arr, TAS=300*unit('knots'), L=1*unit.ft,
+                         units='US')
+
+    Re_truth = array([3.2204e+6, 1.4516e+6]) * dimless
+    assert_field(fc.bylen.Re, Re_truth)
+
+    h_BL_lamr_truth = array([0.0348, 0.0518]) * unit('in')
+    assert_field(fc.bylen.h_BL_lamr.to('in'), h_BL_lamr_truth, reltol=0.04)
+
+    h_BL_turb_truth = array([0.2245, 0.2633]) * unit('in')
+    assert_field(fc.bylen.h_BL_turb.to('in'), h_BL_turb_truth, reltol=0.04)
+
+    Cf_lamr_truth = array([0.00074, 0.0011]) * dimless
+    assert_field(fc.bylen.Cf_lamr, Cf_lamr_truth, reltol=0.005)
+
+    Cf_turb_truth = array([0.0036, 0.0042]) * dimless
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    # Test all skin friction methods
+    x = fc.bylen.L
+    Re_x = NonDimensional.reynolds_number(U=fc.byvel.TAS, L=x, nu=fc.byalt.nu)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='granville1977')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='ittc1957')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='schultz_grunov1940')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='prandtl_schlichting1932')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='prandtl1927')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='schlichting')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='powerlaw')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+
 def test_reynolds_number():
     """Test Reynolds number calculations. """
 
@@ -177,18 +233,18 @@ def test_access_byname():
 
     assert fc.bylen.Re == fc.bylen.byname.reynolds_number
 
-    # # Check that base object .byname works properly
-    # assert fc.byname.pressure == fc.byalt.byname.pressure
-    # assert fc.byname.temperature == fc.byalt.byname.temperature
-    # assert fc.byname.density == fc.byalt.byname.density
-    # assert fc.byname.kinematic_viscosity == fc.byalt.byname.kinematic_viscosity
+    # Check that base object .byname works properly
+    assert fc.byname.pressure == fc.byalt.byname.pressure
+    assert fc.byname.temperature == fc.byalt.byname.temperature
+    assert fc.byname.density == fc.byalt.byname.density
+    assert fc.byname.kinematic_viscosity == fc.byalt.byname.kinematic_viscosity
 
-    # assert fc.byname.mach_number == fc.byvel.byname.mach_number
-    # assert fc.byname.true_airspeed == fc.byvel.byname.true_airspeed
-    # assert fc.byname.calibrated_airspeed == fc.byvel.byname.calibrated_airspeed
-    # assert fc.byname.equivalent_airspeed == fc.byvel.byname.equivalent_airspeed
+    assert fc.byname.mach_number == fc.byvel.byname.mach_number
+    assert fc.byname.true_airspeed == fc.byvel.byname.true_airspeed
+    assert fc.byname.calibrated_airspeed == fc.byvel.byname.calibrated_airspeed
+    assert fc.byname.equivalent_airspeed == fc.byvel.byname.equivalent_airspeed
 
-    # assert fc.byname.reynolds_number == fc.bylen.byname.reynolds_number
+    assert fc.byname.reynolds_number == fc.bylen.byname.reynolds_number
 
 
 def test_input_altitude_bounds():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Compute non-dimensional flow quantities.
 
-Dependencies:
+Dependencies: numpy, pint
 
 Author: Matthew C. Jones
 Email: matt.c.jones.aoe@gmail.com

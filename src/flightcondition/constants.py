@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""
-Dimensioned constants.
+"""Dimensioned constants.
 
 Dependencies: numpy, pint
 

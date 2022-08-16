@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-"""Provide dimensional units for mathematical operations.
-Using the pint package.
+"""Provide dimensional units for mathematical operations using the pint
+package.
 
 Dependencies: pint
 

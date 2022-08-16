@@ -265,21 +265,21 @@ abbreviated output:
     Flight Condition (units=US, full_output=False)
     ===========================================================
     ------------------  Altitude Quantities  ------------------
-    geometric_altitude             h       = 23 kft
-    pressure                       p       = 857.25 lbf/ft²
-    temperature                    T       = 436.74 °R
-    density                        rho     = 0.0011435 slug/ft³
-    sound_speed                    a       = 1024.5 ft/s
-    kinematic_viscosity            nu      = 2.8509×10⁻⁴ ft²/s
+    geometric_altitude             h          = 23 kft
+    pressure                       p          = 857.25 lbf/ft²
+    temperature                    T          = 436.74 °R
+    density                        rho        = 0.0011435 slug/ft³
+    sound_speed                    a          = 1024.5 ft/s
+    kinematic_viscosity            nu         = 2.8509×10⁻⁴ ft²/s
     ------------------  Velocity Quantities  ------------------
-    true_airspeed                  TAS     = 335.93 kt
-    calibrated_airspeed            CAS     = 238.14 kt
-    equivalent_airspeed            EAS     = 233 kt
-    mach_number                    M       = 0.55344
-    reynolds_per_length            Re_by_L = 1.6573×10⁵ 1/in
+    true_airspeed                  TAS        = 335.93 kt
+    calibrated_airspeed            CAS        = 238.14 kt
+    equivalent_airspeed            EAS        = 233 kt
+    mach_number                    M          = 0.55344
+    reynolds_per_length            Re_by_L    = 1.6573×10⁵ 1/in
     ------------------   Length Quantities   ------------------
-    length_scale                   L       = 4 ft
-    reynolds_number                Re      = 7.9551×10⁶
+    length_scale                   L          = 4 ft
+    reynolds_number                Re         = 7.9551×10⁶
 
 Alternatively use the :code:`--KEAS 233` syntactic sugar to omit the
 :code:`knots` unit.  See also :code:`--KTAS` and  :code:`--KCAS`.

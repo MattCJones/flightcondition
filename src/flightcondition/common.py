@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Common classes and functions.
 
-Dependencies:
+Dependencies: numpy, pint
 
 Author: Matthew C. Jones
 Email: matt.c.jones.aoe@gmail.com
@@ -154,7 +154,7 @@ class DimensionalData:
                            f"{var.units:{pp_}}")
         else:
             var_val_str = f"{var:{fmt_val}{pp_}}"
-        var_str = f"{var_name:{max_var_chars}s} {var_str:7s} = {var_val_str}"
+        var_str = f"{var_name:{max_var_chars}s} {var_str:10s} = {var_val_str}"
         return var_str
 
     @staticmethod

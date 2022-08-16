@@ -17,6 +17,7 @@ import warnings
 import numpy as np
 
 from flightcondition.atmosphere import Atmosphere
+from flightcondition.boundarylayer import BoundaryLayer
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.common import AliasAttributes, DimensionalData,\
     _len1array_to_scalar, _property_decorators
@@ -227,7 +228,8 @@ class Velocity(DimensionalData):
             pressure: Impact pressure
         """
         # p0 = p + q_c
-        p0 = Velocity._stagnation_pressure(M=M, p=p)
+        y = Phys.gamma_air
+        p0 = IsentropicFlow.p0_by_p(M, y)*p
         q_c = p0 - p
         return q_c
 
@@ -421,89 +423,6 @@ class Velocity(DimensionalData):
         q_inf = 0.5*rho*TAS**2
         return q_inf
 
-    @staticmethod
-    def _stagnation_pressure(M, p, y=Phys.gamma_air):
-        """Equation for stagnation pressure, i.e. bringing flow to rest
-        isentropically.
-
-        Assumes:
-            Adiabatic
-            Reversible
-
-        Args:
-            M (dimless): Mach number
-            p (pressure): Static pressure
-            y (dimless): ratio of specific heats
-
-        Returns:
-            pressure: Stagnation pressure
-        """
-        p0 = IsentropicFlow.p0_by_p(M, y)*p
-        return p0
-
-    @staticmethod
-    def _stagnation_temperature(M, T, y=Phys.gamma_air):
-        """Adiabatic flow equation for stagnation temperature, i.e. temperature
-        brought to rest isentropically (note that the equation does not assume
-        isentropic flow).
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-
-        T0 = IsentropicFlow.T0_by_T(M, y)*T
-        return T0
-
-    @staticmethod
-    def _recovery_temperature_laminar(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
-        """Adiabiatic wall temperature on infinite flat plate in laminar flow.
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-            Pr (dimless): Prandtl number
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-        r = Pr**(1/2)
-        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
-        return T0
-
-    @staticmethod
-    def _recovery_temperature_turbulent(M, T, y=Phys.gamma_air,
-                                        Pr=Phys.Pr_air):
-        """Adiabiatic wall temperature on infinite flat plate in turbulent
-        flow.
-
-        Assumes:
-            Adiabatic
-
-        Args:
-            M (pressure): Mach number
-            T (temperature): Static (ambient) temperature
-            y (dimless): ratio of specific heats
-            Pr (dimless): Prandtl number
-
-        Returns:
-            temperature: Stagnation temperature
-        """
-        r = Pr**(1/3)
-        T0 = IsentropicFlow.T0_by_T(M, y, r)*T
-        return T0
-
     @_property_decorators
     def M(self):
         """Get Mach number :math:`M` """
@@ -580,28 +499,33 @@ class Velocity(DimensionalData):
     @_property_decorators
     def p0(self):
         """Get stagnation pressure :math:`p_0`"""
-        p0 = self._q_inf_from_TAS(TAS=self.TAS, rho=self._byalt.rho)
-        p0 = __class__._stagnation_pressure(M=self.M, p=self._byalt.p)
+        M = self.M
+        p = self._byalt.p
+        y = Phys.gamma_air
+        p0 = IsentropicFlow.p0_by_p(M, y)*p
         return p0
 
     @_property_decorators
     def T0(self):
         """Get stagnation temperature :math:`T_0`"""
-        T0 = __class__._stagnation_temperature(M=self.M, T=self._byalt.T)
+        M = self.M
+        T = self._byalt.T
+        y = Phys.gamma_air
+        T0 = IsentropicFlow.T0_by_T(M, y)*T
         return T0
 
     @_property_decorators
     def Tr_lamr(self):
         """Get recovery temperature (laminar) :math:`Tr_{laminar}`"""
-        Tr_lamr = __class__._recovery_temperature_laminar(M=self.M,
-                                                          T=self._byalt.T)
+        Tr_lamr = BoundaryLayer.recovery_temperature_laminar(
+            M=self.M, T=self._byalt.T)
         return Tr_lamr
 
     @_property_decorators
     def Tr_turb(self):
         """Get recovery temperature (turbulent) :math:`Tr_{turbulent}`"""
-        Tr_turb = __class__._recovery_temperature_turbulent(M=self.M,
-                                                            T=self._byalt.T)
+        Tr_turb = BoundaryLayer.recovery_temperature_turbulent(
+            M=self.M, T=self._byalt.T)
         return Tr_turb
 
     @_property_decorators
@@ -620,6 +544,11 @@ class Length(DimensionalData):
     varnames = {
         'L': 'length_scale',
         'Re': 'reynolds_number',
+        # 'Kn': 'knudsen_number',
+        'h_BL_turb': 'boundary_thickness_turbulent',
+        'h_BL_lamr': 'boundary_thickness_laminar',
+        'Cf_lamr': 'friction_coefficient_laminar',
+        'Cf_turb': 'friction_coefficient_turbulent',
     }
 
     def __init__(self, byalt, byvel):
@@ -652,8 +581,10 @@ class Length(DimensionalData):
 
         if units == 'US':
             L_units = 'ft'
+            h_BL_units = 'in'
         else:  # default to SI units
             L_units = 'm'
+            h_BL_units = 'mm'
 
         # Insert longer variable name into output
         max_var_chars = max([
@@ -666,11 +597,28 @@ class Length(DimensionalData):
             pretty_print=pretty_print)
         Re_str = self._vartostr(
             var=self.Re, var_str='Re', to_units='',
-            max_var_chars=max_var_chars, fmt_val="10.4e",
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
+        h_BL_lamr_str = self._vartostr(
+            var=self.h_BL_lamr, var_str='h_BL_lamr', to_units=h_BL_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
+        h_BL_turb_str = self._vartostr(
+            var=self.h_BL_turb, var_str='h_BL_turb', to_units=h_BL_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
+        Cf_lamr_str = self._vartostr(
+            var=self.Cf_lamr, var_str='Cf_lamr', to_units=dimless,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
+        Cf_turb_str = self._vartostr(
+            var=self.Cf_turb, var_str='Cf_turb', to_units=dimless,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
             pretty_print=pretty_print)
 
         if full_output:
-            repr_str = (f"{L_str}\n{Re_str}")
+            repr_str = (f"{L_str}\n{Re_str}\n{h_BL_lamr_str}\n"
+                        f"{h_BL_turb_str}\n{Cf_lamr_str}\n{Cf_turb_str}")
         else:
             repr_str = (f"{L_str}\n{Re_str}")
 
@@ -707,11 +655,49 @@ class Length(DimensionalData):
         self._byvel.TAS = NonDimensional.reynolds_number_velocity(
             Re_L=Re, L=self.L, nu=self._byalt.nu)
 
+    # @_property_decorators  # disable for now
+    # def Kn(self):
+    #     """Get Knudsen number :math:`K_n`"""
+    #     Kn = NonDimensional.knudsen_number(self.L, self._byalt.MFP)
+    #     return Kn
+
     @_property_decorators
-    def Kn(self):
-        """Get Knudsen number :math:`K_n`"""
-        Kn = NonDimensional.knudsen_number(self.L, self._byalt.MFP)
-        return Kn
+    def h_BL_lamr(self):
+        """Get laminar Boundary Layer Thickness :math:`\\h_BL_{lamr}` """
+        x = self.L
+        Re_x = NonDimensional.reynolds_number(
+            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+        h_BL_lamr = BoundaryLayer.flat_plate_boundary_layer_lamr(
+            x=self.L, Re_x=Re_x)
+        return h_BL_lamr
+
+    @_property_decorators
+    def h_BL_turb(self):
+        """Get turbulent Boundary Layer Thickness :math:`\\h_BL_{turb}` """
+        x = self.L
+        Re_x = NonDimensional.reynolds_number(
+            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+        h_BL_turb = BoundaryLayer.flat_plate_boundary_layer_turb(
+            x=self.L, Re_x=Re_x)
+        return h_BL_turb
+
+    @_property_decorators
+    def Cf_lamr(self):
+        """Get laminar skin friction coefficient :math:`\\Cf_{lamr}` """
+        x = self.L
+        Re_x = NonDimensional.reynolds_number(
+            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+        Cf_lamr = BoundaryLayer.flat_plate_skin_friction_coeff_lamr(Re_x=Re_x)
+        return Cf_lamr
+
+    @_property_decorators
+    def Cf_turb(self):
+        """Get turbulent skin friction coefficient :math:`\\Cf_{turb}` """
+        x = self.L
+        Re_x = NonDimensional.reynolds_number(
+            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+        Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(Re_x=Re_x)
+        return Cf_turb
 
 
 class FlightCondition(DimensionalData):

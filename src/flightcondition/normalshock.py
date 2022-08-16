@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Compute normal shock quantities.
 
-Dependencies:
+Dependencies: numpy, pint
 
 Author: Matthew C. Jones
 Email: matt.c.jones.aoe@gmail.com
