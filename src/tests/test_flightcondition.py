@@ -151,23 +151,7 @@ def test_other_len_properties():
     Re_x = NonDimensional.reynolds_number(U=fc.byvel.TAS, L=x, nu=fc.byalt.nu)
 
     Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='granville1977')
-    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
-
-    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='ittc1957')
-    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
-
-    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='schultz_grunov1940')
-    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
-
-    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='prandtl_schlichting1932')
-    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
-
-    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='prandtl1927')
+        Re_x=Re_x, source='calibrated_powerlaw')
     assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
 
     Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
@@ -175,24 +159,52 @@ def test_other_len_properties():
     assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
 
     Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-        Re_x=Re_x, source='powerlaw')
+        Re_x=Re_x, source='prandtl1927')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='prandtl_schlichting1932')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='schultz_grunov1940')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='ittc1957')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='granville1977')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='roskam1987')
+    assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+        Re_x=Re_x, source='white2006')
     assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
 
     # Test yplus computations
     wall_distance_from_yplus1 = fc.bylen.wall_distance_from_yplus(1)
     wall_distance_from_yplus1.ito('m')
     wall_distance_from_yplus1_truth = [2.4e-6, 5.0e-6] * unit.m
-    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
+    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth,
+                 reltol=0.10)
+    assert_field(wall_distance_from_yplus1, fc.bylen.h_yplus1)
 
     wall_distance_from_yplus30 = fc.bylen.wall_distance_from_yplus(30)
     wall_distance_from_yplus30.ito('m')
     wall_distance_from_yplus30_truth = [7.2e-5, 1.5e-4] * unit.m
-    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
+    assert_field(wall_distance_from_yplus30, wall_distance_from_yplus30_truth,
+                 reltol=0.10)
 
     wall_distance_from_yplus100 = fc.bylen.wall_distance_from_yplus(100)
     wall_distance_from_yplus100.ito('m')
     wall_distance_from_yplus100_truth = [2.4e-4, 5.0e-4] * unit.m
-    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
+    assert_field(wall_distance_from_yplus100, wall_distance_from_yplus100_truth,
+                 reltol=0.10)
 
 
 def test_reynolds_number():

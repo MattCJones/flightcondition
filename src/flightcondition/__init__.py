@@ -12,6 +12,7 @@ import importlib.metadata
 
 from .atmosphere import Atmosphere
 from .flightcondition import FlightCondition
+from .boundarylayer import BoundaryLayer
 from .isentropicflow import IsentropicFlow
 from .normalshock import NormalShock
 from .units import unit, dimless, printv

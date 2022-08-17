@@ -102,15 +102,26 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Calibrated airspeed :code:`CAS`
    * Equivalent airspeed :code:`EAS`
    * Mach number :code:`M`
+   * Mach angle :code:`mu_M`
    * Dynamic pressure :code:`q_inf`
    * Impact pressure :code:`q_c`
    * Stagnation pressure :code:`p_0`
    * Stagnation temperature :code:`T_0`
+   * Recovery temperature (laminar) :code:`Tr_lamr`
+   * Recovery temperature (turbulent) :code:`Tr_turb`
    * Reynolds number per unit length :code:`Re_by_L`
 
 #. :code:`bylen` *length-scale* quantities:
    
+   * Length scale :code:`L`
    * Reynolds number :code:`Re`
+   * Boundary layer thickness (laminar) :code:`h_BL_lamr`
+   * Boundary layer thickness (turbulent) :code:`h_BL_turb`
+   * Flat plate skin friction coefficient (laminar) :code:`Cf_lamr`
+   * Flat plate skin friction coefficient (turbulent) :code:`Cf_turb`
+   * Boundary layer thickness (laminar) :code:`h_BL_lamr`
+   * Boundary layer thickness (turbulent) :code:`h_BL_turb`
+   * Wall distance where :math:`y^+=1` :code:`h_yplus1`
 
 Quantities may be accessed using the specific :code:`byalt`, :code:`byvel`, or
 :code:`bylen` object.  Quantities may also be accessed using their full name with

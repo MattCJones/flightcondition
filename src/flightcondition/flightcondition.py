@@ -545,8 +545,8 @@ class Length(DimensionalData):
         'L': 'length_scale',
         'Re': 'reynolds_number',
         # 'Kn': 'knudsen_number',
-        'h_BL_turb': 'boundary_thickness_turbulent',
         'h_BL_lamr': 'boundary_thickness_laminar',
+        'h_BL_turb': 'boundary_thickness_turbulent',
         'Cf_lamr': 'friction_coefficient_laminar',
         'Cf_turb': 'friction_coefficient_turbulent',
         'h_yplus1': 'wall_distance_yplus1',
@@ -632,7 +632,8 @@ class Length(DimensionalData):
 
     @to_base_units_wrapper
     def wall_distance_from_yplus(self, yplus):
-        """Compute wall distance from yplus value.
+        """Compute wall distance from yplus value.  Assume turbulent flow over
+        a flat plate.
 
         :math:`y^+ = \\frac{y u_\\tau}{\\nu}`
 
@@ -731,15 +732,13 @@ class Length(DimensionalData):
     @_property_decorators
     def Cf_turb(self):
         """Get turbulent skin friction coefficient :math:`\\Cf_{turb}` """
-        x = self.L
-        Re_x = NonDimensional.reynolds_number(
-            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
-        Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(Re_x=Re_x)
+        Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
+            Re_x=self.Re, M=self._byvel.M)
         return Cf_turb
 
     @_property_decorators
     def h_yplus1(self):
-        """Get height from wall where yplus=1. """
+        """Get height from flat plate wall in turbulent flow where yplus=1. """
         h_yplus1 = self.wall_distance_from_yplus(1)
         return h_yplus1
 
