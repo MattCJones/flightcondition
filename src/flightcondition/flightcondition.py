@@ -549,6 +549,7 @@ class Length(DimensionalData):
         'h_BL_lamr': 'boundary_thickness_laminar',
         'Cf_lamr': 'friction_coefficient_laminar',
         'Cf_turb': 'friction_coefficient_turbulent',
+        'h_yplus1': 'wall_distance_yplus1',
     }
 
     def __init__(self, byalt, byvel):
@@ -615,14 +616,51 @@ class Length(DimensionalData):
             var=self.Cf_turb, var_str='Cf_turb', to_units=dimless,
             max_var_chars=max_var_chars, fmt_val="10.5g",
             pretty_print=pretty_print)
+        h_yplus1_str = self._vartostr(
+            var=self.h_yplus1, var_str='h_yplus1', to_units=h_BL_units,
+            max_var_chars=max_var_chars, fmt_val="10.5g",
+            pretty_print=pretty_print)
 
         if full_output:
             repr_str = (f"{L_str}\n{Re_str}\n{h_BL_lamr_str}\n"
-                        f"{h_BL_turb_str}\n{Cf_lamr_str}\n{Cf_turb_str}")
+                        f"{h_BL_turb_str}\n{Cf_lamr_str}\n{Cf_turb_str}\n"
+                        f"{h_yplus1_str}")
         else:
             repr_str = (f"{L_str}\n{Re_str}")
 
         return repr_str
+
+    @to_base_units_wrapper
+    def wall_distance_from_yplus(self, yplus):
+        """Compute wall distance from yplus value.
+
+        :math:`y^+ = \\frac{y u_\\tau}{\\nu}`
+
+        where
+
+        :math:`u_\\tau = \\sqrt{\\frac{\\tau_w}{\\rho}}
+
+        Args:
+            yplus (dimless): yplus value
+
+        Returns:
+            length: Distance from wall
+        """
+        yplus *= dimless
+        check_dimensionless(yplus)
+
+        rho = self._byalt.rho
+        nu = self._byalt.nu
+        q_inf = self._byvel.q_inf
+        with warnings.catch_warnings():  # catch warning for divide by 0
+            warnings.simplefilter("ignore")
+            Cf_turb = self.Cf_turb
+
+            tau_wall = Cf_turb*q_inf
+            u_tau = np.sqrt(tau_wall/rho)
+            y = yplus*nu/u_tau
+
+        return y
 
     @_property_decorators
     def L(self):
@@ -698,6 +736,12 @@ class Length(DimensionalData):
             U=self._byvel.TAS, L=x, nu=self._byalt.nu)
         Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(Re_x=Re_x)
         return Cf_turb
+
+    @_property_decorators
+    def h_yplus1(self):
+        """Get height from wall where yplus=1. """
+        h_yplus1 = self.wall_distance_from_yplus(1)
+        return h_yplus1
 
 
 class FlightCondition(DimensionalData):
@@ -870,9 +914,10 @@ class FlightCondition(DimensionalData):
 
             # If altitude is 0, but length scale is input, determine if US
             # units based on the input length scale
-            if self.byalt.h.magnitude.all() == 0:
-                if check_US_length_units(L):
-                    self.units = 'US'
+            if units == "":
+                if self.byalt.h.magnitude.all() == 0:
+                    if check_US_length_units(L):
+                        self.units = 'US'
 
         # Velocity is set based on Re and L
         if Re is not None:

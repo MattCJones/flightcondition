@@ -10,6 +10,8 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
+import warnings
+
 import numpy as np
 
 from flightcondition.constants import PhysicalConstants as Phys
@@ -71,7 +73,9 @@ class BoundaryLayer:
         Returns:
             length: boundary layer thickness
         """
-        delta_lamr = 5.0*x/Re_x**0.5
+        with warnings.catch_warnings():  # catch warning for divide by 0
+            warnings.simplefilter("ignore")
+            delta_lamr = 5.0*x/Re_x**0.5
         return delta_lamr
 
     @staticmethod
@@ -85,7 +89,11 @@ class BoundaryLayer:
         Returns:
             length: boundary layer thickness
         """
-        delta_turb = 0.37*x/Re_x**0.2
+        # Derivation of Prandtl (1927),
+        # Eq. 7.43 in Boundary Layer Analysis 2nd. Ed. by Schetz and Bowersox
+        with warnings.catch_warnings():  # catch warning for divide by 0
+            warnings.simplefilter("ignore")
+            delta_turb = 0.375*x/Re_x**0.2
         return delta_turb
 
     @staticmethod
@@ -105,7 +113,9 @@ class BoundaryLayer:
             length: skin friction coefficient
         """
         # Total, integrated, Cf is 2 times local Cf
-        Cf_lamr = 2*0.664*Re_x**(-0.5)
+        with warnings.catch_warnings():  # catch warning for divide by 0
+            warnings.simplefilter("ignore")
+            Cf_lamr = 2*0.664*Re_x**(-0.5)
         return Cf_lamr
 
     @staticmethod
@@ -124,23 +134,25 @@ class BoundaryLayer:
         Returns:
             length: skin friction coefficient
         """
-        # See https://www.cfd-online.com/Wiki/Skin_friction_coefficient
-        if source == 'granville1977':
-            Cf_turb = 0.0776*(np.log10(Re_x) - 1.88)**(-2) + 60*Re_x**(-1)
-        elif source == 'ittc1957':
-            Cf_turb = 0.075*(np.log10(Re_x) - 2)**(-2)
-        elif source == 'schultz_grunov1940':
-            Cf_turb = 0.427*(np.log10(Re_x) - 0.407)**(-2.64)
-        elif source == 'prandtl_schlichting1932':
-            Cf_turb = 0.455*(np.log10(Re_x))**(-2.58)
-        elif source == 'prandtl1927':
-            Cf_turb = 0.074*Re_x**(-0.2)
-        elif source == 'schlichting':  # only valid for Re_x < 1e9
-            Cf_turb = (2*np.log10(Re_x) - 0.65)**(-2.3)
-        elif source == 'powerlaw':  # only valid for 5e5 < Re_x < 1e7
-            Cf_turb = 0.0592*Re_x**(-0.2)
-        else:
-            raise ValueError(
-                f"Input reference is invalid: {source}\n\tSee source code."
-            )
+        with warnings.catch_warnings():  # catch warning for divide by 0
+            warnings.simplefilter("ignore")
+            # See https://www.cfd-online.com/Wiki/Skin_friction_coefficient
+            if source == 'granville1977':
+                Cf_turb = 0.0776*(np.log10(Re_x) - 1.88)**(-2) + 60*Re_x**(-1)
+            elif source == 'ittc1957':
+                Cf_turb = 0.075*(np.log10(Re_x) - 2)**(-2)
+            elif source == 'schultz_grunov1940':
+                Cf_turb = 0.427*(np.log10(Re_x) - 0.407)**(-2.64)
+            elif source == 'prandtl_schlichting1932':
+                Cf_turb = 0.455*(np.log10(Re_x))**(-2.58)
+            elif source == 'prandtl1927':
+                Cf_turb = 0.074*Re_x**(-0.2)
+            elif source == 'schlichting':  # only valid for Re_x < 1e9
+                Cf_turb = (2*np.log10(Re_x) - 0.65)**(-2.3)
+            elif source == 'powerlaw':  # only valid for 5e5 < Re_x < 1e7
+                Cf_turb = 0.0592*Re_x**(-0.2)
+            else:
+                raise ValueError(
+                    f"Input reference is invalid: {source}\n\tSee source code."
+                )
         return Cf_turb

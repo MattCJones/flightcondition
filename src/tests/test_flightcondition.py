@@ -138,7 +138,7 @@ def test_other_len_properties():
     assert_field(fc.bylen.h_BL_lamr.to('in'), h_BL_lamr_truth, reltol=0.04)
 
     h_BL_turb_truth = array([0.2245, 0.2633]) * unit('in')
-    assert_field(fc.bylen.h_BL_turb.to('in'), h_BL_turb_truth, reltol=0.04)
+    assert_field(fc.bylen.h_BL_turb.to('in'), h_BL_turb_truth, reltol=0.001)
 
     Cf_lamr_truth = array([0.00074, 0.0011]) * dimless
     assert_field(fc.bylen.Cf_lamr, Cf_lamr_truth, reltol=0.005)
@@ -177,6 +177,22 @@ def test_other_len_properties():
     Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
         Re_x=Re_x, source='powerlaw')
     assert_field(fc.bylen.Cf_turb, Cf_turb_truth, reltol=0.05)
+
+    # Test yplus computations
+    wall_distance_from_yplus1 = fc.bylen.wall_distance_from_yplus(1)
+    wall_distance_from_yplus1.ito('m')
+    wall_distance_from_yplus1_truth = [2.4e-6, 5.0e-6] * unit.m
+    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
+
+    wall_distance_from_yplus30 = fc.bylen.wall_distance_from_yplus(30)
+    wall_distance_from_yplus30.ito('m')
+    wall_distance_from_yplus30_truth = [7.2e-5, 1.5e-4] * unit.m
+    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
+
+    wall_distance_from_yplus100 = fc.bylen.wall_distance_from_yplus(100)
+    wall_distance_from_yplus100.ito('m')
+    wall_distance_from_yplus100_truth = [2.4e-4, 5.0e-4] * unit.m
+    assert_field(wall_distance_from_yplus1, wall_distance_from_yplus1_truth, reltol=0.10)
 
 
 def test_reynolds_number():
