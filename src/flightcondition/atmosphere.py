@@ -164,14 +164,17 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    def __init__(self, h=None, units="", **kwargs):
+    def __init__(self, h=None, units="", full_output=None, **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
             units (str): Set to 'US' for US units or 'SI' for SI
+            full_output (bool): Set to True for full output
         """
+        self.full_output = full_output
+
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]
         self._H_max = Atmo.H_base[-1]
@@ -202,7 +205,7 @@ class Atmosphere(DimensionalData):
         self.byname = AliasAttributes(varsobj_arr=[self, ],
                                       varnames_dict_arr=[__class__.varnames, ])
 
-    def tostring(self, full_output=True, units=None, max_var_chars=0,
+    def tostring(self, full_output=None, units=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
@@ -284,6 +287,14 @@ class Atmosphere(DimensionalData):
                                  max_var_chars=max_var_chars,
                                  fmt_val="10.4e", pretty_print=pretty_print)
 
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
+        # Assemble output string
         if full_output:
             if type(self.layer.name) is np.str_:  # singular string
                 trunc_layer_name = self.layer.name
@@ -378,6 +389,25 @@ class Atmosphere(DimensionalData):
         else:
             self._units = units
             unit.default_system = units
+
+    @property
+    def full_output(self):
+        """Enable or disable full output of data by default.
+
+        Returns:
+            bool: Full output flag
+        """
+        return self._full_output
+
+    @full_output.setter
+    def full_output(self, full_output):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Args:
+            full_output (bool): Full output flag
+        """
+        self._full_output = full_output
 
     @_property_decorators
     def h(self):

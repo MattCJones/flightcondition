@@ -57,7 +57,7 @@ class Velocity(DimensionalData):
         h0 = 0 * unit('kft')
         self._atm0 = Atmosphere(h0)
 
-    def tostring(self, full_output=True, units=None, max_var_chars=0,
+    def tostring(self, full_output=None, units=None, max_var_chars=0,
                  pretty_print=True):
         """String representation of data structure.
 
@@ -155,6 +155,7 @@ class Velocity(DimensionalData):
                 max_var_chars=max_var_chars, fmt_val="10.5g",
                 pretty_print=pretty_print) + "\n"
 
+        # Assemble output string
         if full_output:
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}"
                         f"{q_inf_str}{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}"
@@ -802,7 +803,7 @@ class FlightCondition(DimensionalData):
 
     def __init__(
         self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None, Re=None,
-        units="", **kwargs,
+        units="", full_output=None, **kwargs,
     ):
         """Constructor based on altitude and input velocity in terms of Mach
         number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
@@ -825,11 +826,13 @@ class FlightCondition(DimensionalData):
             Re (dimless): Reynolds number - alternative to velocity or length
                 scale but not both - aliases are 'Re_L', 'reynolds_number'
             units (str): Set to 'US' for US units or 'SI' for SI
+            full_output (bool): Set to True for full output
         """
 
         # Preprocess needed altitude-based quantities
         # Automatically process altitude through Atmosphere class
-        self.byalt = Atmosphere(h=h, units=units, **kwargs)
+        self.byalt = Atmosphere(h=h, units=units, full_output=full_output,
+                                **kwargs)
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -971,9 +974,18 @@ class FlightCondition(DimensionalData):
         Returns:
             str: String representation
         """
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
+        # Determine units
         if units is not None:
             self.units = units
 
+        # Determine maximum characters to add spaces for and assemble string
         max_var_chars = max([
             max([len(v) for v in Atmosphere.varnames.values()]),
             max([len(v) for v in Velocity.varnames.values()]),
@@ -1024,6 +1036,25 @@ class FlightCondition(DimensionalData):
             units (str): Unit system
         """
         self.byalt.units = units
+
+    @property
+    def full_output(self):
+        """Enable or disable full output of data by default.
+
+        Returns:
+            bool: Full output flag
+        """
+        return self.byalt.full_output
+
+    @full_output.setter
+    def full_output(self, full_output):
+        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
+        by dir(unit.sys).
+
+        Args:
+            full_output (bool): Full output flag
+        """
+        self.byalt.full_output = full_output
 
     def redim_force(self, S_ref):
         """Factor to redimensionalize force from force coefficient e.g.,
