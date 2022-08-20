@@ -3,11 +3,12 @@
 
 # flake8: noqa F401
 
-############################################################
-print("="*60)
+#######################################################################
+maxchars = 71  # 80 - 1 - 4*2 = 71 columns available
+print("="*maxchars)
 print("Checking flightcondition usage:")
-print("="*60)
-############################################################
+print("="*maxchars)
+#######################################################################
 
 from flightcondition import FlightCondition, unit, dimless
 
@@ -20,7 +21,7 @@ fc = FlightCondition(3*unit('km'), M=0.5)
 # Uncomment to print abbreviated output in US units:
 #print(f"\n{fc.tostring(full_output=False, units="US")}")
 
-# Access true, calibrated, equivalent airspeeds
+# Convert true, calibrated, equivalent airspeeds
 KTAS = fc.TAS.to('knots')
 KCAS = fc.CAS.to('knots')
 KEAS = fc.EAS.to('knots')
@@ -34,23 +35,25 @@ h, p, T, rho, nu, a = fc.h, fc.p, fc.T, fc.rho, fc.nu, fc.a
 print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
 # >>> The ambient temperature at 3 km is 268.7 K
 
-# Compute again instead using true airspeed and altitude in km
-fc = FlightCondition(3.048*unit('km'), TAS=401.7*unit('mph'))
+# Change airspeed to 300 KEAS and altitude to 12 kft
+fc.EAS = 300 * unit('knots')
+fc.h = 12 * unit('kft')
 #print(f"{fc}")  # uncomment to print output
 
-# Compute for a range of altitudes at 275.14 knots-equivalent
+# Recompute for a range of altitudes at 275.14 knots-equivalent
 # airspeed with a characteristic length scale of 10 meters
 fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
                      EAS=275.14*unit('kt'),
                      L=10*unit('m'))
 
-# Compute additional derived quantities
-# Explore the class data structure for all options
-print(f"\nThe dynamic pressure in psi is "
-      f"{fc.q_inf.to('psi'):.3g}")
+# Compute additional derived quantities - explore the class for more!
+print(f"\nThe dynamic pressure in psi is {fc.q_inf.to('psi'):.3g}")
 # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
 print(f"The Reynolds number is {fc.Re:.3g}")
 # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
+h_yplus100 = fc.wall_distance_from_yplus(100)
+print(f"The wall distance where y+=100 is {h_yplus100.to('in'):.3g}")
+# >>> The wall distance where y+=100 is [0.0126 0.0138 0.0153] in
 
 # Alternatively access quantities by their full name
 print(fc.TAS == fc.byname.true_airspeed)
@@ -60,12 +63,12 @@ print(fc.TAS == fc.byname.true_airspeed)
 print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
 # >>> [ True  True  True]
 
-############################################################
+#######################################################################
 print("")
-print("="*60)
+print("="*maxchars)
 print("Checking atmosphere usage:")
-print("="*60)
-############################################################
+print("="*maxchars)
+#######################################################################
 
 from flightcondition import Atmosphere, unit
 

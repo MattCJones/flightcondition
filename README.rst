@@ -121,15 +121,13 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Flat plate skin friction coefficient (turbulent) :code:`Cf_turb`
    * Boundary layer thickness (laminar) :code:`h_BL_lamr`
    * Boundary layer thickness (turbulent) :code:`h_BL_turb`
-   * Wall distance where :math:`y^+=1` :code:`h_yplus1`
+   * Wall distance (turbulent) where :math:`y^+=1` :code:`h_yplus1`
 
-Quantities may be accessed using the their shorter variable names, or by their
-full names using the :code:`byname` object.  For example, Mach number can be
-accessed using :code:`.M` or by its full name using
-:code:`.byname.mach_number`.  They may also be accessed through their
-particular sub-category: :code:`byalt`, :code:`byvel`, or :code:`bylen`.  For
-example, Mach number can be accessed using :code:`.byvel.M` or
-:code:`.byvel.byname.mach_number`.
+Quantities may be accessed by either (a) their shorter variable names, e.g.
+:code:`.M`, or (b) by their longer, full names, e.g.
+:code:`byname.mach_number`.  They may also be accessed through their particular
+sub-category: :code:`byalt`, :code:`byvel`, or :code:`bylen`, e.g.
+:code:`.byvel.M` or :code:`.byvel.byname.mach_number`.
 
 **Example usage**:
 
@@ -146,7 +144,7 @@ example, Mach number can be accessed using :code:`.byvel.M` or
     # Uncomment to print abbreviated output in US units:
     #print(f"\n{fc.tostring(full_output=False, units="US")}")
 
-    # Access true, calibrated, equivalent airspeeds
+    # Convert true, calibrated, equivalent airspeeds
     KTAS = fc.TAS.to('knots')
     KCAS = fc.CAS.to('knots')
     KEAS = fc.EAS.to('knots')
@@ -160,23 +158,25 @@ example, Mach number can be accessed using :code:`.byvel.M` or
     print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
     # >>> The ambient temperature at 3 km is 268.7 K
 
-    # Compute again instead using true airspeed and altitude in km
-    fc = FlightCondition(3.048*unit('km'), TAS=401.7*unit('mph'))
+    # Change airspeed to 300 KEAS and altitude to 12 kft
+    fc.EAS = 300 * unit('knots')
+    fc.h = 12 * unit('kft')
     #print(f"{fc}")  # uncomment to print output
 
-    # Compute for a range of altitudes at 275.14 knots-equivalent
+    # Recompute for a range of altitudes at 275.14 knots-equivalent
     # airspeed with a characteristic length scale of 10 meters
     fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
                         EAS=275.14*unit('kt'),
                         L=10*unit('m'))
 
-    # Compute additional derived quantities
-    # Explore the class data structure for all options
-    print(f"\nThe dynamic pressure in psi is "
-          f"{fc.q_inf.to('psi'):.3g}")
+    # Compute additional derived quantities - explore the class for more!
+    print(f"\nThe dynamic pressure in psi is {fc.q_inf.to('psi'):.3g}")
     # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
     print(f"The Reynolds number is {fc.Re:.3g}")
     # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
+    h_yplus100 = fc.wall_distance_from_yplus(100)
+    print(f"The wall distance where y+=100 is {h_yplus100.to('in'):.3g}")
+    # >>> The wall distance where y+=100 is [0.0126 0.0138 0.0153] in
 
     # Alternatively access quantities by their full name
     print(fc.TAS == fc.byname.true_airspeed)
