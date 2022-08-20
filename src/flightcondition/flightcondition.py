@@ -93,6 +93,9 @@ class FlightCondition(Atmosphere):
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
         'EAS': 'equivalent_airspeed',
+        'KTAS': 'knots_true_airspeed',
+        'KCAS': 'knots_calibrated_airspeed',
+        'KEAS': 'knots_equivalent_airspeed',
         'M': 'mach_number',
         'mu_M': 'mach_angle',
         'q_inf': 'dynamic_pressure',
@@ -856,6 +859,45 @@ class FlightCondition(Atmosphere):
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
         self._CAS = self._CAS_from_q_c(self.q_c)
+
+    @_property_decorators
+    def KTAS(self):
+        """Get knots-true-airspeed. """
+        return self._TAS.to('knots')
+
+    @KTAS.setter
+    def KTAS(self, KTAS):
+        """Set knots-true-airspeed. """
+        KTAS *= dimless  # add dimless for raw float input
+        check_dimensionless(KTAS)
+        TAS = KTAS * unit('knots')
+        self.TAS = TAS
+
+    @_property_decorators
+    def KCAS(self):
+        """Get knots-calibrated-airspeed. """
+        return self._CAS.to('knots')
+
+    @KCAS.setter
+    def KCAS(self, KCAS):
+        """Set knots-calibrated-airspeed. """
+        KCAS *= dimless  # add dimless for raw float input
+        check_dimensionless(KCAS)
+        CAS = KCAS * unit('knots')
+        self.CAS = CAS
+
+    @_property_decorators
+    def KEAS(self):
+        """Get knots-equivalent-airspeed. """
+        return self._EAS.to('knots')
+
+    @KEAS.setter
+    def KEAS(self, KEAS):
+        """Set knots-equivalent-airspeed. """
+        KEAS *= dimless  # add dimless for raw float input
+        check_dimensionless(KEAS)
+        EAS = KEAS * unit('knots')
+        self.EAS = EAS
 
     @_property_decorators
     def mu_M(self):
