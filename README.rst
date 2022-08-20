@@ -123,10 +123,13 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Boundary layer thickness (turbulent) :code:`h_BL_turb`
    * Wall distance where :math:`y^+=1` :code:`h_yplus1`
 
-Quantities may be accessed using the specific :code:`byalt`, :code:`byvel`, or
-:code:`bylen` object.  Quantities may also be accessed using their full name with
-the :code:`byname` object.  For example, Mach number can be accessed using
-:code:`.byvel.M` or by its full name using :code:`.byname.mach_number`
+Quantities may be accessed using the their shorter variable names, or by their
+full names using the :code:`byname` object.  For example, Mach number can be
+accessed using :code:`.M` or by its full name using
+:code:`.byname.mach_number`.  They may also be accessed through their
+particular sub-category: :code:`byalt`, :code:`byvel`, or :code:`bylen`.  For
+example, Mach number can be accessed using :code:`.byvel.M` or
+:code:`.byvel.byname.mach_number`.
 
 **Example usage**:
 
@@ -144,17 +147,16 @@ the :code:`byname` object.  For example, Mach number can be accessed using
     #print(f"\n{fc.tostring(full_output=False, units="US")}")
 
     # Access true, calibrated, equivalent airspeeds
-    KTAS = fc.byvel.TAS.to('knots')
-    KCAS = fc.byvel.CAS.to('knots')
-    KEAS = fc.byvel.EAS.to('knots')
+    KTAS = fc.TAS.to('knots')
+    KCAS = fc.CAS.to('knots')
+    KEAS = fc.EAS.to('knots')
     print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
-        f" which is {KCAS.magnitude:.4g} KCAS,"
-        f" or {KEAS.magnitude:.4g} KEAS")
+          f" which is {KCAS.magnitude:.4g} KCAS,"
+          f" or {KEAS.magnitude:.4g} KEAS")
     # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
 
     # Access atmospheric data (see Atmosphere class for more)
-    atm = fc.byalt  # access Atmosphere object
-    h, p, T, rho, nu, a = atm.h, atm.p, atm.T, atm.rho, atm.nu, atm.a
+    h, p, T, rho, nu, a = fc.h, fc.p, fc.T, fc.rho, fc.nu, fc.a
     print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
     # >>> The ambient temperature at 3 km is 268.7 K
 
@@ -171,13 +173,17 @@ the :code:`byname` object.  For example, Mach number can be accessed using
     # Compute additional derived quantities
     # Explore the class data structure for all options
     print(f"\nThe dynamic pressure in psi is "
-        f"{fc.byvel.q_inf.to('psi'):.3g}")
+          f"{fc.q_inf.to('psi'):.3g}")
     # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
-    print(f"The Reynolds number is {fc.bylen.Re:.3g}")
+    print(f"The Reynolds number is {fc.Re:.3g}")
     # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
 
     # Alternatively access quantities by their full name
-    print(fc.byvel.TAS == fc.byname.true_airspeed)
+    print(fc.TAS == fc.byname.true_airspeed)
+    # >>> [ True  True  True]
+
+    # Or by their subcategories: `byalt`, `byvel`, or `bylen`
+    print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
     # >>> [ True  True  True]
 
 

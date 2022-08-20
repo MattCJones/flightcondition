@@ -33,14 +33,17 @@ class Layer(DimensionalData):
         'p_base': 'base_static_pressure',
     }
 
-    def __init__(self, H_arr):
+    def __init__(self, H_arr, full_output=True, units=None):
         """Initialize Layer nested class.
 
         Args:
             H_arr (length): Geopotential altitude
-
+            full_output (bool): Set to True for full output
+            units (str): Set to 'US' for US units or 'SI' for SI
         """
         H_arr = np.atleast_1d(H_arr)
+        self.full_output = full_output
+        self.units = units
 
         self._layer_name = [""]*np.size(H_arr)
         self._H_base = np.zeros_like(H_arr) * unit('m')
@@ -78,16 +81,79 @@ class Layer(DimensionalData):
         else:  # no break
             raise ValueError("H out of bounds.")
 
-    def tostring(self, full_output=True):
+    def tostring(self, full_output=None, units=None, max_var_chars=0,
+                 pretty_print=True):
         """Output string representation of class object.
 
         Args:
             full_output (bool): Set to True for full output
+            units (str): Set to 'US' for US units or 'SI' for SI
+            max_var_chars (int): Maximum number of characters in unit string
+            pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation
         """
-        return str(super().asdict())
+        if units is not None:
+            self.units = units
+
+        if self.units == 'US':
+            H_base_units   = 'kft'
+            T_base_units   = 'degR'
+            T_grad_units   = 'degR/kft'
+            p_base_units   = 'lbf/ft^2'
+        else:  # SI units
+            H_base_units   = 'km'
+            T_base_units   = 'degK'
+            T_grad_units   = 'degK/km'
+            p_base_units   = 'Pa'
+
+        # Insert longer variable name into output
+        max_var_chars = max([
+            max([len(v) for v in __class__.varnames.values()]),
+            max_var_chars
+        ])
+        H_base_str = self._vartostr(var=self.H_base, var_str='H_base',
+                                    to_units=H_base_units,
+                                    max_var_chars=max_var_chars,
+                                    fmt_val="10.5g", pretty_print=pretty_print)
+        T_base_str = self._vartostr(var=self.T_base, var_str='T_base',
+                                    to_units=T_base_units,
+                                    max_var_chars=max_var_chars,
+                                    fmt_val="10.5g", pretty_print=pretty_print)
+        T_grad_str = self._vartostr(var=self.T_grad, var_str='T_grad',
+                                    to_units=T_grad_units,
+                                    max_var_chars=max_var_chars,
+                                    fmt_val="10.5g", pretty_print=pretty_print)
+        p_base_str = self._vartostr(var=self.p_base, var_str='p_base',
+                                    to_units=p_base_units,
+                                    max_var_chars=max_var_chars,
+                                    fmt_val="10.5g", pretty_print=pretty_print)
+
+        # Create layer string
+        if type(self.name) is np.str_:  # singular string
+            trunc_layer_name = self.name
+        else:
+            trunc_layer_name = "[" + " ".join([
+                f"{s[:10]}" for s in self.name
+            ]) + "]"
+        layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name    = "
+                     f"{trunc_layer_name}")
+
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
+        # Assemble output string
+        if full_output:
+            repr_str = (f"{layer_str}\n{H_base_str}\n{T_base_str}\n"
+                        f"{T_grad_str}\n{p_base_str}")
+        else:
+            repr_str = (f"{layer_str}")
+        return repr_str
 
     @property
     def name(self):
@@ -164,7 +230,7 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    def __init__(self, h=None, units="", full_output=None, **kwargs):
+    def __init__(self, h=None, units=None, full_output=None, **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
@@ -174,6 +240,11 @@ class Atmosphere(DimensionalData):
             full_output (bool): Set to True for full output
         """
         self.full_output = full_output
+        # Check units and set initially
+        if units in dir(unit.sys):
+            self.units = units
+        else:
+            self.units = 'SI'
 
         # Compute altitude bounds
         self._H_min = Atmo.H_base[0]
@@ -192,14 +263,12 @@ class Atmosphere(DimensionalData):
             h = 0 * unit('ft')
         self.h = h
 
-        # Process unit system
+        # Further process unit system
         if units not in dir(unit.sys):  # check if usable system
             if check_US_length_units(h):
                 self.units = 'US'
             else:
                 self.units = 'SI'
-        else:
-            self.units = units
 
         # Initialize access by full quantity name through .byname.<name>
         self.byname = AliasAttributes(varsobj_arr=[self, ],
@@ -287,6 +356,9 @@ class Atmosphere(DimensionalData):
                                  max_var_chars=max_var_chars,
                                  fmt_val="10.4e", pretty_print=pretty_print)
 
+        # Create layer string
+        layer_str = self.layer.tostring(full_output=False)
+
         # Determine full output flag
         if full_output is None:
             if self.full_output is None:
@@ -296,15 +368,6 @@ class Atmosphere(DimensionalData):
 
         # Assemble output string
         if full_output:
-            if type(self.layer.name) is np.str_:  # singular string
-                trunc_layer_name = self.layer.name
-            else:
-                trunc_layer_name = "[" + " ".join([
-                    f"{s[:10]}" for s in self.layer.name
-                ]) + "]"
-            layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name    = "
-                         f"{trunc_layer_name}")
-
             repr_str = (f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n{rho_str}\n"
                         f"{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n{g_str}\n"
                         f"{MFP_str}\n{layer_str}")
@@ -389,6 +452,8 @@ class Atmosphere(DimensionalData):
         else:
             self._units = units
             unit.default_system = units
+            if hasattr(self, 'layer'):
+                self.layer.units = units
 
     @property
     def full_output(self):
@@ -448,7 +513,8 @@ class Atmosphere(DimensionalData):
         # Update quantities
         self._h = h
         self._H = self._H_from_h(self.h)
-        self.layer = Layer(self.H)
+        self.layer = Layer(self.H, full_output=self.full_output,
+                           units=self.units)
 
     @_property_decorators
     def H(self):

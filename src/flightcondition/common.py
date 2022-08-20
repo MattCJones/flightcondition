@@ -70,6 +70,24 @@ class AliasAttributes():
                 if attr == varname:
                     return setattr(varsobj, var, attrval)
 
+    def __repr__(self):
+        """Output string representation of class object.
+
+        Returns:
+            str: Full string output
+        """
+        # Determine full output flag
+        if self.full_output is None:
+            full_output = False
+        else:
+            full_output = self.full_output
+
+        # Catch exception and return "" if tostring() is not specified
+        try:
+            return self.tostring(full_output=full_output)
+        except TypeError:
+            return ""
+
 
 class DimensionalData:
     """Parent class to hold dimensional data"""

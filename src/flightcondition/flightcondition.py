@@ -19,8 +19,8 @@ import numpy as np
 from flightcondition.atmosphere import Atmosphere
 from flightcondition.boundarylayer import BoundaryLayer
 from flightcondition.constants import PhysicalConstants as Phys
-from flightcondition.common import AliasAttributes, DimensionalData,\
-    _len1array_to_scalar, _property_decorators
+from flightcondition.common import AliasAttributes, _len1array_to_scalar,\
+    _property_decorators
 from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.nondimensional import NonDimensional
 from flightcondition.units import unit, dimless, check_area_dimensioned,\
@@ -28,10 +28,66 @@ from flightcondition.units import unit, dimless, check_area_dimensioned,\
     check_US_length_units, to_base_units_wrapper
 
 
-class Velocity(DimensionalData):
-    """Class to hold airspeed data. """
+class FlightCondition(Atmosphere):
+    """Easily convert between Mach number, true airspeed (TAS), calibrated
+    airspeed (CAS), and equivalent airspeed (EAS) for given altitude(s).
+    Additional flight condition data and atmospheric data is computed.
 
-    varnames = {
+    All inputs must be dimensional unit quantities.
+
+    Usage:
+        from flightcondition import FlightCondition, unit, dimless
+
+        # Compute flight condition at 3 km, Mach 0.5
+        fc = FlightCondition(3*unit('km'), M=0.5)
+
+        # Uncomment to print summary of flight condition quantities:
+        #print(f"{fc}")
+
+        # Uncomment to print abbreviated output in US units:
+        #print(f"\n{fc.tostring(full_output=False, units="US")}")
+
+        # Access true, calibrated, equivalent airspeeds
+        KTAS = fc.TAS.to('knots')
+        KCAS = fc.CAS.to('knots')
+        KEAS = fc.EAS.to('knots')
+        print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
+            f" which is {KCAS.magnitude:.4g} KCAS,"
+            f" or {KEAS.magnitude:.4g} KEAS")
+        # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
+
+        # Access atmospheric data (see Atmosphere class for more)
+        h, p, T, rho, nu, a = fc.h, fc.p, fc.T, fc.rho, fc.nu, fc.a
+        print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
+        # >>> The ambient temperature at 3 km is 268.7 K
+
+        # Compute again instead using true airspeed and altitude in km
+        fc = FlightCondition(3.048*unit('km'), TAS=401.7*unit('mph'))
+        #print(f"{fc}")  # uncomment to print output
+
+        # Compute for a range of altitudes at 275.14 knots-equivalent
+        # airspeed with a characteristic length scale of 10 meters
+        fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
+                            EAS=275.14*unit('kt'),
+                            L=10*unit('m'))
+
+        # Compute additional derived quantities
+        # Explore the class data structure for all options
+        print(f"\nThe dynamic pressure in psi is "
+            f"{fc.q_inf.to('psi'):.3g}")
+        # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
+        print(f"The Reynolds number is {fc.Re:.3g}")
+        # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
+
+        # Alternatively access quantities by their full name
+        print(fc.TAS == fc.byname.true_airspeed)
+        # >>> [ True  True  True]
+
+        # Or by their subcategories: `byalt`, `byvel`, or `bylen`
+        print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
+        # >>> [ True  True  True]
+    """
+    _byvel_varnames = {
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
         'EAS': 'equivalent_airspeed',
@@ -46,19 +102,341 @@ class Velocity(DimensionalData):
         'Re_by_L': 'reynolds_per_length',
     }
 
-    def __init__(self, byalt):
-        """Initialize.
+    _bylen_varnames = {
+        'L': 'length_scale',
+        'Re': 'reynolds_number',
+        # 'Kn': 'knudsen_number',
+        'h_BL_lamr': 'boundary_thickness_laminar',
+        'h_BL_turb': 'boundary_thickness_turbulent',
+        'Cf_lamr': 'friction_coefficient_laminar',
+        'Cf_turb': 'friction_coefficient_turbulent',
+        'h_yplus1': 'wall_distance_yplus1',
+    }
+
+# =========================================================================== #
+#                       GENERAL FUNCTIONS & PROPERTIES                        #
+# =========================================================================== #
+    def __init__(
+        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None, Re=None,
+        units=None, full_output=None, **kwargs,
+    ):
+        """Constructor based on altitude and input velocity in terms of Mach
+        number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
+        length scale.  Reynolds number can be input as an alternative to either
+        velocity or length scale but not both.  All inputs must be dimensional
+        unit quantities.
 
         Args:
-            byalt (object): Altitude object
+            h (length): Geometric altitude - aliases are 'alt', 'altitude'
+            M (dimless): Velocity as Mach number - aliases are 'mach', 'Mach',
+                'M_inf', 'mach_number'
+            TAS (speed): Velocity as true airspeed - aliases are 'tas',
+                'true_airspeed', 'U_inf', 'V_inf'
+            CAS (speed): Velocity as calibrated airspeed - aliases are 'cas',
+                'calibrated_airspeed'
+            EAS (speed): Velocity as equivalent airspeed - aliases are 'eas',
+                'equivalent_airspeed'
+            L (length): Length scale - aliases are 'ell', 'bylen', 'length',
+                'length_scale', 'l'
+            Re (dimless): Reynolds number - alternative to velocity or length
+                scale but not both - aliases are 'Re_L', 'reynolds_number'
+            units (str): Set to 'US' for US units or 'SI' for SI
+            full_output (bool): Set to True for full output
         """
-        # Link to Atmosphere data
-        self._byalt = byalt
-        h0 = 0 * unit('kft')
-        self._atm0 = Atmosphere(h0)
+        # Initalize Atmosphere super class
+        super().__init__(h=h, units=units, full_output=full_output)
+        self._byalt_tostring = super().tostring
+        self._byalt_varnames = super().varnames
 
-    def tostring(self, full_output=None, units=None, max_var_chars=0,
-                 pretty_print=True):
+        # Computer sea level properties
+        self._atm0 = Atmosphere(h=0*unit('kft'))
+
+        # Preprocess needed altitude-based quantities
+        # Automatically process altitude through Atmosphere class
+        self.byalt = Atmosphere(h=h, units=units, full_output=full_output,
+                                **kwargs)
+
+        # Check for hidden aliases
+        M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
+        if M is None:
+            M = __class__._arg_from_alias(M_aliases, kwargs)
+        TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf', 'VTAS',
+                       'vtas']
+        if TAS is None:
+            TAS = __class__._arg_from_alias(TAS_aliases, kwargs)
+        CAS_aliases = ['cas', 'calibrated_airspeed', 'VCAS', 'vcas']
+        if CAS is None:
+            CAS = __class__._arg_from_alias(CAS_aliases, kwargs)
+        EAS_aliases = ['eas', 'equivalent_airspeed', 'VEAS', 'veas']
+        if EAS is None:
+            EAS = __class__._arg_from_alias(EAS_aliases, kwargs)
+        L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
+        if L is None:
+            L = __class__._arg_from_alias(L_aliases, kwargs)
+        Re_aliases = ['Re_L', 'reynolds_number']
+        if Re is None:
+            Re = __class__._arg_from_alias(Re_aliases, kwargs)
+
+        # Check if KTAS, KCAS, or KEAS input and append knots unit if so
+        KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']
+        if TAS is None:
+            KTAS = __class__._arg_from_alias(KTAS_aliases, kwargs)
+            TAS = None if KTAS is None else KTAS * unit('knots')
+        KCAS_aliases = ['KCAS', 'kcas', 'knots_calibrated_airspeed']
+        if CAS is None:
+            KCAS = __class__._arg_from_alias(KCAS_aliases, kwargs)
+            CAS = None if KCAS is None else KCAS * unit('knots')
+        KEAS_aliases = ['KEAS', 'keas', 'knots_equivalent_airspeed']
+        if EAS is None:
+            KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
+            EAS = None if KEAS is None else KEAS * unit('knots')
+
+        if M is not None:
+            self.M = M
+        elif TAS is not None:
+            self.TAS = TAS
+        elif CAS is not None:
+            self.CAS = CAS
+        elif EAS is not None:
+            self.EAS = EAS
+        elif Re is not None:
+            # Velocity is set based on Re and L - set dummy speed for now
+            self.M = 0
+        else:
+            # Use Mach=0 if no velocity is input
+            self.M = 0*dimless
+
+        # Check that computations are within valid Mach number limits
+        M_ = np.atleast_1d(self.M)
+        self._mach_min = 0 * dimless
+        self._mach_max = 30 * dimless
+        if (M_ < self._mach_min).any() or (self._mach_max < M_).any():
+            raise ValueError(
+                f"Mach number is out of bounds "
+                f"({self._mach_min:.5g} < M_ < {self._mach_max:.5g})"
+            )
+
+        # If length scale is not input, default to unity with dimentionals unit
+        # based on US or SI determination
+        if L is None:
+            if Re is None:
+                L_unit = unit('ft') if self.units == 'US' else unit('m')
+                self.L = 1.0 * L_unit
+            else:
+                Re *= dimless
+                check_dimensionless(Re)
+                self.L = NonDimensional.reynolds_number_length(
+                    Re, self.TAS, self.nu)
+        else:  # length scale is input by user
+            self.L = L
+
+            # If altitude is 0, but length scale is input, determine if US
+            # units based on the input length scale
+            if units is None:
+                if self.h.magnitude.all() == 0:
+                    if check_US_length_units(L):
+                        self.units = 'US'
+
+        # Velocity is set based on Re and L
+        if Re is not None:
+            if (M is not None
+                    or TAS is not None
+                    or CAS is not None
+                    or EAS is not None):
+                msg = "Overriding velocity based on Reynolds number."
+                warnings.warn(msg)
+            self.Re = Re  # velocity is set based on Re and L
+
+        # Set alias references by name _byalt_byname.<name>
+        self._byalt_byname = AliasAttributes(
+            varsobj_arr=[self, ],
+            varnames_dict_arr=[self._byalt_varnames, ]
+        )
+
+        # Set alias references by name _byvel_byname.<name>
+        self._byvel_byname = AliasAttributes(
+            varsobj_arr=[self, ],
+            varnames_dict_arr=[self._byvel_varnames, ]
+        )
+
+        # Set alias references by name _bylen_byname.<name>
+        self._bylen_byname = AliasAttributes(
+            varsobj_arr=[self, ],
+            varnames_dict_arr=[self._bylen_varnames, ]
+        )
+
+        # Set alias references by name generally .byname.<name>
+        self.byname = AliasAttributes(
+            varsobj_arr=[self, self, self],
+            varnames_dict_arr=[
+                self._byalt_varnames,
+                self._byvel_varnames,
+                self._bylen_varnames,
+            ]
+        )
+
+        # Set variable aliases by altitude properties to .byalt.<var>
+        byalt_vars = {key: key for key in self._byalt_varnames.keys()}
+        self.byalt = AliasAttributes(
+            varsobj_arr=[self, self, self, self, self, ],
+            varnames_dict_arr=[
+                byalt_vars,
+                {"_byalt_varnames": "varnames"},
+                {"_byalt_tostring": "tostring"},
+                {"full_output": "full_output"},
+                {"_byalt_byname": "byname"},
+            ]
+        )
+
+        # Set variable aliases by velocity properties to .byvel.<var>
+        byvel_vars = {key: key for key in self._byvel_varnames.keys()}
+        self.byvel = AliasAttributes(
+            varsobj_arr=[self, self, self, self, self, ],
+            varnames_dict_arr=[
+                byvel_vars,
+                {"_byvel_varnames": "varnames"},
+                {"_byvel_tostring": "tostring"},
+                {"full_output": "full_output"},
+                {"_byvel_byname": "byname"},
+            ]
+        )
+
+        # Set variable aliases by length properties to .bylen.<var>
+        bylen_vars = {key: key for key in self._bylen_varnames.keys()}
+        self.bylen = AliasAttributes(
+            varsobj_arr=[self, self, self, self, self, self, ],
+            varnames_dict_arr=[
+                bylen_vars,
+                {"_bylen_varnames": "varnames"},
+                {"_bylen_tostring": "tostring"},
+                {"full_output": "full_output"},
+                {"_bylen_byname": "byname"},
+                {"wall_distance_from_yplus": "wall_distance_from_yplus"},
+            ]
+        )
+
+        # Set all property variable references to .byvar.<var>
+        self.byvar = AliasAttributes(
+            varsobj_arr=[self.byalt, self.byvel, self.bylen, ],
+            varnames_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
+        )
+
+        # Aggregate variable names
+        self.varnames = {}
+        self.varnames.update(self._byalt_varnames)
+        self.varnames.update(self._byvel_varnames)
+        self.varnames.update(self._bylen_varnames)
+
+    def tostring(self, full_output=True, units=None, pretty_print=True):
+        """String representation of data structure.
+
+        Args:
+            full_output (bool): Set to True for full output
+            units (str): Set to 'US' for US units or 'SI' for SI
+            pretty_print (bool): Pretty print output
+
+        Returns:
+            str: String representation
+        """
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
+        # Determine units
+        if units is not None:
+            self.units = units
+
+        # Determine maximum characters to add spaces for and assemble string
+        max_var_chars = max([
+            max([len(v) for v in self._byalt_varnames.values()]),
+            max([len(v) for v in self._byvel_varnames.values()]),
+            max([len(v) for v in self._bylen_varnames.values()]),
+        ])
+        alti_str = self._byalt_tostring(full_output, self.units,
+                                        pretty_print=pretty_print,
+                                        max_var_chars=max_var_chars)
+        spee_str = self._byvel_tostring(full_output, self.units,
+                                        max_var_chars=max_var_chars,
+                                        pretty_print=pretty_print)
+        leng_str = self._bylen_tostring(full_output, self.units,
+                                        max_var_chars=max_var_chars,
+                                        pretty_print=pretty_print)
+
+        unit_str = self.units
+        ext_str = "full_output=True" if full_output else "full_output=False"
+        top_hdr = f"   Flight Condition (units={unit_str}, {ext_str})"
+        lin_str = "==========================================================="
+        alt_hdr = "------------------  Altitude Quantities  ------------------"
+        vel_hdr = "------------------  Velocity Quantities  ------------------"
+        len_hdr = "------------------   Length Quantities   ------------------"
+
+        repr_str = (f"{lin_str}\n{top_hdr}\n{lin_str}"
+                    f"\n{alt_hdr}" f"\n{alti_str}"
+                    f"\n{vel_hdr}" f"\n{spee_str}"
+                    f"\n{len_hdr}" f"\n{leng_str}"
+                    )
+        return repr_str
+
+    def redim_force(self, S_ref):
+        """Factor to redimensionalize force from force coefficient e.g.,
+
+            .. math::
+
+                L & = C_L q_\\infty S_ref
+                  & = C_L \\text{redim_force}
+
+        Args:
+            S_ref (area): Reference area
+
+        Returns:
+            force: Redimensionalization factor
+        """
+        check_area_dimensioned(S_ref)
+        redim_force = self.byvel.q_inf * S_ref
+
+        # Set to force unit since to_base_units() gives mass*length/time^2
+        if self.units == 'US':
+            redim_force.ito('lbf')
+        elif self.units == 'SI':
+            redim_force.ito('N')
+
+        return redim_force
+
+    def redim_moment(self, S_ref, L):
+        """Factor to redimensionalize moment from moment coefficient e.g.,
+
+            .. math::
+
+                M & = C_M q_\\infty S_ref L
+                  & = C_M \\text{redim_moment}
+
+        Args:
+            S_ref (area): Reference area
+            L (length): Reference length
+
+        Returns:
+            moment: Redimensionalization factor
+        """
+        check_area_dimensioned(S_ref)
+        check_length_dimensioned(L)
+        redim_moment = self.byvel.q_inf * S_ref * L
+
+        # Set to force unit since to_base_units() gives mass*length/time^2
+        if self.units == 'US':
+            redim_moment.ito('ft lbf')
+        elif self.units == 'SI':
+            redim_moment.ito('m N')
+
+        return redim_moment
+
+# =========================================================================== #
+#                       VELOCITY FUNCTIONS & PROPERTIES                       #
+# =========================================================================== #
+    def _byvel_tostring(self, full_output=None, units=None, max_var_chars=0,
+                        pretty_print=True):
         """String representation of data structure.
 
         Args:
@@ -72,7 +450,7 @@ class Velocity(DimensionalData):
         """
         # Set default unit system
         if units is None:
-            units = self._byalt.units
+            units = self.units
 
         if units == 'US':
             EAS_units   = 'knots'
@@ -168,11 +546,9 @@ class Velocity(DimensionalData):
     @staticmethod
     def _compare_input_size(input_a, input_b):
         """Enforce non-singular input arrays to be equal in size
-
         Args:
             input_a (object): Input A
             input_b (object): Input B
-
         Returns:
             object: sized_arr
         """
@@ -191,13 +567,11 @@ class Velocity(DimensionalData):
     def _check_and_size_input(self, input_var, input_alt=None, input_vel=None):
         """Check that input is correctly typed, then size input array. If
         scalar, leave as scalar.
-
         Args:
             input_var (object): Input array (or scalar)
             input_alt (object): Input array of altitude level
             input_vel (object): Input array of velocity level (when assessing
                 length scale as input_var)
-
         Returns:
             object: Sized array (or scalar)
         """
@@ -219,7 +593,7 @@ class Velocity(DimensionalData):
 
     @staticmethod
     def _impact_pressure(M, p):
-        """Equation for impact pressure
+        """Compute impact pressure
 
         Args:
             M (dimless): Mach number
@@ -244,7 +618,7 @@ class Velocity(DimensionalData):
         Returns:
             dimless: Mach number
         """
-        a_inf = self._byalt.a
+        a_inf = self.a
         M = NonDimensional.mach_number(U=TAS, a=a_inf)
         return M
 
@@ -258,7 +632,7 @@ class Velocity(DimensionalData):
         Returns:
             speed: True airspeed
         """
-        a_inf = self._byalt.a
+        a_inf = self.a
         TAS = NonDimensional.mach_velocity(M, a_inf)
         return TAS
 
@@ -274,7 +648,7 @@ class Velocity(DimensionalData):
         """
         a_inf_h0 = self._atm0.a
         p_inf_h0 = self._atm0.p
-        p_inf = self._byalt.p
+        p_inf = self.p
         delta = p_inf/p_inf_h0
         M = EAS/(a_inf_h0*np.sqrt(delta))
         return M
@@ -291,7 +665,7 @@ class Velocity(DimensionalData):
         """
         a_inf_h0 = self._atm0.a
         p_inf_h0 = self._atm0.p
-        p_inf = self._byalt.p
+        p_inf = self.p
         delta = p_inf/p_inf_h0
         EAS = M*(a_inf_h0*np.sqrt(delta))
         return EAS
@@ -344,7 +718,7 @@ class Velocity(DimensionalData):
         Returns:
             dimless: Mach number
         """
-        p_inf = self._byalt.p
+        p_inf = self.p
         # Isentropic flow equation
         # M_should = __class__._isentropic_mach(p0=q_c, p=p_inf)  # DEPRECATED
         M = IsentropicFlow.M_from_p0_by_p((q_c+p_inf)/p_inf)
@@ -361,7 +735,7 @@ class Velocity(DimensionalData):
         Returns:
             impact pressure
         """
-        p_inf = self._byalt.p
+        p_inf = self.p
         # Solve for impact pressure from isentropic flow equation:
         q_c = __class__._impact_pressure(M=M, p=p_inf)
         return q_c
@@ -379,7 +753,7 @@ class Velocity(DimensionalData):
         """
         a_inf_h0 = self._atm0.a
         p_inf_h0 = self._atm0.p
-        p_inf = self._byalt.p
+        p_inf = self.p
         delta = p_inf/p_inf_h0
         EAS = M*(a_inf_h0*np.sqrt(delta))
         return EAS
@@ -433,7 +807,7 @@ class Velocity(DimensionalData):
     def M(self, M):
         """Mach number :math:`M` """
         M *= dimless  # add dimless for raw float input
-        self._M = self._check_and_size_input(M, input_alt=self._byalt.h)
+        self._M = self._check_and_size_input(M, input_alt=self.h)
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -447,7 +821,7 @@ class Velocity(DimensionalData):
     @TAS.setter
     def TAS(self, TAS):
         """Set true airspeed. """
-        self._TAS = self._check_and_size_input(TAS, input_alt=self._byalt.h)
+        self._TAS = self._check_and_size_input(TAS, input_alt=self.h)
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -461,7 +835,7 @@ class Velocity(DimensionalData):
     @CAS.setter
     def CAS(self, CAS):
         """Calibrated airspeed. """
-        self._CAS = self._check_and_size_input(CAS, input_alt=self._byalt.h)
+        self._CAS = self._check_and_size_input(CAS, input_alt=self.h)
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
         self._TAS = self._TAS_from_M(self.M)
@@ -475,7 +849,7 @@ class Velocity(DimensionalData):
     @EAS.setter
     def EAS(self, EAS):
         """Set equivalent airspeed. """
-        self._EAS = self._check_and_size_input(EAS, input_alt=self._byalt.h)
+        self._EAS = self._check_and_size_input(EAS, input_alt=self.h)
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -494,14 +868,14 @@ class Velocity(DimensionalData):
     @_property_decorators
     def q_inf(self):
         """Get dynamic pressure :math:`q_\\infty`"""
-        q_inf = __class__._q_inf_from_TAS(TAS=self.TAS, rho=self._byalt.rho)
+        q_inf = __class__._q_inf_from_TAS(TAS=self.TAS, rho=self.rho)
         return q_inf
 
     @_property_decorators
     def p0(self):
         """Get stagnation pressure :math:`p_0`"""
         M = self.M
-        p = self._byalt.p
+        p = self.p
         y = Phys.gamma_air
         p0 = IsentropicFlow.p0_by_p(M, y)*p
         return p0
@@ -510,7 +884,7 @@ class Velocity(DimensionalData):
     def T0(self):
         """Get stagnation temperature :math:`T_0`"""
         M = self.M
-        T = self._byalt.T
+        T = self.T
         y = Phys.gamma_air
         T0 = IsentropicFlow.T0_by_T(M, y)*T
         return T0
@@ -519,53 +893,30 @@ class Velocity(DimensionalData):
     def Tr_lamr(self):
         """Get recovery temperature (laminar) :math:`Tr_{laminar}`"""
         Tr_lamr = BoundaryLayer.recovery_temperature_laminar(
-            M=self.M, T=self._byalt.T)
+            M=self.M, T=self.T)
         return Tr_lamr
 
     @_property_decorators
     def Tr_turb(self):
         """Get recovery temperature (turbulent) :math:`Tr_{turbulent}`"""
         Tr_turb = BoundaryLayer.recovery_temperature_turbulent(
-            M=self.M, T=self._byalt.T)
+            M=self.M, T=self.T)
         return Tr_turb
 
     @_property_decorators
     def Re_by_L(self):
         """Get Reynolds number per unit length :math:`Re_L`"""
-        length_unit = 'in' if self._byalt.units == 'US' else None
+        length_unit = 'in' if self.units == 'US' else None
         Re_by_L = NonDimensional.reynolds_per_length(U=self.TAS,
-                                                     nu=self._byalt.nu,
+                                                     nu=self.nu,
                                                      length_unit=length_unit)
         return Re_by_L
 
-
-class Length(DimensionalData):
-    """Class to hold length data. """
-
-    varnames = {
-        'L': 'length_scale',
-        'Re': 'reynolds_number',
-        # 'Kn': 'knudsen_number',
-        'h_BL_lamr': 'boundary_thickness_laminar',
-        'h_BL_turb': 'boundary_thickness_turbulent',
-        'Cf_lamr': 'friction_coefficient_laminar',
-        'Cf_turb': 'friction_coefficient_turbulent',
-        'h_yplus1': 'wall_distance_yplus1',
-    }
-
-    def __init__(self, byalt, byvel):
-        """Initialize.
-
-        Args:
-            byalt (object): Altitude object
-            byvel (object): Velocity object
-        """
-        # Link to Atmosphere and Velocity data
-        self._byalt = byalt
-        self._byvel = byvel
-
-    def tostring(self, full_output=True, units=None, max_var_chars=0,
-                 pretty_print=True):
+# =========================================================================== #
+#                        LENGTH FUNCTIONS & PROPERTIES                        #
+# =========================================================================== #
+    def _bylen_tostring(self, full_output=True, units=None, max_var_chars=0,
+                        pretty_print=True):
         """String representation of data structure.
 
         Args:
@@ -579,7 +930,7 @@ class Length(DimensionalData):
         """
         # Set default unit system
         if units is None:
-            units = self._byalt.units
+            units = self.units
 
         if units == 'US':
             L_units = 'ft'
@@ -651,9 +1002,9 @@ class Length(DimensionalData):
         yplus *= dimless
         check_dimensionless(yplus)
 
-        rho = self._byalt.rho
-        nu = self._byalt.nu
-        q_inf = self._byvel.q_inf
+        rho = self.rho
+        nu = self.nu
+        q_inf = self.q_inf
         with warnings.catch_warnings():  # catch warning for divide by 0
             warnings.simplefilter("ignore")
             Cf_turb = self.Cf_turb
@@ -673,8 +1024,7 @@ class Length(DimensionalData):
     def L(self, L):
         """Set length scale :math:`L`"""
         # Verify that length input is dimensional length quantity
-        L = self._byvel._check_and_size_input(L, input_alt=self._byalt.h,
-                                              input_vel=self._byvel.M)
+        L = self._check_and_size_input(L, input_alt=self.h, input_vel=self.M)
         check_length_dimensioned(L)
         self._L = L
 
@@ -682,7 +1032,7 @@ class Length(DimensionalData):
     def Re(self):
         """Get Reynolds number :math:`Re`"""
         Re = NonDimensional.reynolds_number(
-            U=self._byvel.TAS, L=self.L, nu=self._byalt.nu)
+            U=self.TAS, L=self.L, nu=self.nu)
         return Re
 
     @Re.setter
@@ -690,15 +1040,15 @@ class Length(DimensionalData):
         """Set Reynolds number :math:`Re`
         Set the true airspeed based on Reynolds number and length scale. """
         Re *= dimless  # add dimless for raw float input
-        Re = self._byvel._check_and_size_input(
-            Re, input_alt=self._byalt.h, input_vel=self._byvel.M)
-        self._byvel.TAS = NonDimensional.reynolds_number_velocity(
-            Re_L=Re, L=self.L, nu=self._byalt.nu)
+        Re = self._check_and_size_input(
+            Re, input_alt=self.h, input_vel=self.M)
+        self.TAS = NonDimensional.reynolds_number_velocity(
+            Re_L=Re, L=self.L, nu=self.nu)
 
     # @_property_decorators  # disable for now
     # def Kn(self):
     #     """Get Knudsen number :math:`K_n`"""
-    #     Kn = NonDimensional.knudsen_number(self.L, self._byalt.MFP)
+    #     Kn = NonDimensional.knudsen_number(self.L, self.MFP)
     #     return Kn
 
     @_property_decorators
@@ -706,7 +1056,7 @@ class Length(DimensionalData):
         """Get laminar Boundary Layer Thickness :math:`\\h_BL_{lamr}` """
         x = self.L
         Re_x = NonDimensional.reynolds_number(
-            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+            U=self.TAS, L=x, nu=self.nu)
         h_BL_lamr = BoundaryLayer.flat_plate_boundary_layer_lamr(
             x=self.L, Re_x=Re_x)
         return h_BL_lamr
@@ -716,7 +1066,7 @@ class Length(DimensionalData):
         """Get turbulent Boundary Layer Thickness :math:`\\h_BL_{turb}` """
         x = self.L
         Re_x = NonDimensional.reynolds_number(
-            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+            U=self.TAS, L=x, nu=self.nu)
         h_BL_turb = BoundaryLayer.flat_plate_boundary_layer_turb(
             x=self.L, Re_x=Re_x)
         return h_BL_turb
@@ -726,7 +1076,7 @@ class Length(DimensionalData):
         """Get laminar skin friction coefficient :math:`\\Cf_{lamr}` """
         x = self.L
         Re_x = NonDimensional.reynolds_number(
-            U=self._byvel.TAS, L=x, nu=self._byalt.nu)
+            U=self.TAS, L=x, nu=self.nu)
         Cf_lamr = BoundaryLayer.flat_plate_skin_friction_coeff_lamr(Re_x=Re_x)
         return Cf_lamr
 
@@ -734,7 +1084,7 @@ class Length(DimensionalData):
     def Cf_turb(self):
         """Get turbulent skin friction coefficient :math:`\\Cf_{turb}` """
         Cf_turb = BoundaryLayer.flat_plate_skin_friction_coeff_turb(
-            Re_x=self.Re, M=self._byvel.M)
+            Re_x=self.Re, M=self.M)
         return Cf_turb
 
     @_property_decorators
@@ -742,368 +1092,3 @@ class Length(DimensionalData):
         """Get height from flat plate wall in turbulent flow where yplus=1. """
         h_yplus1 = self.wall_distance_from_yplus(1)
         return h_yplus1
-
-
-class FlightCondition(DimensionalData):
-    """Easily convert between Mach number, true airspeed (TAS), calibrated
-    airspeed (CAS), and equivalent airspeed (EAS) for given altitude(s).
-    Additional flight condition data and atmospheric data is computed.
-
-    All inputs must be dimensional unit quantities.
-
-    Usage:
-        from flightcondition import FlightCondition, unit, dimless
-
-        # Compute flight condition at 3 km, Mach 0.5
-        fc = FlightCondition(3*unit('km'), M=0.5)
-
-        # Uncomment to print summary of flight condition quantities:
-        #print(f"{fc}")
-
-        # Uncomment to print abbreviated output in US units:
-        #print(f"\n{fc.tostring(full_output=False, units='US')}")
-
-        # Access true, calibrated, equivalent airspeeds
-        KTAS = fc.byvel.TAS.to('knots')
-        KCAS = fc.byvel.CAS.to('knots')
-        KEAS = fc.byvel.EAS.to('knots')
-        print(f"Flying at {KTAS.magnitude:.4g} KTAS,"
-            f" which is {KCAS.magnitude:.4g} KCAS,"
-            f" or {KEAS.magnitude:.4g} KEAS")
-        # >>> Flying at 319.4 KTAS, which is 277.7 KCAS, or 275.1 KEAS
-
-        # Access atmospheric data (see Atmosphere class for more)
-        atm = fc.byalt  # access Atmosphere object
-        h, p, T, rho, nu, a = atm.h, atm.p, atm.T, atm.rho, atm.nu, atm.a
-        print(f"The ambient temperature at {h.to('km'):.4g} is {T:.4g}")
-        # >>> The ambient temperature at 3 km is 268.7 K
-
-        # Compute again instead using true airspeed and altitude in km
-        fc = FlightCondition(3.048*unit('km'), TAS=401.7*unit('mph'))
-        #print(f"{fc}")  # uncomment to print output
-
-        # Compute for a range of altitudes at 275.14 knots-equivalent
-        # airspeed with a characteristic length scale of 10 meters
-        fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
-                            EAS=275.14*unit('kt'),
-                            L=10*unit('m'))
-
-        # Compute additional derived quantities
-        # Explore the class data structure for all options
-        print(f"\nThe dynamic pressure in psi is "
-            f"{fc.byvel.q_inf.to('psi'):.3g}")
-        # >>> The dynamic pressure in psi is [1.78 1.78 1.78] psi
-        print(f"The Reynolds number is {fc.bylen.Re:.3g}")
-        # >>> The Reynolds number is [9.69e+07 8.82e+07 7.95e+07]
-
-        # Alternatively access quantities by their full name
-        print(fc.byvel.TAS == fc.byname.true_airspeed)
-        # >>> [ True  True  True]
-    """
-
-    def __init__(
-        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None, Re=None,
-        units="", full_output=None, **kwargs,
-    ):
-        """Constructor based on altitude and input velocity in terms of Mach
-        number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
-        length scale.  Reynolds number can be input as an alternative to either
-        velocity or length scale but not both.  All inputs must be dimensional
-        unit quantities.
-
-        Args:
-            h (length): Geometric altitude - aliases are 'alt', 'altitude'
-            M (dimless): Velocity as Mach number - aliases are 'mach', 'Mach',
-                'M_inf', 'mach_number'
-            TAS (speed): Velocity as true airspeed - aliases are 'tas',
-                'true_airspeed', 'U_inf', 'V_inf'
-            CAS (speed): Velocity as calibrated airspeed - aliases are 'cas',
-                'calibrated_airspeed'
-            EAS (speed): Velocity as equivalent airspeed - aliases are 'eas',
-                'equivalent_airspeed'
-            L (length): Length scale - aliases are 'ell', 'bylen', 'length',
-                'length_scale', 'l'
-            Re (dimless): Reynolds number - alternative to velocity or length
-                scale but not both - aliases are 'Re_L', 'reynolds_number'
-            units (str): Set to 'US' for US units or 'SI' for SI
-            full_output (bool): Set to True for full output
-        """
-
-        # Preprocess needed altitude-based quantities
-        # Automatically process altitude through Atmosphere class
-        self.byalt = Atmosphere(h=h, units=units, full_output=full_output,
-                                **kwargs)
-
-        # Check for hidden aliases
-        M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
-        if M is None:
-            M = __class__._arg_from_alias(M_aliases, kwargs)
-        TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf', 'VTAS',
-                       'vtas']
-        if TAS is None:
-            TAS = __class__._arg_from_alias(TAS_aliases, kwargs)
-        CAS_aliases = ['cas', 'calibrated_airspeed', 'VCAS', 'vcas']
-        if CAS is None:
-            CAS = __class__._arg_from_alias(CAS_aliases, kwargs)
-        EAS_aliases = ['eas', 'equivalent_airspeed', 'VEAS', 'veas']
-        if EAS is None:
-            EAS = __class__._arg_from_alias(EAS_aliases, kwargs)
-        L_aliases = ['ell', 'len', 'length', 'length_scale', 'l']
-        if L is None:
-            L = __class__._arg_from_alias(L_aliases, kwargs)
-        Re_aliases = ['Re_L', 'reynolds_number']
-        if Re is None:
-            Re = __class__._arg_from_alias(Re_aliases, kwargs)
-
-        # Check if KTAS, KCAS, or KEAS input and append knots unit if so
-        KTAS_aliases = ['KTAS', 'ktas', 'knots_true_airspeed']
-        if TAS is None:
-            KTAS = __class__._arg_from_alias(KTAS_aliases, kwargs)
-            TAS = None if KTAS is None else KTAS * unit('knots')
-        KCAS_aliases = ['KCAS', 'kcas', 'knots_calibrated_airspeed']
-        if CAS is None:
-            KCAS = __class__._arg_from_alias(KCAS_aliases, kwargs)
-            CAS = None if KCAS is None else KCAS * unit('knots')
-        KEAS_aliases = ['KEAS', 'keas', 'knots_equivalent_airspeed']
-        if EAS is None:
-            KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
-            EAS = None if KEAS is None else KEAS * unit('knots')
-
-        # Compute velocity-based quantities
-        self.byvel = Velocity(self.byalt)
-
-        if M is not None:
-            self.byvel.M = M
-        elif TAS is not None:
-            self.byvel.TAS = TAS
-        elif CAS is not None:
-            self.byvel.CAS = CAS
-        elif EAS is not None:
-            self.byvel.EAS = EAS
-        elif Re is not None:
-            # Velocity is set based on Re and L - set dummy speed for now
-            self.byvel.M = 0
-        else:
-            # Use Mach=0 if no velocity is input
-            self.byvel.M = 0*dimless
-
-        # Check that computations are within valid Mach number limits
-        M_ = np.atleast_1d(self.byvel.M)
-        self._mach_min = 0 * dimless
-        self._mach_max = 30 * dimless
-        if (M_ < self._mach_min).any() or (self._mach_max < M_).any():
-            raise ValueError(
-                f"Mach number is out of bounds "
-                f"({self._mach_min:.5g} < M_ < {self._mach_max:.5g})"
-            )
-
-        # Compute length-scale-based quantities
-        self.bylen = Length(self.byalt, self.byvel)
-
-        # If length scale is not input, default to unity with dimentionals unit
-        # based on US or SI determination
-        if L is None:
-            if Re is None:
-                L_unit = unit('ft') if self.units == 'US' else unit('m')
-                self.bylen.L = 1.0 * L_unit
-            else:
-                Re *= dimless
-                check_dimensionless(Re)
-                self.bylen.L = NonDimensional.reynolds_number_length(
-                    Re, self.byvel.TAS, self.byalt.nu)
-        else:  # length scale is input by user
-            self.bylen.L = L
-
-            # If altitude is 0, but length scale is input, determine if US
-            # units based on the input length scale
-            if units == "":
-                if self.byalt.h.magnitude.all() == 0:
-                    if check_US_length_units(L):
-                        self.units = 'US'
-
-        # Velocity is set based on Re and L
-        if Re is not None:
-            if (M is not None
-                    or TAS is not None
-                    or CAS is not None
-                    or EAS is not None):
-                msg = "Overriding velocity based on Reynolds number."
-                warnings.warn(msg)
-            self.bylen.Re = Re  # velocity is set based on Re and L
-
-        # Initialize access by full quantity name through .byname.<name>
-        self.byvel.byname = AliasAttributes(
-            varsobj_arr=[self.byvel, ], varnames_dict_arr=[Velocity.varnames, ]
-        )
-        self.bylen.byname = AliasAttributes(
-            varsobj_arr=[self.bylen, ], varnames_dict_arr=[Length.varnames, ]
-        )
-
-        # Set references at base level too
-        varsobj_arr = [self.byalt, self.byvel, self.bylen, ]
-        varnames_dict_arr = [Atmosphere.varnames,
-                             Velocity.varnames,
-                             Length.varnames, ]
-        own_dict_arr = [
-            {key: key for key in dict_.keys()} for dict_ in varnames_dict_arr
-        ]
-
-        self.byvar = AliasAttributes(
-            varsobj_arr=varsobj_arr,
-            varnames_dict_arr=own_dict_arr
-        )
-
-        self.varnames = {}
-        self.varnames.update(Atmosphere.varnames)
-        self.varnames.update(Velocity.varnames)
-        self.varnames.update(Length.varnames)
-
-        self.byname = AliasAttributes(
-            varsobj_arr=varsobj_arr,
-            varnames_dict_arr=varnames_dict_arr
-        )
-
-    def tostring(self, full_output=True, units=None, pretty_print=True):
-        """String representation of data structure.
-
-        Args:
-            full_output (bool): Set to True for full output
-            units (str): Set to 'US' for US units or 'SI' for SI
-            pretty_print (bool): Pretty print output
-
-        Returns:
-            str: String representation
-        """
-        # Determine full output flag
-        if full_output is None:
-            if self.full_output is None:
-                full_output = True
-            else:
-                full_output = self.full_output
-
-        # Determine units
-        if units is not None:
-            self.units = units
-
-        # Determine maximum characters to add spaces for and assemble string
-        max_var_chars = max([
-            max([len(v) for v in Atmosphere.varnames.values()]),
-            max([len(v) for v in Velocity.varnames.values()]),
-            max([len(v) for v in Length.varnames.values()]),
-        ])
-        alti_str = self.byalt.tostring(full_output, self.units,
-                                       pretty_print=pretty_print,
-                                       max_var_chars=max_var_chars)
-        spee_str = self.byvel.tostring(full_output, self.units,
-                                       max_var_chars=max_var_chars,
-                                       pretty_print=pretty_print)
-        leng_str = self.bylen.tostring(full_output, self.units,
-                                       max_var_chars=max_var_chars,
-                                       pretty_print=pretty_print)
-
-        unit_str = self.units
-        ext_str = "full_output=True" if full_output else "full_output=False"
-        top_hdr = f"   Flight Condition (units={unit_str}, {ext_str})"
-        lin_str = "==========================================================="
-        alt_hdr = "------------------  Altitude Quantities  ------------------"
-        vel_hdr = "------------------  Velocity Quantities  ------------------"
-        len_hdr = "------------------   Length Quantities   ------------------"
-
-        repr_str = (f"{lin_str}\n{top_hdr}\n{lin_str}"
-                    f"\n{alt_hdr}" f"\n{alti_str}"
-                    f"\n{vel_hdr}" f"\n{spee_str}"
-                    f"\n{len_hdr}" f"\n{leng_str}"
-                    )
-
-        return repr_str
-
-    @property
-    def units(self):
-        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
-        by dir(unit.sys).
-
-        Returns:
-            str: Unit system
-        """
-        return self.byalt.units
-
-    @units.setter
-    def units(self, units):
-        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
-        by dir(unit.sys).
-
-        Args:
-            units (str): Unit system
-        """
-        self.byalt.units = units
-
-    @property
-    def full_output(self):
-        """Enable or disable full output of data by default.
-
-        Returns:
-            bool: Full output flag
-        """
-        return self.byalt.full_output
-
-    @full_output.setter
-    def full_output(self, full_output):
-        """Unit system to use: 'SI', 'US', etc.  Available unit systems given
-        by dir(unit.sys).
-
-        Args:
-            full_output (bool): Full output flag
-        """
-        self.byalt.full_output = full_output
-
-    def redim_force(self, S_ref):
-        """Factor to redimensionalize force from force coefficient e.g.,
-
-            .. math::
-
-                L & = C_L q_\\infty S_ref
-                  & = C_L \\text{redim_force}
-
-        Args:
-            S_ref (area): Reference area
-
-        Returns:
-            force: Redimensionalization factor
-        """
-        check_area_dimensioned(S_ref)
-        redim_force = self.byvel.q_inf * S_ref
-
-        # Set to force unit since to_base_units() gives mass*length/time^2
-        if self.units == 'US':
-            redim_force.ito('lbf')
-        elif self.units == 'SI':
-            redim_force.ito('N')
-
-        return redim_force
-
-    def redim_moment(self, S_ref, L):
-        """Factor to redimensionalize moment from moment coefficient e.g.,
-
-            .. math::
-
-                M & = C_M q_\\infty S_ref L
-                  & = C_M \\text{redim_moment}
-
-        Args:
-            S_ref (area): Reference area
-            L (length): Reference length
-
-        Returns:
-            moment: Redimensionalization factor
-        """
-        check_area_dimensioned(S_ref)
-        check_length_dimensioned(L)
-        redim_moment = self.byvel.q_inf * S_ref * L
-
-        # Set to force unit since to_base_units() gives mass*length/time^2
-        if self.units == 'US':
-            redim_moment.ito('ft lbf')
-        elif self.units == 'SI':
-            redim_moment.ito('m N')
-
-        return redim_moment
