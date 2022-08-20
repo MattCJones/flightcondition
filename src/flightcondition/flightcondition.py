@@ -252,6 +252,15 @@ class FlightCondition(Atmosphere):
                 warnings.warn(msg)
             self.Re = Re  # velocity is set based on Re and L
 
+        # Set up behind-the scenes quantity access features
+        # Set up sub-categories asdict functions
+        self._byalt_asdict = self._asdict_template(
+            varnames_dict=self._byalt_varnames)
+        self._byvel_asdict = self._asdict_template(
+            varnames_dict=self._byvel_varnames)
+        self._bylen_asdict = self._asdict_template(
+            varnames_dict=self._bylen_varnames)
+
         # Set alias references by name _byalt_byname.<name>
         self._byalt_byname = AliasAttributes(
             varsobj_arr=[self, ],
@@ -283,39 +292,42 @@ class FlightCondition(Atmosphere):
         # Set variable aliases by altitude properties to .byalt.<var>
         byalt_vars = {key: key for key in self._byalt_varnames.keys()}
         self.byalt = AliasAttributes(
-            varsobj_arr=[self, self, self, self, self, ],
+            varsobj_arr=[self, self, self, self, self, self, ],
             varnames_dict_arr=[
                 byalt_vars,
                 {"_byalt_varnames": "varnames"},
                 {"_byalt_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byalt_byname": "byname"},
+                {"_byalt_asdict": "asdict"},
             ]
         )
 
         # Set variable aliases by velocity properties to .byvel.<var>
         byvel_vars = {key: key for key in self._byvel_varnames.keys()}
         self.byvel = AliasAttributes(
-            varsobj_arr=[self, self, self, self, self, ],
+            varsobj_arr=[self, self, self, self, self, self, ],
             varnames_dict_arr=[
                 byvel_vars,
                 {"_byvel_varnames": "varnames"},
                 {"_byvel_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byvel_byname": "byname"},
+                {"_byvel_asdict": "asdict"},
             ]
         )
 
         # Set variable aliases by length properties to .bylen.<var>
         bylen_vars = {key: key for key in self._bylen_varnames.keys()}
         self.bylen = AliasAttributes(
-            varsobj_arr=[self, self, self, self, self, self, ],
+            varsobj_arr=[self, self, self, self, self, self, self, ],
             varnames_dict_arr=[
                 bylen_vars,
                 {"_bylen_varnames": "varnames"},
                 {"_bylen_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_bylen_byname": "byname"},
+                {"_bylen_asdict": "asdict"},
                 {"wall_distance_from_yplus": "wall_distance_from_yplus"},
             ]
         )

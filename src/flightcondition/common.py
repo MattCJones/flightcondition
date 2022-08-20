@@ -126,15 +126,31 @@ class DimensionalData:
 
         return self.tostring(full_output=full_output)
 
-    def asdict(self):
+    def _asdict_template(self, varnames_dict=None):
         """Return class data as dictionary.
+
+        Args:
+            varnames_dict (dict): Optionally specified variable names
+                dicitonary
+
         Returns:
             dict: Class data
         """
+        if varnames_dict is None:
+            varnames_dict = self.varnames
         obj_dict = {}
-        for var, varname in self.varnames.items():
+        for var, varname in varnames_dict.items():
             obj_dict[var] = getattr(self, var)
         return obj_dict
+
+    @property
+    def asdict(self):
+        """Return class data as dictionary.
+
+        Returns:
+            dict: Class data
+        """
+        return self._asdict_template(self.varnames)
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
