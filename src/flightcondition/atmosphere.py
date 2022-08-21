@@ -131,14 +131,13 @@ class Layer(DimensionalData):
                                     fmt_val="10.5g", pretty_print=pretty_print)
 
         # Create layer string
-        if type(self.name) is np.str_:  # singular string
+        if type(self.name) is np.str_:  # singular array
             trunc_layer_name = self.name
-        else:
-            trunc_layer_name = "[" + " ".join([
-                f"{s[:10]}" for s in self.name
-            ]) + "]"
-        layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name       = "
-                     f"{trunc_layer_name}")
+        else:  # truncate layer name to no more than 10 character
+            trunc_layer_name = [f"{s[:10]}" for s in self.name]
+        layer_str = self._vartostr(var=trunc_layer_name, var_str='name',
+                                   to_units=None, max_var_chars=max_var_chars,
+                                   fmt_val="", pretty_print=False)
 
         # Determine full output flag
         if full_output is None:
@@ -357,7 +356,8 @@ class Atmosphere(DimensionalData):
                                  fmt_val="10.4e", pretty_print=pretty_print)
 
         # Create layer string
-        layer_str = self.layer.tostring(full_output=False)
+        layer_str = self.layer.tostring(full_output=False,
+                                        max_var_chars=max_var_chars)
 
         # Determine full output flag
         if full_output is None:

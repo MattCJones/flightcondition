@@ -177,7 +177,7 @@ class DimensionalData:
         """
         return ""
 
-    def _vartostr(self, var, var_str, to_units, max_var_chars=0,
+    def _vartostr(self, var, var_str, to_units=None, max_var_chars=0,
                   fmt_val="10.5g", pretty_print=False):
         """Formatted variable string with variable, full name, and value.
         Shortens array output to fit better on screen.
@@ -194,13 +194,21 @@ class DimensionalData:
         """
         pp_ = "~P" if pretty_print else ""
         var_name = self.varnames[var_str]
-        var.ito(to_units)
+        if to_units is None:
+            var_units_str = ""
+        else:
+            var.ito(to_units)
+            var_units_str = f"{var.units:{pp_}}"
+
         if np.size(var) > 6:
-            mag = var.magnitude
+            if to_units is None:
+                mag = var
+            else:
+                mag = var.magnitude
             var_val_str = (f"[{mag[0]:{fmt_val}} {mag[1]:{fmt_val}} "
                            f"{mag[2]:{fmt_val}} ... {mag[-3]:{fmt_val}} "
                            f"{mag[-2]:{fmt_val}} {mag[-1]:{fmt_val}}] "
-                           f"{var.units:{pp_}}")
+                           f"{var_units_str}")
         else:
             var_val_str = f"{var:{fmt_val}{pp_}}"
         var_str = f"{var_name:{max_var_chars}s} {var_str:10s} = {var_val_str}"
