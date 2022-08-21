@@ -94,15 +94,24 @@ class DimensionalData:
 
     varnames = {}
 
-    def __eq__(self, otherobj):
+    def __eq__(self, other):
         """Check equality.
         Returns:
             dict: Dictionary representation of object
         """
-        if otherobj.__class__ is not self.__class__:
+        if other.__class__ is not self.__class__:
             return NotImplemented
 
-        return self.asdict() == otherobj.asdict()
+        for var in self.varnames.keys():
+            a = self.asdict[var]
+            b = other.asdict[var]
+            if not (np.shape(a) == np.shape(b)):
+                return False
+            else:
+                if not ((a == b) | (np.isnan(a) & np.isnan(b))).all():
+                    return False
+        else:  # nobreak
+            return True
 
     def __str__(self):
         """Output string when object is printed.

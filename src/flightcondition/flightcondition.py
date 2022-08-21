@@ -581,7 +581,8 @@ class FlightCondition(Atmosphere):
             sizedarr = input_a
         return sizedarr
 
-    def _check_and_size_input(self, input_var, input_alt=None, input_vel=None):
+    @staticmethod
+    def _check_and_size_input(input_var, input_alt=None, input_vel=None):
         """Check that input is correctly typed, then size input array. If
         scalar, leave as scalar.
         Args:
@@ -824,7 +825,7 @@ class FlightCondition(Atmosphere):
     def M(self, M):
         """Mach number :math:`M` """
         M *= dimless  # add dimless for raw float input
-        self._M = self._check_and_size_input(M, input_alt=self.h)
+        self._M = __class__._check_and_size_input(M, input_alt=self.h)
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -838,7 +839,7 @@ class FlightCondition(Atmosphere):
     @TAS.setter
     def TAS(self, TAS):
         """Set true airspeed. """
-        self._TAS = self._check_and_size_input(TAS, input_alt=self.h)
+        self._TAS = __class__._check_and_size_input(TAS, input_alt=self.h)
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -852,7 +853,7 @@ class FlightCondition(Atmosphere):
     @CAS.setter
     def CAS(self, CAS):
         """Calibrated airspeed. """
-        self._CAS = self._check_and_size_input(CAS, input_alt=self.h)
+        self._CAS = __class__._check_and_size_input(CAS, input_alt=self.h)
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
         self._TAS = self._TAS_from_M(self.M)
@@ -866,7 +867,7 @@ class FlightCondition(Atmosphere):
     @EAS.setter
     def EAS(self, EAS):
         """Set equivalent airspeed. """
-        self._EAS = self._check_and_size_input(EAS, input_alt=self.h)
+        self._EAS = __class__._check_and_size_input(EAS, input_alt=self.h)
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
