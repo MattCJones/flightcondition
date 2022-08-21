@@ -182,7 +182,7 @@ sub-category: :code:`byalt`, :code:`byvel`, or :code:`bylen`, e.g.
     print(fc.TAS == fc.byname.true_airspeed)
     # >>> [ True  True  True]
 
-    # Or by their subcategories: `byalt`, `byvel`, or `bylen`
+    # Or by their sub-categories: `byalt`, `byvel`, or `bylen`
     print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
     # >>> [ True  True  True]
 

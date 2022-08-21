@@ -137,7 +137,7 @@ class Layer(DimensionalData):
             trunc_layer_name = "[" + " ".join([
                 f"{s[:10]}" for s in self.name
             ]) + "]"
-        layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name    = "
+        layer_str = (f"{'atmospheric_layer ':{max_var_chars}} name       = "
                      f"{trunc_layer_name}")
 
         # Determine full output flag

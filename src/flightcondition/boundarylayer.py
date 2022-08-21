@@ -141,6 +141,7 @@ class BoundaryLayer:
         #
         # Cf_turb = A*Re_x**B
         # where A and B are obtained from experiment for a given Mach number
+        # Cf_turb, Re_x, and M must have the same size
 
         # Process data and format as array
         Re_x = np.atleast_1d(Re_x)
@@ -149,6 +150,14 @@ class BoundaryLayer:
             M = np.zeros_like(Re_x) * dimless
         else:
             M = np.atleast_1d(M) * dimless
+
+        # If M is size 1, temporarily set it to the size of Re_x
+        if np.size(M) == 1 and np.size(Re_x) > 1:
+            M = np.ones_like(Re_x)*M
+
+        if not (np.size(M) == np.size(Re_x)):
+            raise AttributeError("Mach number and Reynolds number arrays must "
+                                 "be the same size")
 
         # Empirical data curve coefficients
         M_data_arr = np.array([0, 0.3, 0.7, 0.9, 1.0, 1.5, 2.0, 2.5, 3.0])

@@ -309,6 +309,68 @@ def test_mach_bounds():
     with pytest.raises(ValueError) as e_info:
         FlightCondition(h_geom, M=M_above_max)
 
+def test_dynamic_array_warnings_and_errors():
+    """Test that proper warnings and errors are thrown when dynamically
+    changing property arrays. """
+
+    mismatch_substr = "Non-singular arrays must be equal in size"
+
+    # Setting altitude with of incorrect size should throw a warning
+    with warnings.catch_warnings(record=True) as wrn:
+        fc = FlightCondition()
+        fc.M = [0.2, 0.5, 0.7]
+        fc.h = [2, 3] * unit.km;
+        assert mismatch_substr in str(wrn[-1].message)
+
+    # Setting Mach number with of incorrect size should throw an error
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fc = FlightCondition()
+            fc.h = [2, 3] * unit.km;
+            fc.M = [0.2, 0.5, 0.7]
+        except AttributeError as err:
+            assert (mismatch_substr in str(err))
+
+    # Setting TAS with of incorrect size should throw an error
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fc = FlightCondition()
+            fc.h = [2, 3] * unit.km;
+            fc.TAS = [120, 300, 540] * unit('m/s')
+        except AttributeError as err:
+            assert (mismatch_substr in str(err))
+
+    # Setting CAS with of incorrect size should throw an error
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fc = FlightCondition()
+            fc.h = [2, 3] * unit.km;
+            fc.CAS = [120, 300, 540] * unit('m/s')
+        except AttributeError as err:
+            assert (mismatch_substr in str(err))
+
+    # Setting EAS with of incorrect size should throw an error
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fc = FlightCondition()
+            fc.h = [2, 3] * unit.km;
+            fc.EAS = [120, 300, 540] * unit('m/s')
+        except AttributeError as err:
+            assert (mismatch_substr in str(err))
+
+    # Setting Reynolds number of incorrect size should throw an error
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        try:
+            fc = FlightCondition()
+            fc.M = [0.2, 0.5, 0.7]
+            fc.Re = [1e6, 2e5];
+        except AttributeError as err:
+            assert (mismatch_substr in str(err))
 
 def test_command_line_interface():
     """Test that command line interface is running properly. """

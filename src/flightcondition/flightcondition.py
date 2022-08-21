@@ -85,10 +85,12 @@ class FlightCondition(Atmosphere):
         print(fc.TAS == fc.byname.true_airspeed)
         # >>> [ True  True  True]
 
-        # Or by their subcategories: `byalt`, `byvel`, or `bylen`
+        # Or by their sub-categories: `byalt`, `byvel`, or `bylen`
         print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
         # >>> [ True  True  True]
     """
+    # Define dictionaries mapping variables to their full names
+    _byalt_varnames = Atmosphere.varnames
     _byvel_varnames = {
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
@@ -110,13 +112,16 @@ class FlightCondition(Atmosphere):
     _bylen_varnames = {
         'L': 'length_scale',
         'Re': 'reynolds_number',
-        # 'Kn': 'knudsen_number',
         'h_BL_lamr': 'boundary_thickness_laminar',
         'h_BL_turb': 'boundary_thickness_turbulent',
         'Cf_lamr': 'friction_coefficient_laminar',
         'Cf_turb': 'friction_coefficient_turbulent',
         'h_yplus1': 'wall_distance_yplus1',
     }
+    varnames = {}
+    varnames.update(_byalt_varnames)
+    varnames.update(_byvel_varnames)
+    varnames.update(_bylen_varnames)
 
 # =========================================================================== #
 #                       GENERAL FUNCTIONS & PROPERTIES                        #
@@ -151,15 +156,9 @@ class FlightCondition(Atmosphere):
         # Initalize Atmosphere super class
         super().__init__(h=h, units=units, full_output=full_output)
         self._byalt_tostring = super().tostring
-        self._byalt_varnames = super().varnames
 
         # Computer sea level properties
         self._atm0 = Atmosphere(h=0*unit('kft'))
-
-        # Preprocess needed altitude-based quantities
-        # Automatically process altitude through Atmosphere class
-        self.byalt = Atmosphere(h=h, units=units, full_output=full_output,
-                                **kwargs)
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -338,12 +337,6 @@ class FlightCondition(Atmosphere):
             varnames_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
         )
 
-        # Aggregate variable names
-        self.varnames = {}
-        self.varnames.update(self._byalt_varnames)
-        self.varnames.update(self._byvel_varnames)
-        self.varnames.update(self._bylen_varnames)
-
     def tostring(self, full_output=True, units=None, pretty_print=True):
         """String representation of data structure.
 
@@ -366,12 +359,18 @@ class FlightCondition(Atmosphere):
         if units is not None:
             self.units = units
 
+        # Check that quantity array sizes are consistent, otherwise raise error
+        self._check_compatible_array_sizes(raise_warning=True,
+                                           raise_error=True)
+
         # Determine maximum characters to add spaces for and assemble string
         max_var_chars = max([
             max([len(v) for v in self._byalt_varnames.values()]),
             max([len(v) for v in self._byvel_varnames.values()]),
             max([len(v) for v in self._bylen_varnames.values()]),
         ])
+
+        # Build output strings from sub-categories
         alti_str = self._byalt_tostring(full_output, self.units,
                                         pretty_print=pretty_print,
                                         max_var_chars=max_var_chars)
@@ -396,6 +395,119 @@ class FlightCondition(Atmosphere):
                     f"\n{len_hdr}" f"\n{leng_str}"
                     )
         return repr_str
+
+    @staticmethod
+    def _check_compatible_array_size(arr1, arr2,
+                                     arr_name1="Arr1", arr_name2="Arr2",
+                                     raise_warning=False, raise_error=False):
+        """Check that two arrays have valid sizes. Non-singular arrays must be
+        equal in size.
+
+        Args:
+            arr1 (array): Array 1
+            arr2 (array): Array 2
+            arr_name1 (str): Array name 1
+            arr_name2 (str): Array name 2
+            raise_error (bool): Whether or not to raise an error.
+            raise_warning (bool): Whether or not to raise a warning.
+
+        Returns:
+            bool: True if valid sizes else false.
+        """
+        arr_size1 = np.size(arr1)
+        arr_size2 = np.size(arr2)
+        msg = (f"{arr_name1} array size {arr_size1} and {arr_name2} array size"
+               f" {arr_size2} are incompatible! Non-singular arrays must be "
+               "equal in size.")
+        if arr_size1 > 1 and arr_size2 > 1:
+            if not arr_size1 == arr_size2:
+                if raise_warning:
+                    warnings.warn(msg.format(arr_size1, arr_size2))
+                if raise_error:
+                    raise AttributeError(msg.format(arr_size1, arr_size2))
+                return False
+        return True
+
+    def _check_compatible_array_sizes(self, raise_warning=False,
+                                      raise_error=False):
+        """Check that altitude, velocity, and length array sizes are valid.  If
+        two sub-category sizes are non-equal and greater than 1, the underlying
+        functions of the class may fail.  This check can detect problems
+        beforehand.
+
+        Args:
+            raise_error (bool): Whether or not to raise an error.
+            raise_warning (bool): Whether or not to raise a warning.
+
+        Returns:
+            bool: True if valid sizes else false.
+        """
+        iscompatible = True
+        msg = "{} arrays of size {} and {} arrays of size {} are incompatible."
+
+        if not __class__._check_compatible_array_size(self.h, self.M):
+            warnings.warn(msg.format("Altitude", np.size(self.h), "Velocity",
+                          np.size(self.M)))
+            iscompatible = False
+        if not __class__._check_compatible_array_size(self.h, self.L):
+            warnings.warn(msg.format("Altitude", np.size(self.h), "Length",
+                          np.size(self.L)))
+            iscompatible = False
+        if not __class__._check_compatible_array_size(self.M, self.L):
+            warnings.warn(msg.format("Velocity", np.size(self.M), "Length",
+                          np.size(self.L)))
+            iscompatible = False
+
+        if raise_error and not iscompatible:
+            raise AttributeError("Aborting! Array sizes are incompatible. "
+                                 "See previous warnings.")
+
+        return iscompatible
+
+    @staticmethod
+    def _reshape_arr1_like_arr2(arr1, arr2, raise_warning=False):
+        """Reshape arr1 to match size of arr2 if size(arr1)==1.
+
+        Args:
+            arr1 (object): Array 1
+            arr2 (object): Array 2
+            raise_warning (bool): Whether or not to raise a warning.
+        """
+        if np.size(arr2) > 1 and np.size(arr1) == 1:
+            if (np.size(arr1) != np.size(arr2)):
+                # Scale up length quantities to match altitude size
+                arr1 = np.ones_like(arr2)*arr1
+        return arr1
+
+    @classmethod
+    def _preprocess_arr(cls, input_arr, input_alt=None, input_vel=None):
+        """Check that input is correctly typed, then size input array. If
+        scalar, leave as scalar.
+
+        Args:
+            input_arr (object): Input array (or scalar)
+            input_alt (object): Input array of altitude level
+            input_vel (object): Input array of velocity level (when assessing
+                length scale as input_arr)
+
+        Returns:
+            object: Sized array (or scalar)
+        """
+        check_dimensioned(input_arr)
+
+        # Force local unit registry
+        input_arr = input_arr.magnitude * unit(str(input_arr.units))
+
+        # Require input, base, and secondary arrays to be singular or
+        # non-singular but equal in size
+        sized_arr = cls._reshape_arr1_like_arr2(input_arr, input_alt)
+        if input_vel is not None:
+            sized_arr = cls._reshape_arr1_like_arr2(input_arr, input_vel)
+
+        tofloat = 1.0
+        sized_arr = (sized_arr * tofloat)
+
+        return sized_arr
 
     def redim_force(self, S_ref):
         """Factor to redimensionalize force from force coefficient e.g.,
@@ -450,8 +562,69 @@ class FlightCondition(Atmosphere):
         return redim_moment
 
 # =========================================================================== #
+#                        LENGTH FUNCTIONS & PROPERTIES                        #
+# =========================================================================== #
+    @_property_decorators
+    def h(self):
+        """Override Atmosphere getter for altitude.
+
+        Returns:
+            length: Geometric altitude
+        """
+        # return super().h  # doesn't work
+        return super(FlightCondition, self.__class__).h.fget(self)
+
+    @h.setter
+    def h(self, h):
+        """Override Atmosphere setter to properly dimension other quantities.
+
+        Args:
+            h (length): Input scalar or array of altitudes
+        """
+        # super().h = h  # doesn't work
+        super(FlightCondition, self.__class__).h.fset(self, h)
+
+        # Set airspeed and length array sizes if they are singular and altitude
+        # is non-singular
+        if hasattr(self, '_M'):
+            if __class__._check_compatible_array_size(
+                    arr1=h, arr2=self._M,
+                    arr_name1=self.varnames['h'], arr_name2=self.varnames['M'],
+                    raise_warning=True):
+                self.M = __class__._reshape_arr1_like_arr2(self._M, h)
+        if hasattr(self, '_L'):
+            if __class__._check_compatible_array_size(
+                    arr1=h, arr2=self._L,
+                    arr_name1=self.varnames['h'], arr_name2=self.varnames['L'],
+                    raise_warning=True):
+                self._L = __class__._reshape_arr1_like_arr2(self._L, h)
+
+# =========================================================================== #
 #                       VELOCITY FUNCTIONS & PROPERTIES                       #
 # =========================================================================== #
+    def _process_input_velocity(self, vel_arr, vel_name="Velocity"):
+        """Check that the input velocity array size is compatible. If so, shape
+        altitude and length.
+
+        Args:
+            vel_arr (array): Velocity array
+
+        Returns:
+            bool: True if compatible else False
+        """
+        if hasattr(self, '_h'):
+            if __class__._check_compatible_array_size(
+                    arr1=vel_arr, arr2=self._h,
+                    arr_name1=vel_name, arr_name2=self.varnames["h"],
+                    raise_warning=True, raise_error=True):
+                self._h = __class__._reshape_arr1_like_arr2(self._h, vel_arr)
+        if hasattr(self, '_L'):
+            if __class__._check_compatible_array_size(
+                    arr1=vel_arr, arr2=self._L,
+                    arr_name1=vel_name, arr_name2=self.varnames["L"],
+                    raise_warning=True):
+                self._L = __class__._reshape_arr1_like_arr2(self._L, vel_arr)
+
     def _byvel_tostring(self, full_output=None, units=None, max_var_chars=0,
                         pretty_print=True):
         """String representation of data structure.
@@ -559,55 +732,6 @@ class FlightCondition(Atmosphere):
             repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
 
         return repr_str
-
-    @staticmethod
-    def _compare_input_size(input_a, input_b):
-        """Enforce non-singular input arrays to be equal in size
-        Args:
-            input_a (object): Input A
-            input_b (object): Input B
-        Returns:
-            object: sized_arr
-        """
-        wrongsize_msg = ("Non-singular input arrays must be equal in size.")
-
-        if np.shape(input_b):  # if array
-            if np.shape(input_a):  # if array
-                if not input_a.size == 1 and not input_b.size == 1:
-                    if not input_a.size == input_b.size:
-                        raise TypeError(wrongsize_msg)
-            sizedarr = np.ones(np.shape(input_b))*input_a
-        else:
-            sizedarr = input_a
-        return sizedarr
-
-    @staticmethod
-    def _check_and_size_input(input_var, input_alt=None, input_vel=None):
-        """Check that input is correctly typed, then size input array. If
-        scalar, leave as scalar.
-        Args:
-            input_var (object): Input array (or scalar)
-            input_alt (object): Input array of altitude level
-            input_vel (object): Input array of velocity level (when assessing
-                length scale as input_var)
-        Returns:
-            object: Sized array (or scalar)
-        """
-        check_dimensioned(input_var)
-
-        # Force local unit registry
-        input_var = input_var.magnitude * unit(str(input_var.units))
-
-        # Require input, base, and secondary arrays to be singular or
-        # non-singular but equal in size
-        sizedarr = __class__._compare_input_size(input_var, input_alt)
-        if input_vel is not None:
-            sizedarr = __class__._compare_input_size(input_var, input_vel)
-
-        tofloat = 1.0
-        sizedarr = (sizedarr * tofloat)
-
-        return sizedarr
 
     @staticmethod
     def _impact_pressure(M, p):
@@ -825,7 +949,9 @@ class FlightCondition(Atmosphere):
     def M(self, M):
         """Mach number :math:`M` """
         M *= dimless  # add dimless for raw float input
-        self._M = __class__._check_and_size_input(M, input_alt=self.h)
+        self._M = __class__._preprocess_arr(M, input_alt=self.h)
+        self._process_input_velocity(self._M, vel_name=self.varnames['M'])
+
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -839,7 +965,9 @@ class FlightCondition(Atmosphere):
     @TAS.setter
     def TAS(self, TAS):
         """Set true airspeed. """
-        self._TAS = __class__._check_and_size_input(TAS, input_alt=self.h)
+        self._TAS = __class__._preprocess_arr(TAS, input_alt=self.h)
+        self._process_input_velocity(self._TAS, vel_name=self.varnames['TAS'])
+
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -853,7 +981,9 @@ class FlightCondition(Atmosphere):
     @CAS.setter
     def CAS(self, CAS):
         """Calibrated airspeed. """
-        self._CAS = __class__._check_and_size_input(CAS, input_alt=self.h)
+        self._CAS = __class__._preprocess_arr(CAS, input_alt=self.h)
+        self._process_input_velocity(self._CAS, vel_name=self.varnames['CAS'])
+
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
         self._TAS = self._TAS_from_M(self.M)
@@ -867,7 +997,9 @@ class FlightCondition(Atmosphere):
     @EAS.setter
     def EAS(self, EAS):
         """Set equivalent airspeed. """
-        self._EAS = __class__._check_and_size_input(EAS, input_alt=self.h)
+        self._EAS = __class__._preprocess_arr(EAS, input_alt=self.h)
+        self._process_input_velocity(self._EAS, vel_name=self.varnames['EAS'])
+
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
@@ -1081,9 +1213,26 @@ class FlightCondition(Atmosphere):
     def L(self, L):
         """Set length scale :math:`L`"""
         # Verify that length input is dimensional length quantity
-        L = self._check_and_size_input(L, input_alt=self.h, input_vel=self.M)
+        L = self._preprocess_arr(L, input_alt=self.h, input_vel=self.M)
         check_length_dimensioned(L)
         self._L = L
+
+        # Set altitude and airspeed array sizes if they are singular and length
+        # is non-singular
+        if hasattr(self, '_h'):
+            if __class__._check_compatible_array_size(
+                    arr1=self._h, arr2=L,
+                    arr_name1=self.varnames['h'], arr_name2=self.varnames['L'],
+                    raise_warning=True):
+                pass
+                # self._h = __class__._reshape_arr1_like_arr2(self._h, L)
+        if hasattr(self, '_M'):
+            if __class__._check_compatible_array_size(
+                    arr1=self.M, arr2=L,
+                    arr_name1=self.varnames['M'], arr_name2=self.varnames['L'],
+                    raise_warning=True):
+                pass
+                # self.M = __class__._reshape_arr1_like_arr2(self._M, L)
 
     @_property_decorators
     def Re(self):
@@ -1097,16 +1246,13 @@ class FlightCondition(Atmosphere):
         """Set Reynolds number :math:`Re`
         Set the true airspeed based on Reynolds number and length scale. """
         Re *= dimless  # add dimless for raw float input
-        Re = self._check_and_size_input(
+        Re = self._preprocess_arr(
             Re, input_alt=self.h, input_vel=self.M)
+        __class__._check_compatible_array_size(
+            arr1=self.M, arr2=Re, arr_name1=self.varnames['M'],
+            arr_name2=self.varnames['L'], raise_warning=True, raise_error=True)
         self.TAS = NonDimensional.reynolds_number_velocity(
             Re_L=Re, L=self.L, nu=self.nu)
-
-    # @_property_decorators  # disable for now
-    # def Kn(self):
-    #     """Get Knudsen number :math:`K_n`"""
-    #     Kn = NonDimensional.knudsen_number(self.L, self.MFP)
-    #     return Kn
 
     @_property_decorators
     def h_BL_lamr(self):

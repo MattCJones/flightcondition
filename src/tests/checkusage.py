@@ -59,7 +59,7 @@ print(f"The wall distance where y+=100 is {h_yplus100.to('in'):.3g}")
 print(fc.TAS == fc.byname.true_airspeed)
 # >>> [ True  True  True]
 
-# Or by their subcategories: `byalt`, `byvel`, or `bylen`
+# Or by their sub-categories: `byalt`, `byvel`, or `bylen`
 print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
 # >>> [ True  True  True]
 
