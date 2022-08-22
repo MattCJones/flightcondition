@@ -307,8 +307,7 @@ Assumptions
 * Atmospheric quantities follow the `1993 International Standard Atmosphere
   <https://en.wikipedia.org/wiki/International_Standard_Atmosphere>`_ model.
 * Velocity computations include varying degrees of the following assumptions.
-  If assumptions are broken for a particular quantity, that quantity returns
-  :code:`nan`.
+  Note that several assumptions break down for hypersonic flow.
 
   - Continuum flow (mean free path is much smaller than the characteristic
     length scale)
