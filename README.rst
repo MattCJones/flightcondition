@@ -90,7 +90,7 @@ format, and an optional length scale.
 #. :code:`L` *length scale* (optional) - aliases are :code:`ell`, :code:`bylen`,
    :code:`length`, :code:`length_scale`, :code:`l`
 
-See also the :code:`KTAS`, :code:`KCAS`, and :code:`KEAS` syntactic sugar.  For
+See also :code:`KTAS`, :code:`KCAS`, and :code:`KEAS` for convenience.  For
 example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
 
 **Outputs** include:
@@ -124,10 +124,10 @@ example, :code:`KCAS=233` is equivalent to :code:`CAS=233*unit('knots')`.
    * Wall distance (turbulent) where :math:`y^+=1` :code:`h_yplus1`
 
 Quantities may be accessed by either (a) their shorter variable names, e.g.
-:code:`.M`, or (b) by their longer, full names, e.g.
-:code:`byname.mach_number`.  They may also be accessed through their particular
+:code:`.TAS`, or (b) by their longer, full names, e.g.
+:code:`byname.true_airspeed`.  They may also be accessed through their particular
 sub-category: :code:`byalt`, :code:`byvel`, or :code:`bylen`, e.g.
-:code:`.byvel.M` or :code:`.byvel.byname.mach_number`.
+:code:`.byvel.TAS` or :code:`.byvel.byname.true_airspeed`.
 
 **Example usage**:
 
