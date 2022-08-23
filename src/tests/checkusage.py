@@ -13,7 +13,7 @@ print("="*maxchars)
 from flightcondition import FlightCondition, unit, dimless
 
 # Compute flight condition at 3 km, Mach 0.5
-fc = FlightCondition(3*unit('km'), M=0.5)
+fc = FlightCondition(h=3*unit('km'), M=0.5)
 
 # Uncomment to print summary of flight condition quantities:
 #print(f"{fc}")
@@ -42,7 +42,7 @@ fc.h = 12 * unit('kft')
 
 # Recompute for a range of altitudes at 275.14 knots-equivalent
 # airspeed with a characteristic length scale of 10 meters
-fc = FlightCondition([0, 9.8425, 20]*unit('kft'),
+fc = FlightCondition(h=[0, 9.8425, 20]*unit('kft'),
                      EAS=275.14*unit('kt'),
                      L=10*unit('m'))
 
