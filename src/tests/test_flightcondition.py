@@ -240,6 +240,35 @@ def test_reynolds_number_velocity():
     assert_field(fc.byvel.TAS, fc2.byvel.TAS)
 
 
+def test_holding_velocity_constant():
+    """Test that proper velocity quantity is held constant when altitude is
+    dynamically changed. """
+    fc = FlightCondition(h=[4, 7, 44]*unit.kft, M=0.5)
+
+    # Dynamically change velocity --> Mach number should stay constant
+    M = fc.M
+    fc.h = [2, 13, 24] * unit.kft
+    assert_field(M, fc.M)
+
+    # Dynamically change velocity --> true airspeed should stay constant
+    fc.TAS = [100, 200, 300] * unit('m/s')
+    TAS = fc.TAS
+    fc.h = [1, 9, 33] * unit.kft
+    assert_field(TAS, fc.TAS)
+
+    # Dynamically change velocity --> calibrated airspeed should stay constant
+    fc.CAS = [110, 220, 330] * unit('m/s')
+    CAS = fc.CAS
+    fc.h = [11, 19, 25] * unit.kft
+    assert_field(CAS, fc.CAS)
+
+    # Dynamically change velocity --> calibrated airspeed should stay constant
+    fc.EAS = [111, 222, 333] * unit('m/s')
+    EAS = fc.EAS
+    fc.h = [7, 15, 21] * unit.kft
+    assert_field(EAS, fc.EAS)
+
+
 def test_access_byname():
     """Test that quantities are properly accessible by name. """
 

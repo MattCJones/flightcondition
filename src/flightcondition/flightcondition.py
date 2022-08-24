@@ -195,6 +195,10 @@ class FlightCondition(Atmosphere):
             KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
             EAS = None if KEAS is None else KEAS * unit('knots')
 
+        # By default hold EAS constant when altitude is changed
+        self._holdconst_vel_var = 'EAS'
+
+        # Assign input velocity quantity
         if M is not None:
             self.M = M
         elif TAS is not None:
@@ -591,7 +595,17 @@ class FlightCondition(Atmosphere):
                     arr1=h, arr2=self._M,
                     arr_name1=self.varnames['h'], arr_name2=self.varnames['M'],
                     raise_warning=True):
-                self.M = __class__._reshape_arr1_like_arr2(self._M, h)
+                if self._holdconst_vel_var == 'M':
+                    self.M = __class__._reshape_arr1_like_arr2(self._M, h)
+                elif self._holdconst_vel_var == 'TAS':
+                    self.TAS = __class__._reshape_arr1_like_arr2(self._TAS, h)
+                elif self._holdconst_vel_var == 'CAS':
+                    self.CAS = __class__._reshape_arr1_like_arr2(self._CAS, h)
+                elif self._holdconst_vel_var == 'EAS':
+                    self.EAS = __class__._reshape_arr1_like_arr2(self._EAS, h)
+                else:  # default to holding EAS constant
+                    self.EAS = __class__._reshape_arr1_like_arr2(self._EAS, h)
+
         if hasattr(self, '_L'):
             if __class__._check_compatible_array_size(
                     arr1=h, arr2=self._L,
@@ -957,6 +971,9 @@ class FlightCondition(Atmosphere):
         self._q_c = self._q_c_from_M(self.M)
         self._CAS = self._CAS_from_q_c(self.q_c)
 
+        # Out of all velocity quantities, hold this one constant over altitude
+        self._holdconst_vel_var = 'M'
+
     @_property_decorators
     def TAS(self):
         """Get true airspeed. """
@@ -972,6 +989,9 @@ class FlightCondition(Atmosphere):
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
         self._q_c = self._q_c_from_M(self.M)
         self._CAS = self._CAS_from_q_c(self.q_c)
+
+        # Out of all velocity quantities, hold this one constant over altitude
+        self._holdconst_vel_var = 'TAS'
 
     @_property_decorators
     def CAS(self):
@@ -989,6 +1009,9 @@ class FlightCondition(Atmosphere):
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
 
+        # Out of all velocity quantities, hold this one constant over altitude
+        self._holdconst_vel_var = 'CAS'
+
     @_property_decorators
     def EAS(self):
         """Get equivalent airspeed. """
@@ -1004,6 +1027,9 @@ class FlightCondition(Atmosphere):
         self._TAS = self._TAS_from_M(self.M)
         self._q_c = self._q_c_from_M(self.M)
         self._CAS = self._CAS_from_q_c(self.q_c)
+
+        # Out of all velocity quantities, hold this one constant over altitude
+        self._holdconst_vel_var = 'EAS'
 
     @_property_decorators
     def KTAS(self):
