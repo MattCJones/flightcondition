@@ -183,8 +183,8 @@ class DimensionalData:
         """
         return ""
 
-    def _vartostr(self, var, var_str, to_units=None, max_var_chars=0,
-                  fmt_val="10.5g", pretty_print=False):
+    def _vartostr(self, var, var_str, to_units=None, max_var_chars=10,
+                  max_name_chars=20, fmt_val="10.5g", pretty_print=False):
         """Formatted variable string with variable, full name, and value.
         Shortens array output to fit better on screen.
 
@@ -192,6 +192,8 @@ class DimensionalData:
             var (Quantity): Variable
             var_str (str): Variable string
             to_units (str): Units to convert to
+            max_var_chars (int): Maximum characters in variables
+            max_name_chars (int): Maximum characters in variable name
             fmt_val (str): String for formatting value
             pretty_print (bool): Pretty print format
 
@@ -217,7 +219,8 @@ class DimensionalData:
                            f"{var_units_str}")
         else:
             var_val_str = f"{var:{fmt_val}{pp_}}"
-        var_str = f"{var_name:{max_var_chars}s} {var_str:10s} = {var_val_str}"
+        var_str = (f"{var_name:{max_name_chars}s} {var_str:{max_var_chars}s} ="
+                   f" {var_val_str}")
         return var_str
 
     @staticmethod

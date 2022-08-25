@@ -368,21 +368,33 @@ class FlightCondition(Atmosphere):
                                            raise_error=True)
 
         # Determine maximum characters to add spaces for and assemble string
-        max_var_chars = max([
-            max([len(v) for v in self._byalt_varnames.values()]),
-            max([len(v) for v in self._byvel_varnames.values()]),
-            max([len(v) for v in self._bylen_varnames.values()]),
-        ])
+        if full_output:
+            max_var_chars = max([  # length of variables
+                max([len(v) for v in self._byalt_varnames.keys()]),
+                max([len(v) for v in self._byvel_varnames.keys()]),
+                max([len(v) for v in self._bylen_varnames.keys()]),
+            ])
+            max_name_chars = max([  # length of variable names
+                max([len(v) for v in self._byalt_varnames.values()]),
+                max([len(v) for v in self._byvel_varnames.values()]),
+                max([len(v) for v in self._bylen_varnames.values()]),
+            ])
+        else:
+            max_var_chars = 7  # length of variables
+            max_name_chars = 19  # length of variable names
 
         # Build output strings from sub-categories
         alti_str = self._byalt_tostring(full_output, self.units,
-                                        pretty_print=pretty_print,
-                                        max_var_chars=max_var_chars)
+                                        max_var_chars=max_var_chars,
+                                        max_name_chars=max_name_chars,
+                                        pretty_print=pretty_print)
         spee_str = self._byvel_tostring(full_output, self.units,
                                         max_var_chars=max_var_chars,
+                                        max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
         leng_str = self._bylen_tostring(full_output, self.units,
                                         max_var_chars=max_var_chars,
+                                        max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
 
         unit_str = self.units
@@ -639,19 +651,27 @@ class FlightCondition(Atmosphere):
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, vel_arr)
 
-    def _byvel_tostring(self, full_output=None, units=None, max_var_chars=0,
-                        pretty_print=True):
+    def _byvel_tostring(self, full_output=None, units=None, max_var_chars=None,
+                        max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum number of characters in unit string
+            max_var_chars (int): Maximum characters in variables
+            max_name_chars (int): Maximum characters in variable name
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation
         """
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
         # Set default unit system
         if units is None:
             units = self.units
@@ -680,62 +700,63 @@ class FlightCondition(Atmosphere):
             Re_by_L_units = '1/mm'
 
         # Insert longer variable name into output
-        max_var_chars = max([
-            max([len(v) for v in self.varnames.values()]),
-            max_var_chars
-        ])
+        if max_var_chars is None:
+            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_name_chars is None:
+            max_name_chars = max([len(v) for v in self.varnames.values()])
+
         M_str = self._vartostr(
             var=self.M, var_str='M', to_units='',
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         TAS_str = self._vartostr(
             var=self.TAS, var_str='TAS', to_units=TAS_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         CAS_str = self._vartostr(
             var=self.CAS, var_str='CAS', to_units=CAS_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         EAS_str = self._vartostr(
             var=self.EAS, var_str='EAS', to_units=EAS_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         q_inf_str = self._vartostr(
             var=self.q_inf, var_str='q_inf', to_units=q_inf_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         q_c_str = self._vartostr(
             var=self.q_c, var_str='q_c', to_units=q_c_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         p0_str = self._vartostr(
             var=self.p0, var_str='p0', to_units=p0_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         T0_str = self._vartostr(
             var=self.T0, var_str='T0', to_units=T0_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Tr_lamr_str = self._vartostr(
             var=self.Tr_lamr, var_str='Tr_lamr', to_units=Tr_lamr_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Tr_turb_str = self._vartostr(
             var=self.Tr_turb, var_str='Tr_turb', to_units=Tr_turb_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print) + "\n"
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Re_by_L_str = self._vartostr(
             var=self.Re_by_L, var_str='Re_by_L', to_units=Re_by_L_units,
-            max_var_chars=max_var_chars, fmt_val="10.4e",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.4e", pretty_print=pretty_print)
 
         if np.isnan(np.atleast_1d(self.mu_M)).all():
             mu_M_str = ""
         else:
             mu_M_str = self._vartostr(
                 var=self.mu_M, var_str='mu_M', to_units='deg',
-                max_var_chars=max_var_chars, fmt_val="10.5g",
-                pretty_print=pretty_print) + "\n"
+                max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+                fmt_val="10.5g", pretty_print=pretty_print) + "\n"
 
         # Assemble output string
         if full_output:
@@ -1130,19 +1151,27 @@ class FlightCondition(Atmosphere):
 # =========================================================================== #
 #                        LENGTH FUNCTIONS & PROPERTIES                        #
 # =========================================================================== #
-    def _bylen_tostring(self, full_output=True, units=None, max_var_chars=0,
-                        pretty_print=True):
+    def _bylen_tostring(self, full_output=True, units=None, max_var_chars=None,
+                        max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum number of characters in unit string
+            max_var_chars (int): Maximum characters in variables
+            max_name_chars (int): Maximum characters in variable name
             pretty_print (bool): Pretty print output
 
         Returns:
             str: String representation
         """
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
         # Set default unit system
         if units is None:
             units = self.units
@@ -1155,38 +1184,39 @@ class FlightCondition(Atmosphere):
             h_BL_units = 'mm'
 
         # Insert longer variable name into output
-        max_var_chars = max([
-            max([len(v) for v in self.varnames.values()]),
-            max_var_chars
-        ])
+        if max_var_chars is None:
+            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_name_chars is None:
+            max_name_chars = max([len(v) for v in self.varnames.values()])
+
         L_str = self._vartostr(
             var=self.L, var_str='L', to_units=L_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         Re_str = self._vartostr(
             var=self.Re, var_str='Re', to_units='',
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         h_BL_lamr_str = self._vartostr(
             var=self.h_BL_lamr, var_str='h_BL_lamr', to_units=h_BL_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         h_BL_turb_str = self._vartostr(
             var=self.h_BL_turb, var_str='h_BL_turb', to_units=h_BL_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         Cf_lamr_str = self._vartostr(
             var=self.Cf_lamr, var_str='Cf_lamr', to_units=dimless,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         Cf_turb_str = self._vartostr(
             var=self.Cf_turb, var_str='Cf_turb', to_units=dimless,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
         h_yplus1_str = self._vartostr(
             var=self.h_yplus1, var_str='h_yplus1', to_units=h_BL_units,
-            max_var_chars=max_var_chars, fmt_val="10.5g",
-            pretty_print=pretty_print)
+            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
 
         if full_output:
             repr_str = (f"{L_str}\n{Re_str}\n{h_BL_lamr_str}\n"
