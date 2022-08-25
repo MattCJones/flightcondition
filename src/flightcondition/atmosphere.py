@@ -109,10 +109,12 @@ class Layer(DimensionalData):
             p_base_units   = 'Pa'
 
         # Insert longer variable name into output
-        max_var_chars = max([
-            max([len(v) for v in __class__.varnames.values()]),
-            max_var_chars
-        ])
+        if full_output == True: # only consider class' varnames if full_output
+            max_var_chars = max([
+                max([len(v) for v in __class__.varnames.values()]),
+                max_var_chars
+            ])
+
         H_base_str = self._vartostr(var=self.H_base, var_str='H_base',
                                     to_units=H_base_units,
                                     max_var_chars=max_var_chars,
