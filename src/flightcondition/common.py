@@ -119,7 +119,13 @@ class DimensionalData:
         Returns:
             str: Full string output
         """
-        return self.tostring(full_output=True)
+        # Determine full output flag
+        if self.full_output is None:
+            full_output = True
+        else:
+            full_output = self.full_output
+
+        return self.tostring(full_output=full_output)
 
     def __repr__(self):
         """Output string representation of class object.
