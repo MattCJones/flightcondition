@@ -15,3 +15,5 @@ scripts
 .mypy_cache
 .vscode
 .eggs
+trash
+flightcondition_demo*.mp4
