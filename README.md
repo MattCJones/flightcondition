@@ -83,8 +83,8 @@ is equivalent to `CAS=233*unit('knots')`.
 
 **Outputs** include:
 
-1.  `byalt` *altitude* quantities - see `Atmosphere` class below.
-2.  `byvel` *velocity* quantities:
+1.  *Altitude* quantities - see `Atmosphere` class below.
+2.  *Velocity* quantities:
     -   True airspeed `TAS`
     -   Calibrated airspeed `CAS`
     -   Equivalent airspeed `EAS`
@@ -97,7 +97,7 @@ is equivalent to `CAS=233*unit('knots')`.
     -   Recovery temperature (laminar) `Tr_lamr`
     -   Recovery temperature (turbulent) `Tr_turb`
     -   Reynolds number per unit length `Re_by_L`
-3.  `bylen` *length-scale* quantities:
+3.  *Length-scale* quantities:
     -   Length scale `L`
     -   Reynolds number `Re`
     -   Boundary layer thickness (laminar) `h_BL_lamr`
@@ -116,7 +116,7 @@ or `bylen`, e.g.  `.byvel.TAS` or `.byvel.byname.true_airspeed`.
 **Example usage**:
 
 ```python
-from flightcondition import FlightCondition, unit, dimless
+from flightcondition import FlightCondition, unit
 
 # Compute flight condition at 3 km, Mach 0.5
 fc = FlightCondition(h=3*unit('km'), M=0.5)

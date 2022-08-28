@@ -36,7 +36,7 @@ class FlightCondition(Atmosphere):
     All inputs must be dimensional unit quantities.
 
     Usage:
-        from flightcondition import FlightCondition, unit, dimless
+        from flightcondition import FlightCondition, unit
 
         # Compute flight condition at 3 km, Mach 0.5
         fc = FlightCondition(h=3*unit('km'), M=0.5)
