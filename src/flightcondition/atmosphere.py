@@ -240,6 +240,10 @@ class Atmosphere(DimensionalData):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
+        See class definition for special hidden arguments such as `h_kft` to
+        input a scalar that automatically converts to the kilo-foot dimension,
+        or `h_km` for kilometers.
+
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
             units (str): Set to 'US' for US units or 'SI' for SI
@@ -260,9 +264,23 @@ class Atmosphere(DimensionalData):
 
         # Process altitude input
         # Check for hidden aliases
-        h_aliases = ['alt', 'altitude']
+        h_aliases = ['alt', 'altitude', 'z']
         if h is None:
             h = __class__._arg_from_alias(h_aliases, kwargs)
+
+        # Check if special h_kft syntactic sugar is used
+        h_kft_aliases = ['h_kft', 'z_kft', 'kft']
+        if h is None:
+            h_kft = __class__._arg_from_alias(h_kft_aliases, kwargs)
+            if h_kft is not None:
+                h = h_kft * unit('kft')
+
+        # Check if special h_km syntactic sugar is used
+        h_km_aliases = ['h_km', 'z_km', 'km']
+        if h is None:
+            h_km = __class__._arg_from_alias(h_km_aliases, kwargs)
+            if h_km is not None:
+                h = h_km * unit('km')
 
         # Default to 0 kft
         if h is None:

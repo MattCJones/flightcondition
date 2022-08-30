@@ -154,7 +154,7 @@ class FlightCondition(Atmosphere):
             full_output (bool): Set to True for full output
         """
         # Initalize Atmosphere super class
-        super().__init__(h=h, units=units, full_output=full_output)
+        super().__init__(h=h, units=units, full_output=full_output, **kwargs)
         self._byalt_tostring = super().tostring
 
         # Computer sea level properties
@@ -223,6 +223,20 @@ class FlightCondition(Atmosphere):
                 f"Mach number is out of bounds "
                 f"({self._mach_min:.5g} < M_ < {self._mach_max:.5g})"
             )
+
+        # Check if special L_ft syntactic sugar is used
+        L_ft_aliases = ['L_ft', 'ell_ft', 'ft']
+        if h is None:
+            L_ft = __class__._arg_from_alias(L_ft_aliases, kwargs)
+            if L_ft is not None:
+                L = L_ft * unit('ft')
+
+        # Check if special L_m syntactic sugar is used
+        L_m_aliases = ['L_m', 'ell_m', 'm']
+        if h is None:
+            L_m = __class__._arg_from_alias(L_m_aliases, kwargs)
+            if L_m is not None:
+                L = L_m * unit('m')
 
         # If length scale is not input, default to unity with dimentionals unit
         # based on US or SI determination
