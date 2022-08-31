@@ -17,7 +17,9 @@ more with built-in unit checking.  Specific sub-modules include:
 * `units`: built-in unit-checking and conversion using the [pint]
 (https://pint.readthedocs.io) package.
 
-![Flight Condition Demo](docs/videos/flightcondition_demo.gif)
+![Flight Condition Demo](
+https://github.com/MattCJones/videos/blob/main/flightcondition/flightcondition_demo.gif
+)
 
 Author
 ------
