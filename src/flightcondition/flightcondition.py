@@ -1066,10 +1066,10 @@ class FlightCondition(Atmosphere):
         # Out of all velocity quantities, hold this one constant over altitude
         self._holdconst_vel_var = 'EAS'
 
-    @_property_decorators
+    @property
     def KTAS(self):
         """Get knots-true-airspeed. """
-        return self._TAS.to('knots')
+        return self.TAS.to('knots')
 
     @KTAS.setter
     def KTAS(self, KTAS):
@@ -1079,10 +1079,10 @@ class FlightCondition(Atmosphere):
         TAS = KTAS * unit('knots')
         self.TAS = TAS
 
-    @_property_decorators
+    @property
     def KCAS(self):
         """Get knots-calibrated-airspeed. """
-        return self._CAS.to('knots')
+        return self.CAS.to('knots')
 
     @KCAS.setter
     def KCAS(self, KCAS):
@@ -1092,10 +1092,10 @@ class FlightCondition(Atmosphere):
         CAS = KCAS * unit('knots')
         self.CAS = CAS
 
-    @_property_decorators
+    @property
     def KEAS(self):
         """Get knots-equivalent-airspeed. """
-        return self._EAS.to('knots')
+        return self.EAS.to('knots')
 
     @KEAS.setter
     def KEAS(self, KEAS):
