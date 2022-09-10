@@ -90,8 +90,8 @@ class FlightCondition(Atmosphere):
         # >>> [ True  True  True]
     """
     # Define dictionaries mapping variables to their full names
-    _byalt_varnames = Atmosphere.varnames
-    _byvel_varnames = {
+    _byalt_full_names = Atmosphere.full_names
+    _byvel_full_names = {
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
         'EAS': 'equivalent_airspeed',
@@ -109,7 +109,7 @@ class FlightCondition(Atmosphere):
         'Re_by_L': 'reynolds_per_length',
     }
 
-    _bylen_varnames = {
+    _bylen_full_names = {
         'L': 'length_scale',
         'Re': 'reynolds_number',
         'h_BL_lamr': 'boundary_thickness_laminar',
@@ -118,10 +118,10 @@ class FlightCondition(Atmosphere):
         'Cf_turb': 'friction_coefficient_turbulent',
         'h_yplus1': 'wall_distance_yplus1',
     }
-    varnames = {}
-    varnames.update(_byalt_varnames)
-    varnames.update(_byvel_varnames)
-    varnames.update(_bylen_varnames)
+    full_names = {}
+    full_names.update(_byalt_full_names)
+    full_names.update(_byvel_full_names)
+    full_names.update(_bylen_full_names)
 
 # =========================================================================== #
 #                       GENERAL FUNCTIONS & PROPERTIES                        #
@@ -159,6 +159,9 @@ class FlightCondition(Atmosphere):
 
         # Computer sea level properties
         self._atm0 = Atmosphere(h=0*unit('kft'))
+
+        # Need to cycle self.units to properly set default units
+        self.units = self.units
 
         # Check for hidden aliases
         M_aliases = ['mach', 'Mach', 'M_inf', 'mach_number']
@@ -272,47 +275,47 @@ class FlightCondition(Atmosphere):
         # Set up behind-the scenes quantity access features
         # Set up sub-categories asdict functions
         self._byalt_asdict = self._asdict_template(
-            varnames_dict=self._byalt_varnames)
+            full_names_dict=self._byalt_full_names)
         self._byvel_asdict = self._asdict_template(
-            varnames_dict=self._byvel_varnames)
+            full_names_dict=self._byvel_full_names)
         self._bylen_asdict = self._asdict_template(
-            varnames_dict=self._bylen_varnames)
+            full_names_dict=self._bylen_full_names)
 
         # Set alias references by name _byalt_byname.<name>
         self._byalt_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            varnames_dict_arr=[self._byalt_varnames, ]
+            full_names_dict_arr=[self._byalt_full_names, ]
         )
 
         # Set alias references by name _byvel_byname.<name>
         self._byvel_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            varnames_dict_arr=[self._byvel_varnames, ]
+            full_names_dict_arr=[self._byvel_full_names, ]
         )
 
         # Set alias references by name _bylen_byname.<name>
         self._bylen_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            varnames_dict_arr=[self._bylen_varnames, ]
+            full_names_dict_arr=[self._bylen_full_names, ]
         )
 
         # Set alias references by name generally .byname.<name>
         self.byname = AliasAttributes(
             varsobj_arr=[self, self, self],
-            varnames_dict_arr=[
-                self._byalt_varnames,
-                self._byvel_varnames,
-                self._bylen_varnames,
+            full_names_dict_arr=[
+                self._byalt_full_names,
+                self._byvel_full_names,
+                self._bylen_full_names,
             ]
         )
 
         # Set variable aliases by altitude properties to .byalt.<var>
-        byalt_vars = {key: key for key in self._byalt_varnames.keys()}
+        byalt_vars = {key: key for key in self._byalt_full_names.keys()}
         self.byalt = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, ],
-            varnames_dict_arr=[
+            full_names_dict_arr=[
                 byalt_vars,
-                {"_byalt_varnames": "varnames"},
+                {"_byalt_full_names": "full_names"},
                 {"_byalt_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byalt_byname": "byname"},
@@ -321,12 +324,12 @@ class FlightCondition(Atmosphere):
         )
 
         # Set variable aliases by velocity properties to .byvel.<var>
-        byvel_vars = {key: key for key in self._byvel_varnames.keys()}
+        byvel_vars = {key: key for key in self._byvel_full_names.keys()}
         self.byvel = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, ],
-            varnames_dict_arr=[
+            full_names_dict_arr=[
                 byvel_vars,
-                {"_byvel_varnames": "varnames"},
+                {"_byvel_full_names": "full_names"},
                 {"_byvel_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byvel_byname": "byname"},
@@ -335,12 +338,12 @@ class FlightCondition(Atmosphere):
         )
 
         # Set variable aliases by length properties to .bylen.<var>
-        bylen_vars = {key: key for key in self._bylen_varnames.keys()}
+        bylen_vars = {key: key for key in self._bylen_full_names.keys()}
         self.bylen = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, self, ],
-            varnames_dict_arr=[
+            full_names_dict_arr=[
                 bylen_vars,
-                {"_bylen_varnames": "varnames"},
+                {"_bylen_full_names": "full_names"},
                 {"_bylen_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_bylen_byname": "byname"},
@@ -352,7 +355,7 @@ class FlightCondition(Atmosphere):
         # Set all property variable references to .byvar.<var>
         self.byvar = AliasAttributes(
             varsobj_arr=[self.byalt, self.byvel, self.bylen, ],
-            varnames_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
+            full_names_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
         )
 
     def tostring(self, full_output=True, units=None, pretty_print=True):
@@ -383,31 +386,31 @@ class FlightCondition(Atmosphere):
 
         # Determine maximum characters to add spaces for and assemble string
         if full_output:
-            max_var_chars = max([  # length of variables
-                max([len(v) for v in self._byalt_varnames.keys()]),
-                max([len(v) for v in self._byvel_varnames.keys()]),
-                max([len(v) for v in self._bylen_varnames.keys()]),
+            max_sym_chars = max([  # length of variables
+                max([len(v) for v in self._byalt_full_names.keys()]),
+                max([len(v) for v in self._byvel_full_names.keys()]),
+                max([len(v) for v in self._bylen_full_names.keys()]),
             ])
             max_name_chars = max([  # length of variable names
-                max([len(v) for v in self._byalt_varnames.values()]),
-                max([len(v) for v in self._byvel_varnames.values()]),
-                max([len(v) for v in self._bylen_varnames.values()]),
+                max([len(v) for v in self._byalt_full_names.values()]),
+                max([len(v) for v in self._byvel_full_names.values()]),
+                max([len(v) for v in self._bylen_full_names.values()]),
             ])
         else:
-            max_var_chars = 7  # length of variables
+            max_sym_chars = 7  # length of variables
             max_name_chars = 19  # length of variable names
 
         # Build output strings from sub-categories
         alti_str = self._byalt_tostring(full_output, self.units,
-                                        max_var_chars=max_var_chars,
+                                        max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
         spee_str = self._byvel_tostring(full_output, self.units,
-                                        max_var_chars=max_var_chars,
+                                        max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
         leng_str = self._bylen_tostring(full_output, self.units,
-                                        max_var_chars=max_var_chars,
+                                        max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
 
@@ -619,7 +622,8 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_M'):
             if __class__._check_compatible_array_size(
                     arr1=h, arr2=self._M,
-                    arr_name1=self.varnames['h'], arr_name2=self.varnames['M'],
+                    arr_name1=self.full_names['h'],
+                    arr_name2=self.full_names['M'],
                     raise_warning=True):
                 if self._holdconst_vel_var == 'M':
                     self.M = __class__._reshape_arr1_like_arr2(self._M, h)
@@ -635,7 +639,8 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_L'):
             if __class__._check_compatible_array_size(
                     arr1=h, arr2=self._L,
-                    arr_name1=self.varnames['h'], arr_name2=self.varnames['L'],
+                    arr_name1=self.full_names['h'],
+                    arr_name2=self.full_names['L'],
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, h)
 
@@ -655,25 +660,25 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_h'):
             if __class__._check_compatible_array_size(
                     arr1=vel_arr, arr2=self._h,
-                    arr_name1=vel_name, arr_name2=self.varnames["h"],
+                    arr_name1=vel_name, arr_name2=self.full_names["h"],
                     raise_warning=True, raise_error=True):
                 self._h = __class__._reshape_arr1_like_arr2(self._h, vel_arr)
         if hasattr(self, '_L'):
             if __class__._check_compatible_array_size(
                     arr1=vel_arr, arr2=self._L,
-                    arr_name1=vel_name, arr_name2=self.varnames["L"],
+                    arr_name1=vel_name, arr_name2=self.full_names["L"],
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, vel_arr)
 
-    def _byvel_tostring(self, full_output=None, units=None, max_var_chars=None,
+    def _byvel_tostring(self, full_output=None, units=None, max_sym_chars=None,
                         max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum characters in variables
-            max_name_chars (int): Maximum characters in variable name
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters in full name
             pretty_print (bool): Pretty print output
 
         Returns:
@@ -714,54 +719,54 @@ class FlightCondition(Atmosphere):
             Re_by_L_units = '1/mm'
 
         # Insert longer variable name into output
-        if max_var_chars is None:
-            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_sym_chars is None:
+            max_sym_chars = max([len(v) for v in self.full_names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.varnames.values()])
+            max_name_chars = max([len(v) for v in self.full_names.values()])
 
         M_str = self._vartostr(
             var=self.M, var_str='M', to_units='',
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         TAS_str = self._vartostr(
             var=self.TAS, var_str='TAS', to_units=TAS_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         CAS_str = self._vartostr(
             var=self.CAS, var_str='CAS', to_units=CAS_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         EAS_str = self._vartostr(
             var=self.EAS, var_str='EAS', to_units=EAS_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         q_inf_str = self._vartostr(
             var=self.q_inf, var_str='q_inf', to_units=q_inf_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         q_c_str = self._vartostr(
             var=self.q_c, var_str='q_c', to_units=q_c_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         p0_str = self._vartostr(
             var=self.p0, var_str='p0', to_units=p0_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         T0_str = self._vartostr(
             var=self.T0, var_str='T0', to_units=T0_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Tr_lamr_str = self._vartostr(
             var=self.Tr_lamr, var_str='Tr_lamr', to_units=Tr_lamr_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Tr_turb_str = self._vartostr(
             var=self.Tr_turb, var_str='Tr_turb', to_units=Tr_turb_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print) + "\n"
         Re_by_L_str = self._vartostr(
             var=self.Re_by_L, var_str='Re_by_L', to_units=Re_by_L_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.4e", pretty_print=pretty_print)
 
         if np.isnan(np.atleast_1d(self.mu_M)).all():
@@ -769,7 +774,7 @@ class FlightCondition(Atmosphere):
         else:
             mu_M_str = self._vartostr(
                 var=self.mu_M, var_str='mu_M', to_units='deg',
-                max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+                max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
                 fmt_val="10.5g", pretty_print=pretty_print) + "\n"
 
         # Assemble output string
@@ -999,7 +1004,7 @@ class FlightCondition(Atmosphere):
         """Mach number :math:`M` """
         M *= dimless  # add dimless for raw float input
         self._M = __class__._preprocess_arr(M, input_alt=self.h)
-        self._process_input_velocity(self._M, vel_name=self.varnames['M'])
+        self._process_input_velocity(self._M, vel_name=self.full_names['M'])
 
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
@@ -1018,7 +1023,8 @@ class FlightCondition(Atmosphere):
     def TAS(self, TAS):
         """Set true airspeed. """
         self._TAS = __class__._preprocess_arr(TAS, input_alt=self.h)
-        self._process_input_velocity(self._TAS, vel_name=self.varnames['TAS'])
+        self._process_input_velocity(
+            self._TAS, vel_name=self.full_names['TAS'])
 
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
@@ -1037,7 +1043,8 @@ class FlightCondition(Atmosphere):
     def CAS(self, CAS):
         """Calibrated airspeed. """
         self._CAS = __class__._preprocess_arr(CAS, input_alt=self.h)
-        self._process_input_velocity(self._CAS, vel_name=self.varnames['CAS'])
+        self._process_input_velocity(
+            self._CAS, vel_name=self.full_names['CAS'])
 
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
@@ -1056,7 +1063,8 @@ class FlightCondition(Atmosphere):
     def EAS(self, EAS):
         """Set equivalent airspeed. """
         self._EAS = __class__._preprocess_arr(EAS, input_alt=self.h)
-        self._process_input_velocity(self._EAS, vel_name=self.varnames['EAS'])
+        self._process_input_velocity(
+            self._EAS, vel_name=self.full_names['EAS'])
 
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
@@ -1165,15 +1173,15 @@ class FlightCondition(Atmosphere):
 # =========================================================================== #
 #                        LENGTH FUNCTIONS & PROPERTIES                        #
 # =========================================================================== #
-    def _bylen_tostring(self, full_output=True, units=None, max_var_chars=None,
+    def _bylen_tostring(self, full_output=True, units=None, max_sym_chars=None,
                         max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum characters in variables
-            max_name_chars (int): Maximum characters in variable name
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters in full name
             pretty_print (bool): Pretty print output
 
         Returns:
@@ -1198,38 +1206,38 @@ class FlightCondition(Atmosphere):
             h_BL_units = 'mm'
 
         # Insert longer variable name into output
-        if max_var_chars is None:
-            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_sym_chars is None:
+            max_sym_chars = max([len(v) for v in self.full_names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.varnames.values()])
+            max_name_chars = max([len(v) for v in self.full_names.values()])
 
         L_str = self._vartostr(
             var=self.L, var_str='L', to_units=L_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         Re_str = self._vartostr(
             var=self.Re, var_str='Re', to_units='',
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         h_BL_lamr_str = self._vartostr(
             var=self.h_BL_lamr, var_str='h_BL_lamr', to_units=h_BL_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         h_BL_turb_str = self._vartostr(
             var=self.h_BL_turb, var_str='h_BL_turb', to_units=h_BL_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         Cf_lamr_str = self._vartostr(
             var=self.Cf_lamr, var_str='Cf_lamr', to_units=dimless,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         Cf_turb_str = self._vartostr(
             var=self.Cf_turb, var_str='Cf_turb', to_units=dimless,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
         h_yplus1_str = self._vartostr(
             var=self.h_yplus1, var_str='h_yplus1', to_units=h_BL_units,
-            max_var_chars=max_var_chars, max_name_chars=max_name_chars,
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
 
         if full_output:
@@ -1292,14 +1300,16 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_h'):
             if __class__._check_compatible_array_size(
                     arr1=self._h, arr2=L,
-                    arr_name1=self.varnames['h'], arr_name2=self.varnames['L'],
+                    arr_name1=self.full_names['h'],
+                    arr_name2=self.full_names['L'],
                     raise_warning=True):
                 pass
                 # self._h = __class__._reshape_arr1_like_arr2(self._h, L)
         if hasattr(self, '_M'):
             if __class__._check_compatible_array_size(
                     arr1=self.M, arr2=L,
-                    arr_name1=self.varnames['M'], arr_name2=self.varnames['L'],
+                    arr_name1=self.full_names['M'],
+                    arr_name2=self.full_names['L'],
                     raise_warning=True):
                 pass
                 # self.M = __class__._reshape_arr1_like_arr2(self._M, L)
@@ -1319,8 +1329,9 @@ class FlightCondition(Atmosphere):
         Re = self._preprocess_arr(
             Re, input_alt=self.h, input_vel=self.M)
         __class__._check_compatible_array_size(
-            arr1=self.M, arr2=Re, arr_name1=self.varnames['M'],
-            arr_name2=self.varnames['L'], raise_warning=True, raise_error=True)
+            arr1=self.M, arr2=Re, arr_name1=self.full_names['M'],
+            arr_name2=self.full_names['L'], raise_warning=True,
+            raise_error=True)
         self.TAS = NonDimensional.reynolds_number_velocity(
             Re_L=Re, L=self.L, nu=self.nu)
 

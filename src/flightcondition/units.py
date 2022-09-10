@@ -12,13 +12,15 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
+from importlib.resources import files
 from inspect import currentframe
 
 from pint import UnitRegistry
 
 __all__ = ['unit', 'dimless', 'printv']
 
-unit = UnitRegistry(system='SI')
+fc_units_file = files("flightcondition").joinpath("data/fc_units_en.txt")
+unit = UnitRegistry(str(fc_units_file))
 unit.default_format = '~P'
 dimless = unit('dimensionless')
 
@@ -148,7 +150,8 @@ def printv(var, to=None, name="", prec=".5g", fmt="~P", *args, **kwargs):
     if isinstance(var, unit.Quantity):
         output = (var.to(to) if to is not None else var.to_base_units())
     else:
-        output = var  # FIXME
+        output = var
+        fmt = ""
     name = name if name else name_of_var(var)
     print(f"{name} = {output:{prec}{fmt}}", *args, **kwargs)
 

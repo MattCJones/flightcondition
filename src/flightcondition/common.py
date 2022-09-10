@@ -20,26 +20,26 @@ from flightcondition.units import to_base_units_wrapper
 class AliasAttributes():
     """Nested alias class to reference quantities by prescribed aliases. """
 
-    def __init__(self, varsobj_arr, varnames_dict_arr):
+    def __init__(self, varsobj_arr, full_names_dict_arr):
         """Populate full names and link to variable
         Args:
             varsobj (list): List of objects that holds all of the variables
-            varnames_dict (list): List of dictionaries that maps variables to
+            full_names_dict (list): List of dictionaries that maps variables to
                 their alias names
         """
         # Avoid infinite loop when setting properties
         super().__setattr__("varsobj_arr", varsobj_arr)
-        super().__setattr__("varnames_dict_arr", varnames_dict_arr)
+        super().__setattr__("full_names_dict_arr", full_names_dict_arr)
 
     def __dir__(self):
         """Add tab completion for alias names. """
-        # Avoid infinite loop when loading varsobj and varnames_dict
-        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
-        varnames_arr = []
-        for varnames_dict in varnames_dict_arr:
-            for varname in varnames_dict.values():
-                varnames_arr.append(varname)
-        return varnames_arr
+        # Avoid infinite loop when loading varsobj and full_names_dict
+        full_names_dict_arr = super().__getattribute__("full_names_dict_arr")
+        full_names_arr = []
+        for full_names_dict in full_names_dict_arr:
+            for varname in full_names_dict.values():
+                full_names_arr.append(varname)
+        return full_names_arr
 
     def __getattribute__(self, attr):
         """Get referenced quantity
@@ -47,11 +47,11 @@ class AliasAttributes():
         Args:
             attr (str): attribute name
         """
-        # Avoid infinite loop when loading varsobj and varnames_dict
+        # Avoid infinite loop when loading varsobj and full_names_dict
         varsobj_arr = super().__getattribute__("varsobj_arr")
-        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
-        for varsobj, varnames_dict in zip(varsobj_arr, varnames_dict_arr):
-            for var, varname in varnames_dict.items():
+        full_names_dict_arr = super().__getattribute__("full_names_dict_arr")
+        for varsobj, full_names_dict in zip(varsobj_arr, full_names_dict_arr):
+            for var, varname in full_names_dict.items():
                 if attr == varname:
                     return getattr(varsobj, var)
 
@@ -62,11 +62,11 @@ class AliasAttributes():
             attr (str): attribute name
             attrval (quantity): attribute value
         """
-        # Avoid infinite loop when loading varsobj and varnames_dict
+        # Avoid infinite loop when loading varsobj and full_names_dict
         varsobj_arr = super().__getattribute__("varsobj_arr")
-        varnames_dict_arr = super().__getattribute__("varnames_dict_arr")
-        for varsobj, varnames_dict in zip(varsobj_arr, varnames_dict_arr):
-            for var, varname in varnames_dict.items():
+        full_names_dict_arr = super().__getattribute__("full_names_dict_arr")
+        for varsobj, full_names_dict in zip(varsobj_arr, full_names_dict_arr):
+            for var, varname in full_names_dict.items():
                 if attr == varname:
                     return setattr(varsobj, var, attrval)
 
@@ -92,7 +92,7 @@ class AliasAttributes():
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
-    varnames = {}
+    full_names = {}
 
     def __eq__(self, other):
         """Check equality.
@@ -102,7 +102,7 @@ class DimensionalData:
         if other.__class__ is not self.__class__:
             return NotImplemented
 
-        for var in self.varnames.keys():
+        for var in self.full_names.keys():
             a = self.asdict[var]
             b = other.asdict[var]
             if not (np.shape(a) == np.shape(b)):
@@ -141,20 +141,20 @@ class DimensionalData:
 
         return self.tostring(full_output=full_output)
 
-    def _asdict_template(self, varnames_dict=None):
+    def _asdict_template(self, full_names_dict=None):
         """Return class data as dictionary.
 
         Args:
-            varnames_dict (dict): Optionally specified variable names
+            full_names_dict (dict): Optionally specified variable names
                 dicitonary
 
         Returns:
             dict: Class data
         """
-        if varnames_dict is None:
-            varnames_dict = self.varnames
+        if full_names_dict is None:
+            full_names_dict = self.full_names
         obj_dict = {}
-        for var, varname in varnames_dict.items():
+        for var, varname in full_names_dict.items():
             obj_dict[var] = getattr(self, var)
         return obj_dict
 
@@ -165,7 +165,7 @@ class DimensionalData:
         Returns:
             dict: Class data
         """
-        return self._asdict_template(self.varnames)
+        return self._asdict_template(self.full_names)
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
@@ -183,7 +183,7 @@ class DimensionalData:
         """
         return ""
 
-    def _vartostr(self, var, var_str, to_units=None, max_var_chars=10,
+    def _vartostr(self, var, var_str, to_units=None, max_sym_chars=10,
                   max_name_chars=20, fmt_val="10.5g", pretty_print=False):
         """Formatted variable string with variable, full name, and value.
         Shortens array output to fit better on screen.
@@ -192,8 +192,8 @@ class DimensionalData:
             var (Quantity): Variable
             var_str (str): Variable string
             to_units (str): Units to convert to
-            max_var_chars (int): Maximum characters in variables
-            max_name_chars (int): Maximum characters in variable name
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters in full name
             fmt_val (str): String for formatting value
             pretty_print (bool): Pretty print format
 
@@ -201,7 +201,7 @@ class DimensionalData:
             str: formatted string
         """
         pp_ = "~P" if pretty_print else ""
-        var_name = self.varnames[var_str]
+        var_name = self.full_names[var_str]
         if to_units is None:
             var_units_str = ""
         else:
@@ -219,7 +219,7 @@ class DimensionalData:
                            f"{var_units_str}")
         else:
             var_val_str = f"{var:{fmt_val}{pp_}}"
-        var_str = (f"{var_name:{max_name_chars}s} {var_str:{max_var_chars}s} ="
+        var_str = (f"{var_name:{max_name_chars}s} {var_str:{max_sym_chars}s} ="
                    f" {var_val_str}")
         return var_str
 

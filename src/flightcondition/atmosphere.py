@@ -25,7 +25,7 @@ from flightcondition.units import unit, check_dimensioned,\
 class Layer(DimensionalData):
     """Class to compute and store layer data. """
 
-    varnames = {
+    full_names = {
         'name': 'layer_name',
         'H_base': 'base_geopotential_height',
         'T_base': 'base_geopotential_temperature',
@@ -60,8 +60,8 @@ class Layer(DimensionalData):
             self._p_base[idx] = Atmo.p_base[jdx]
 
         # Initialize access by full quantity name through .byname.<name>
-        self.byname = AliasAttributes(varsobj_arr=[self, ],
-                                      varnames_dict_arr=[__class__.varnames, ])
+        self.byname = AliasAttributes(
+            varsobj_arr=[self, ], full_names_dict_arr=[__class__.full_names, ])
 
     @staticmethod
     def _layer_idx(H):
@@ -81,15 +81,15 @@ class Layer(DimensionalData):
         else:  # no break
             raise ValueError("H out of bounds.")
 
-    def tostring(self, full_output=None, units=None, max_var_chars=None,
+    def tostring(self, full_output=None, units=None, max_sym_chars=None,
                  max_name_chars=None, pretty_print=True):
         """Output string representation of class object.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum characters in variables
-            max_name_chars (int): Maximum characters in variable name
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters iin full name
             pretty_print (bool): Pretty print output
 
         Returns:
@@ -117,29 +117,29 @@ class Layer(DimensionalData):
             p_base_units   = 'Pa'
 
         # Insert longer variable name into output
-        if max_var_chars is None:
-            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_sym_chars is None:
+            max_sym_chars = max([len(v) for v in self.full_names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.varnames.values()])
+            max_name_chars = max([len(v) for v in self.full_names.values()])
 
         H_base_str = self._vartostr(var=self.H_base, var_str='H_base',
                                     to_units=H_base_units,
-                                    max_var_chars=max_var_chars,
+                                    max_sym_chars=max_sym_chars,
                                     max_name_chars=max_name_chars,
                                     fmt_val="10.5g", pretty_print=pretty_print)
         T_base_str = self._vartostr(var=self.T_base, var_str='T_base',
                                     to_units=T_base_units,
-                                    max_var_chars=max_var_chars,
+                                    max_sym_chars=max_sym_chars,
                                     max_name_chars=max_name_chars,
                                     fmt_val="10.5g", pretty_print=pretty_print)
         T_grad_str = self._vartostr(var=self.T_grad, var_str='T_grad',
                                     to_units=T_grad_units,
-                                    max_var_chars=max_var_chars,
+                                    max_sym_chars=max_sym_chars,
                                     max_name_chars=max_name_chars,
                                     fmt_val="10.5g", pretty_print=pretty_print)
         p_base_str = self._vartostr(var=self.p_base, var_str='p_base',
                                     to_units=p_base_units,
-                                    max_var_chars=max_var_chars,
+                                    max_sym_chars=max_sym_chars,
                                     max_name_chars=max_name_chars,
                                     fmt_val="10.5g", pretty_print=pretty_print)
 
@@ -149,7 +149,7 @@ class Layer(DimensionalData):
         else:  # truncate layer name to no more than 10 character
             trunc_layer_name = [f"{s[:10]}" for s in self.name]
         layer_str = self._vartostr(var=trunc_layer_name, var_str='name',
-                                   to_units=None, max_var_chars=max_var_chars,
+                                   to_units=None, max_sym_chars=max_sym_chars,
                                    max_name_chars=max_name_chars,
                                    fmt_val="", pretty_print=False)
 
@@ -222,7 +222,7 @@ class Atmosphere(DimensionalData):
         # >>> The mean free path = [7.25e-08 4.04e-05 0.00564] yd
     """
 
-    varnames = {
+    full_names = {
         'h': 'geometric_altitude',
         'H': 'geopotential_altitude',
         'p': 'pressure',
@@ -295,18 +295,18 @@ class Atmosphere(DimensionalData):
                 self.units = 'SI'
 
         # Initialize access by full quantity name through .byname.<name>
-        self.byname = AliasAttributes(varsobj_arr=[self, ],
-                                      varnames_dict_arr=[__class__.varnames, ])
+        self.byname = AliasAttributes(
+            varsobj_arr=[self, ], full_names_dict_arr=[__class__.full_names, ])
 
-    def tostring(self, full_output=None, units=None, max_var_chars=None,
+    def tostring(self, full_output=None, units=None, max_sym_chars=None,
                  max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
             units (str): Set to 'US' for US units or 'SI' for SI
-            max_var_chars (int): Maximum characters in variables
-            max_name_chars (int): Maximum characters in variable name
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters iin full name
             pretty_print (bool): Pretty print output
 
         Returns:
@@ -341,63 +341,63 @@ class Atmosphere(DimensionalData):
             MFP_units = 'm'
 
         # Insert longer variable name into output
-        if max_var_chars is None:
-            max_var_chars = max([len(v) for v in self.varnames.keys()])
+        if max_sym_chars is None:
+            max_sym_chars = max([len(v) for v in self.full_names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.varnames.values()])
+            max_name_chars = max([len(v) for v in self.full_names.values()])
 
         h_str = self._vartostr(var=self.h, var_str='h', to_units=h_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         H_str = self._vartostr(var=self.H, var_str='H', to_units=H_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         p_str = self._vartostr(var=self.p, var_str='p', to_units=p_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         T_str = self._vartostr(var=self.T, var_str='T', to_units=T_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         fmt_val_rho = "10.4e" if units == 'US' else "10.5g"
         rho_str = self._vartostr(var=self.rho, var_str='rho',
                                  to_units=rho_units,
-                                 max_var_chars=max_var_chars,
+                                 max_sym_chars=max_sym_chars,
                                  max_name_chars=max_name_chars,
                                  fmt_val=fmt_val_rho,
                                  pretty_print=pretty_print)
         a_str = self._vartostr(var=self.a, var_str='a', to_units=a_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         mu_str = self._vartostr(var=self.mu, var_str='mu', to_units=mu_units,
-                                max_var_chars=max_var_chars,
+                                max_sym_chars=max_sym_chars,
                                 max_name_chars=max_name_chars,
                                 fmt_val="10.4e", pretty_print=pretty_print)
         nu_str = self._vartostr(var=self.nu, var_str='nu', to_units=nu_units,
-                                max_var_chars=max_var_chars,
+                                max_sym_chars=max_sym_chars,
                                 max_name_chars=max_name_chars,
                                 fmt_val="10.4e", pretty_print=pretty_print)
         k_str = self._vartostr(var=self.k, var_str='k', to_units=k_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.4e", pretty_print=pretty_print)
         g_str = self._vartostr(var=self.g, var_str='g', to_units=g_units,
-                               max_var_chars=max_var_chars,
+                               max_sym_chars=max_sym_chars,
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
         MFP_str = self._vartostr(var=self.MFP, var_str='MFP',
                                  to_units=MFP_units,
-                                 max_var_chars=max_var_chars,
+                                 max_sym_chars=max_sym_chars,
                                  max_name_chars=max_name_chars,
                                  fmt_val="10.4e", pretty_print=pretty_print)
 
         # Create layer string
         layer_str = self.layer.tostring(full_output=False,
-                                        max_var_chars=max_var_chars,
+                                        max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars)
 
         # Determine full output flag
