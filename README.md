@@ -1,8 +1,6 @@
-Flight Condition
-================
+# Flight Condition
 
-About
------
+## About
 
 Airspeed conversions (true/calibrated/equivalent/Mach), atmospheric data, and
 more with built-in unit checking.  Specific sub-modules include:
@@ -10,24 +8,23 @@ more with built-in unit checking.  Specific sub-modules include:
 * `flightcondition`: input altitude to compute common flight condition data.
   Easily swap between true airspeed, calibrated airspeed, equivalent airspeed,
   and Mach number.  Includes atmospheric data.
-* `atmosphere`: input altitude to compute [1993 International Standard
-  Atmosphere](https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
+* `atmosphere`: input altitude to compute
+  [1993 International Standard Atmosphere](
+  https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
   data.  Many relevant, derived quantities are included. The upper limit is 80
   kilometers.
-* `units`: built-in unit-checking and conversion using the [pint]
-(https://pint.readthedocs.io) package.
+* `units`: built-in unit-checking and conversion using the
+  [pint](https://pint.readthedocs.io) package.
 
 ![Flight Condition Demo](
 https://github.com/MattCJones/videos/blob/main/flightcondition/flightcondition_demo.gif
 )
 
-Author
-------
+## Author
 
 Matthew C. Jones [matt.c.jones.aoe@gmail.com](matt.c.jones.aoe@gmail.com)
 
-Installation
-------------
+## Installation
 
 ### Install Commands
 
@@ -38,8 +35,8 @@ easiest method is to open the terminal and run:
 pip install flightcondition
 ```
 
-Alternatively, manually download the [source code]
-(https://github.com/MattCJones/flightcondition), unpack, and run:
+Alternatively, manually download the
+[source code](https://github.com/MattCJones/flightcondition), unpack, and run:
 
 ```python
 pip install <path/to/flightcondition>
@@ -50,8 +47,7 @@ pip install <path/to/flightcondition>
 -   [numpy](https://numpy.org): package for scientific computing.
 -   [pint](https://pint.readthedocs.io): package for dealing with units.
 
-Usage
------
+## Usage
 
 Import all utilities with,
 
@@ -64,58 +60,76 @@ or more explicitly as shown in the following examples.
 ### Flight Condition
 
 The `FlightCondition` class is used to compute and interact with common flight
-condition data. Inputs include altitude, airspeed in some format, and an
+condition data. Inputs include altitude, velocity in some format, and an
 optional length scale.
 
-**Input** arguments include:
+#### Input Arguments
+Input arguments include:
 
-1.  `h` *geometric altitude* - aliases are
-    `alt`, `altitude`
-2.  Velocity (pick one):
-    -   `TAS` *true airspeed* - aliases are `tas`, `true_airspeed`, `U_inf`,
-        `V_inf`
-    -   `CAS` *calibrated airspeed* - aliases are `cas`, `calibrated_airspeed`
-    -   `EAS` *equivalent airspeed* - aliases are `eas`, `equivalent_airspeed`
-    -   `M` *mach number* - aliases are `mach`, `Mach`, `M_inf`, `mach_number`
-3.  `L` *length scale* (optional) - aliases are `ell`, `bylen`, `length`,
-    `length_scale`, `l`
+1.  **Altitude**: `h` (aliases include: `alt`, `altitude`)
+2.  **Velocity** (pick one):
+    -   *True airspeed*: `TAS` (aliases include: `tas`, `true_airspeed`,
+        `U_inf`, `V_inf`)
+    -   *Calibrated airspeed*: `CAS` (aliases include: `cas`,
+        `calibrated_airspeed`)
+    -   *Equivalent airspeed*: `EAS` (aliases include: `eas`,
+        `equivalent_airspeed`)
+    -   *Mach number*: `M` (aliases include: `mach`, `Mach`, `M_inf`,
+        `mach_number`)
+3.  **Length-scale** (optional): `L` (aliases include: `ell`, `bylen`,
+    `length`, `length_scale`, `l`)
 
-See also `KTAS`, `KCAS`, and `KEAS` for convenience.  For example, `KCAS=233`
+Input quantities must be dimensionalized - see the usage below.  Alternatively
+use `KTAS`, `KCAS`, or `KEAS` for convenience.  For example, `KCAS=233`
 is equivalent to `CAS=233*unit('knots')`.
 
-**Outputs** include:
+#### Output Quantities
 
-1.  *Altitude* quantities - see `Atmosphere` class below.
-2.  *Velocity* quantities:
-    -   True airspeed `TAS`
-    -   Calibrated airspeed `CAS`
-    -   Equivalent airspeed `EAS`
-    -   Mach number `M`
-    -   Mach angle `mu_M`
-    -   Dynamic pressure `q_inf`
-    -   Impact pressure `q_c`
-    -   Stagnation pressure `p_0`
-    -   Stagnation temperature `T_0`
-    -   Recovery temperature (laminar) `Tr_lamr`
-    -   Recovery temperature (turbulent) `Tr_turb`
-    -   Reynolds number per unit length `Re_by_L`
-3.  *Length-scale* quantities:
-    -   Length scale `L`
-    -   Reynolds number `Re`
-    -   Boundary layer thickness (laminar) `h_BL_lamr`
-    -   Boundary layer thickness (turbulent) `h_BL_turb`
-    -   Flat plate skin friction coefficient (laminar) `Cf_lamr`
-    -   Flat plate skin friction coefficient (turbulent) `Cf_turb`
-    -   Boundary layer thickness (laminar) `h_BL_lamr`
-    -   Boundary layer thickness (turbulent) `h_BL_turb`
-    -   Wall distance (turbulent) where $y^+=1$ `h_yplus1`
-
+The following tables list the quantities and the variables used to access them.
 Quantities may be accessed by either (a) their shorter variable names, e.g.
 `.TAS`, or (b) by their longer, full names, e.g.  `byname.true_airspeed`. They
 may also be accessed through their particular sub-category: `byalt`, `byvel`,
 or `bylen`, e.g.  `.byvel.TAS` or `.byvel.byname.true_airspeed`.
 
-**Example usage**:
+| Altitude Quantity     | Name    | Full Name (via `.byname.`) |
+|-----------------------|---------|----------------------------|
+| Geometric altitude    | `h`     | `geometric_altitude`       |
+| Geopotential altitude | `H`     | `geopotential_altitude`    |
+| Pressure              | `p`     | `pressure`                 |
+| Temperature           | `T`     | `temperature`              |
+| Density               | `rho`   | `density`                  |
+| Sound speed           | `a`     | `sounds_speed`             |
+| Dynamic viscosity     | `mu`    | `dynamic_viscosity`        |
+| Kinematic viscosity   | `nu`    | `kinematic_viscosity`      |
+| Thermal conductivity  | `k`     | `thermal_conductivity`     |
+| Gravity               | `g`     | `gravity`                  |
+| Mean free path        | `MFP`   | `mean_free_path`           |
+
+| Velocity Quantity                | Name      | Full Name (via `.byname.`)       |
+|----------------------------------|-----------|----------------------------------|
+| True airspeed (TAS)              | `TAS`     | `true_airspeed`                  |
+| Calibrated airspeed (CAS)        | `CAS`     | `calibrated_airspeed`            |
+| Equivalent airspeed (EAS)        | `EAS`     | `equivalent_airspeed`            |
+| Mach number                      | `M`       | `mach_number`                    |
+| Mach angle                       | `mu_M`    | `mach_angle`                     |
+| Dynamic pressure                 | `q_inf`   | `dynamic_pressure`               |
+| Impact pressure                  | `q_c`     | `impact_pressure`                |
+| Stagnation pressure              | `q_0`     | `stagnation_pressure`            |
+| Stagnation temperature           | `T_0`     | `stagnation_temperature`         |
+| Recovery temperature (laminar)   | `Tr_lamr` | `recovery_temperature_laminar`   |
+| Recovery temperature (turbulent) | `Tr_turb` | `recovery_temperature_turbulent` |
+| Reynolds number per unit length  | `Re_by_L` | `recovery_temperature_turbulent` |
+
+| Length-Scale Quantity                            | Name        | Full Name (via `.byname.`)       |
+|--------------------------------------------------|-------------|----------------------------------|
+| Length scale                                     | `L`         | `length_scale`                   |
+| Reynolds number                                  | `Re`        | `reynolds_number`                |
+| Boundary layer thickness (laminar)               | `h_BL_lamr` | `boundary_thickness_laminar`     |
+| Boundary layer thickness (turbulent)             | `h_BL_turb` | `boundary_thickness_turbulent`   |
+| Flat plate skin friction coefficient (laminar)   | `Cf_lamr`   | `friction_coefficient_laminar`   |
+| Flat plate skin friction coefficient (turbulent) | `Cf_turb`   | `friction_coefficient_turbulent` |
+
+#### Example Usage
 
 ```python
 from flightcondition import FlightCondition, unit
@@ -174,25 +188,23 @@ print(fc.byvel.TAS == fc.byvel.byname.true_airspeed)
 
 ### Atmosphere
 
-The `Atmosphere` class can be used to compute and interact
-with common standard atmosphere data and derived quantities.
+The `Atmosphere` class can be used to compute and interact with common standard
+atmosphere data and derived quantities.  See the list of output quantities in
+the `FlightCondition` documentation above.
+See also `layer` for layer properties such as `layer.name` for the layer name.
 
-Outputs include:
+Note that all `Atmosphere` properties can be accessed through the
+`FlightCondition` class, however, this class stands on its own if the
+additional velocity and length-scale quantities are not desired.
 
--   Pressure `p`
--   Temperature `T`
--   Density `rho`
--   Sound speed `a`
--   Dynamic viscosity `mu`
--   Kinematic viscosity `nu`
--   Thermal conductivity `k`
--   Layer name `layer.name`
--   Geometric altitude `h`
--   Geopotential altitude `H`
--   Acceleration due to gravity `g`
--   Mean free path `MFP`
+#### Input Arguments
+The input argument is geometric altitude `h`.  Aliases include `alt` and
+`altitude`.  Note that these geometric altitude must be input as dimensional
+length quantities - see the usage below.  Alternatively input
+un-dimensionalized numbers using `h_kft` or `h_km` for kilofeet and kilometers
+respectively.
 
-Usage:
+#### Example Usage
 
 ```python
 from flightcondition import Atmosphere, unit
@@ -284,11 +296,12 @@ reynolds_number     Re      = 7.9551×10⁶
 Alternatively use the `--KEAS 233` syntactic sugar to omit the `knots` unit.
 See also `--KTAS` and `--KCAS`.
 
-Assumptions
------------
+## Assumptions
 
--   Atmospheric quantities follow the [1993 International Standard Atmosphere]
-(https://en.wikipedia.org/wiki/International_Standard_Atmosphere) model.
+-   Atmospheric quantities follow the
+    [1993 International Standard Atmosphere](
+    https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
+    model.
 -   Velocity computations include varying degrees of the following assumptions.
     Note that several assumptions break down for hypersonic flow.
     -   Continuum flow (mean free path is much smaller than the characteristic
@@ -299,15 +312,17 @@ Assumptions
     -   Adiabatic
     -   Reversible (`CAS`, `q_c`, `p_0`)
 
-License
--------
+## Unit Testing
+`flightcondition` is maintained using unit tests to maintain functionality and
+accuracy.  Even so, see the Disclaimer below.
+
+## License
 
 `flightcondition` is licensed under the MIT LICENSE. See the
 [LICENSE](https://github.com/MattCJones/flightcondition/blob/main/LICENSE)
 document.
 
-Disclaimer
-----------
+## Disclaimer
 
 The software is provided "as is", without warranty of any kind, express or
 implied, including but not limited to the warranties of merchantability,
