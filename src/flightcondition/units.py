@@ -12,14 +12,20 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-from importlib.resources import files
+# from importlib.resources import files  # Python 3.9+
+from pathlib import Path
+from pkg_resources import resource_filename  # Python 3.8+
 from inspect import currentframe
 
 from pint import UnitRegistry
 
 __all__ = ['unit', 'dimless', 'printv']
 
-fc_units_file = files("flightcondition").joinpath("data/fc_units_en.txt")
+# For Python 3.9+:
+# fc_units_file = files("flightcondition").joinpath("data/fc_units_en.txt")
+# For Python 3.8+:
+fc_units_file = Path(
+    resource_filename("flightcondition", "data/fc_units_en.txt"))  # 3.8+
 unit = UnitRegistry(str(fc_units_file))
 unit.default_format = '~P'
 dimless = unit('dimensionless')
