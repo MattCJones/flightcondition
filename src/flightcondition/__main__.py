@@ -46,6 +46,12 @@ def _parse_args(args_arr):
         '--Altitude', dest='altitude', metavar='', nargs=2,
         type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
+        '--kft', dest='kft', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--km', dest='km', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--M', dest='M', metavar='', nargs=None, type=float, default=None,
         help=("Mach number, e.g. '0.5'; aliases include: "
               "--mach-number --Mach"))
@@ -120,6 +126,8 @@ def main():
     args_arr = sys.argv[1:] if len(sys.argv) > 1 else None
     args = _parse_args(args_arr)
     h_ = _dimension(args.altitude)
+    h_ = h_ if args.kft is None else args.kft*unit('kft')
+    h_ = h_ if args.km is None else args.km*unit('km')
     M_ = None if args.M is None else args.M
     TAS_ = None if args.TAS is None else _dimension(args.TAS)
     CAS_ = None if args.CAS is None else _dimension(args.CAS)
