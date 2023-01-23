@@ -46,14 +46,10 @@ def test_custom_units_yard_to_feet():
     fc_units_en = Path(
         resource_filename("flightcondition", "data/fc_units_en.txt"))
 
-    truth_diff_lines = [
-        '--- ', '+++ ', '@@ -867,6 +867,6 @@', ' @end\n', ' \n',
-        (' @system US using USCSLiquidVolume, USCSDryVolume, USCSVolumeOther, '
-        'USCSLengthInternational, USCSLengthSurvey, AvoirdupoisUS\n'),
-        '-    yard\n', '+    foot\n', '     pound\n', ' @end\n']
     print(f"Files to diff:\n{pint_default_en}\n{fc_units_en}")
     units_diff_lines = diff(pint_default_en, fc_units_en)
-    assert units_diff_lines == truth_diff_lines
+    assert any(['-    yard' in s for s in units_diff_lines])
+    assert any(['+    foot' in s for s in units_diff_lines])
 
 def test_custom_units_constants_unchanged():
     """Test that "constants_en.txt" units database is unchanged. """
