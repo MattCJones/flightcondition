@@ -25,7 +25,7 @@ gamma_air = Phys.gamma_air
 R_air = Phys.R_air
 a0_by_a_truth_arr = np.sqrt(T0_by_T_truth_arr)
 
-A_star_by_A_truth_arr = [1/1.33984375, 1.0, 1/4.23456790] * dimless
+A_by_A_star_truth_arr = [1.33984375, 1.0, 4.23456790] * dimless
 
 
 def test_p0_by_p():
@@ -54,8 +54,8 @@ def test_rho0_by_rho():
 
 def test_A_star_by_A():
     """Test area ratio. """
-    assert_field(IsentropicFlow.A_star_by_A(M), A_star_by_A_truth_arr)
-    assert_field(1/IsentropicFlow.A_by_A_star(M), A_star_by_A_truth_arr)
+    assert_field(IsentropicFlow.A_by_A_star(M), A_by_A_star_truth_arr)
+    assert_field(IsentropicFlow.A_star_by_A(M), 1/A_by_A_star_truth_arr)
 
 
 def test_M_from_p0_by_p():
@@ -80,3 +80,17 @@ def test_M_from_rho0_by_rho():
     """Test Mach number from density. """
     assert_field(IsentropicFlow.M_from_rho0_by_rho(rho0_by_rho_truth_arr), M)
     assert_field(IsentropicFlow.M_from_rho_by_rho0(1/rho0_by_rho_truth_arr), M)
+
+
+def test_M_from_A_by_A_star():
+    """Test finding Mach number from area ratio. """
+    assert_field(
+        IsentropicFlow.subsonic_M_from_A_by_A_star(
+            A_by_A_star_truth_arr[0].magnitude)*dimless,
+        M[0]
+    )
+    assert_field(
+        IsentropicFlow.supersonic_M_from_A_by_A_star(
+            A_by_A_star_truth_arr[-1].magnitude)*dimless,
+        M[-1]
+    )
