@@ -78,7 +78,7 @@ def check_dimensionless(inp):
         inp (object): Object to assert as length dimensional type
 
     """
-    if not (inp.check('[]')):
+    if not inp.check('[]'):
         raise TypeError("Input value is not correctly typed! Use dimensionless"
                         " dimensional unit.")
 
@@ -90,7 +90,7 @@ def check_length_dimensioned(inp):
         inp (object): Object to assert as length dimensional type
 
     """
-    if not (inp.check('[length]')):
+    if not inp.check('[length]'):
         raise TypeError("Input value is not correctly typed! Use length"
                         " dimensional unit.")
 
@@ -114,8 +114,33 @@ def check_area_dimensioned(inp):
         inp (object): Object to assert as area dimensional type
 
     """
-    if not (inp.check('[length]^2')):
+    if not inp.check('[length]^2'):
         raise TypeError("Input value is not correctly typed! Use area"
+                        " dimensional unit.")
+
+
+def check_pressure_dimensioned(inp):
+    """Check that input is pressure type Quantity from pint package.
+
+    Args:
+        inp (object): Object to assert as pressure dimensional type
+
+    """
+    # p = F/A = ma/A = M L /T2 /L2 = M /L /T2
+    if not inp.check('[mass] [length]^-1 [time]^-2'):
+        raise TypeError("Input value is not correctly typed! Use pressure"
+                        " dimensional unit.")
+
+
+def check_temperature_dimensioned(inp):
+    """Check that input is temperature type Quantity from pint package.
+
+    Args:
+        inp (object): Object to assert as temperature dimensional type
+
+    """
+    if not inp.check('[temperature]'):
+        raise TypeError("Input value is not correctly typed! Use temperature"
                         " dimensional unit.")
 
 

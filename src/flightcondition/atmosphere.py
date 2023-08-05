@@ -19,7 +19,8 @@ from flightcondition.constants import AtmosphereConstants as Atmo
 from flightcondition.common import AliasAttributes, DimensionalData,\
     _property_decorators
 from flightcondition.units import unit, check_dimensioned,\
-    check_length_dimensioned, check_US_length_units
+    check_length_dimensioned, check_US_length_units,\
+    check_pressure_dimensioned, check_temperature_dimensioned
 
 
 class Layer(DimensionalData):
@@ -556,6 +557,8 @@ class Atmosphere(DimensionalData):
         self._H = self._H_from_h(self.h)
         self.layer = Layer(self.H, full_output=self.full_output,
                            units=self.units)
+        self._T = None
+        self._p = None
 
     @_property_decorators
     def H(self):
@@ -565,37 +568,67 @@ class Atmosphere(DimensionalData):
     @_property_decorators
     def p(self):
         """Air pressure :math:`p` """
-        H_base = np.atleast_1d(self.layer.H_base)
-        T_base = np.atleast_1d(self.layer.T_base)
-        T_grad = np.atleast_1d(self.layer.T_grad)
-        p_base = np.atleast_1d(self.layer.p_base)
+        # Only compute p if not set by user
+        if self._p is not None:
+            p = self._p
+        else:
+            H_base = np.atleast_1d(self.layer.H_base)
+            T_base = np.atleast_1d(self.layer.T_base)
+            T_grad = np.atleast_1d(self.layer.T_grad)
+            p_base = np.atleast_1d(self.layer.p_base)
 
-        H = np.atleast_1d(self.H)
-        T = np.atleast_1d(self.T)
-        g_0 = Phys.g
-        R_air = Phys.R_air
+            H = np.atleast_1d(self.H)
+            T = np.atleast_1d(self.T)
+            g_0 = Phys.g
+            R_air = Phys.R_air
 
-        p = np.zeros_like(H) * unit('Pa')
+            p = np.zeros_like(H) * unit('Pa')
 
-        # Pressure equation changes between T_grad == 0 and T_grad != 0
-        s = T_grad == 0
-        p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
+            # Pressure equation changes between T_grad == 0 and T_grad != 0
+            s = T_grad == 0
+            p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
 
-        s = T_grad != 0
-        p[s] = p_base[s]*(
-            1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
-        )**((1/T_grad[s])*(-g_0/R_air))
+            s = T_grad != 0
+            p[s] = p_base[s]*(
+                1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
+            )**((1/T_grad[s])*(-g_0/R_air))
 
         return p
+
+    @p.setter
+    def p(self, p):
+        """Override ambient air pressure """
+        check_dimensioned(p)
+        check_pressure_dimensioned(p)
+        # Check that p is same size as h
+        if np.size(p) != np.size(self._h):
+            raise AttributeError("Input array must be same size as altitude")
+        self._p = p
+
 
     @_property_decorators
     def T(self):
         """Ambient air temperature :math:`T` """
-        T_grad = np.atleast_1d(self.layer.T_grad)
-        H_base = np.atleast_1d(self.layer.H_base)
-        T_base = np.atleast_1d(self.layer.T_base)
-        T = T_base + T_grad*(self.H - H_base)
+        # Only compute T if not user set
+        if self._T is not None:
+            T = self._T
+        else:
+            T_grad = np.atleast_1d(self.layer.T_grad)
+            H_base = np.atleast_1d(self.layer.H_base)
+            T_base = np.atleast_1d(self.layer.T_base)
+            T = T_base + T_grad*(self.H - H_base)
+
         return T
+
+    @T.setter
+    def T(self, T):
+        """Override ambient air temperature """
+        check_dimensioned(T)
+        check_temperature_dimensioned(T)
+        # Check that T is same size as h
+        if np.size(T) != np.size(self._h):
+            raise AttributeError("Input array must be same size as altitude")
+        self._T = T
 
     @_property_decorators
     def rho(self):
