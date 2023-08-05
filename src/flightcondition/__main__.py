@@ -112,6 +112,12 @@ def _parse_args(args_arr):
         '--ell', dest='length_scale', metavar='', nargs=2,
         type=str, default=None, help=argparse.SUPPRESS)
     parser.add_argument(
+        '--ft', dest='ft', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--m', dest='m', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--units', dest='units', metavar='', nargs=None,
         type=str, default="", help=f"Unit system, i.e. {dir(unit.sys)}")
     parser.add_argument(
