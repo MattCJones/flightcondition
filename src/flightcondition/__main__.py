@@ -65,19 +65,37 @@ def _parse_args(args_arr):
         '--TAS', dest='TAS', metavar='', nargs=2, type=str, default=None,
         help="true airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
+        '--tas', dest='TAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--KTAS', dest='KTAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--ktas', dest='KTAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--CAS', dest='CAS', metavar='', nargs=2, type=str, default=None,
         help="calibrated airspeed and speed unit, e.g. '150 knots'")
     parser.add_argument(
-        '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
-        help="equivalent airspeed and speed unit, e.g. '150 knots'")
-    parser.add_argument(
-        '--KTAS', dest='KTAS', metavar='', nargs=None, type=float,
+        '--cas', dest='CAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--KCAS', dest='KCAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
+        '--kcas', dest='KCAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--EAS', dest='EAS', metavar='', nargs=2, type=str, default=None,
+        help="equivalent airspeed and speed unit, e.g. '150 knots'")
+    parser.add_argument(
+        '--eas', dest='EAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--KEAS', dest='KEAS', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--keas', dest='KEAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
         '--L', dest='length_scale', metavar='', nargs=2,
@@ -136,6 +154,8 @@ def main():
     CAS_ = CAS_ if args.KCAS is None else args.KCAS*unit('knots')
     EAS_ = EAS_ if args.KEAS is None else args.KEAS*unit('knots')
     L_ = None if args.length_scale is None else _dimension(args.length_scale)
+    L_ = L_ if args.ft is None else args.ft*unit('ft')
+    L_ = L_ if args.m is None else args.m*unit('m')
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_,
                          units=args.units)
 
