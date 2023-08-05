@@ -25,7 +25,7 @@ from flightcondition.units import unit, check_dimensioned,\
 class Layer(DimensionalData):
     """Class to compute and store layer data. """
 
-    full_names = {
+    names = {
         'name': 'layer_name',
         'H_base': 'base_geopotential_height',
         'T_base': 'base_geopotential_temperature',
@@ -61,7 +61,7 @@ class Layer(DimensionalData):
 
         # Initialize access by full quantity name through .byname.<name>
         self.byname = AliasAttributes(
-            varsobj_arr=[self, ], full_names_dict_arr=[__class__.full_names, ])
+            varsobj_arr=[self, ], names_dict_arr=[__class__.names, ])
 
     @staticmethod
     def _layer_idx(H):
@@ -118,9 +118,9 @@ class Layer(DimensionalData):
 
         # Insert longer variable name into output
         if max_sym_chars is None:
-            max_sym_chars = max([len(v) for v in self.full_names.keys()])
+            max_sym_chars = max([len(v) for v in self.names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.full_names.values()])
+            max_name_chars = max([len(v) for v in self.names.values()])
 
         H_base_str = self._vartostr(var=self.H_base, var_str='H_base',
                                     to_units=H_base_units,
@@ -222,7 +222,7 @@ class Atmosphere(DimensionalData):
         # >>> The mean free path = [7.25e-08 4.04e-05 0.00564] yd
     """
 
-    full_names = {
+    names = {
         'h': 'geometric_altitude',
         'H': 'geopotential_altitude',
         'p': 'pressure',
@@ -296,7 +296,7 @@ class Atmosphere(DimensionalData):
 
         # Initialize access by full quantity name through .byname.<name>
         self.byname = AliasAttributes(
-            varsobj_arr=[self, ], full_names_dict_arr=[__class__.full_names, ])
+            varsobj_arr=[self, ], names_dict_arr=[__class__.names, ])
 
     def tostring(self, full_output=None, units=None, max_sym_chars=None,
                  max_name_chars=None, pretty_print=True):
@@ -342,9 +342,9 @@ class Atmosphere(DimensionalData):
 
         # Insert longer variable name into output
         if max_sym_chars is None:
-            max_sym_chars = max([len(v) for v in self.full_names.keys()])
+            max_sym_chars = max([len(v) for v in self.names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.full_names.values()])
+            max_name_chars = max([len(v) for v in self.names.values()])
 
         h_str = self._vartostr(var=self.h, var_str='h', to_units=h_units,
                                max_sym_chars=max_sym_chars,

@@ -90,8 +90,8 @@ class FlightCondition(Atmosphere):
         # >>> [ True  True  True]
     """
     # Define dictionaries mapping variables to their full names
-    _byalt_full_names = Atmosphere.full_names
-    _byvel_full_names = {
+    _byalt_names = Atmosphere.names
+    _byvel_names = {
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',
         'EAS': 'equivalent_airspeed',
@@ -109,7 +109,7 @@ class FlightCondition(Atmosphere):
         'Re_by_L': 'reynolds_per_length',
     }
 
-    _bylen_full_names = {
+    _bylen_names = {
         'L': 'length_scale',
         'Re': 'reynolds_number',
         'h_BL_lamr': 'boundary_thickness_laminar',
@@ -118,10 +118,10 @@ class FlightCondition(Atmosphere):
         'Cf_turb': 'friction_coefficient_turbulent',
         'h_yplus1': 'wall_distance_yplus1',
     }
-    full_names = {}
-    full_names.update(_byalt_full_names)
-    full_names.update(_byvel_full_names)
-    full_names.update(_bylen_full_names)
+    names = {}
+    names.update(_byalt_names)
+    names.update(_byvel_names)
+    names.update(_bylen_names)
 
 # =========================================================================== #
 #                       GENERAL FUNCTIONS & PROPERTIES                        #
@@ -275,47 +275,47 @@ class FlightCondition(Atmosphere):
         # Set up behind-the scenes quantity access features
         # Set up sub-categories asdict functions
         self._byalt_asdict = self._asdict_template(
-            full_names_dict=self._byalt_full_names)
+            names_dict=self._byalt_names)
         self._byvel_asdict = self._asdict_template(
-            full_names_dict=self._byvel_full_names)
+            names_dict=self._byvel_names)
         self._bylen_asdict = self._asdict_template(
-            full_names_dict=self._bylen_full_names)
+            names_dict=self._bylen_names)
 
         # Set alias references by name _byalt_byname.<name>
         self._byalt_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            full_names_dict_arr=[self._byalt_full_names, ]
+            names_dict_arr=[self._byalt_names, ]
         )
 
         # Set alias references by name _byvel_byname.<name>
         self._byvel_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            full_names_dict_arr=[self._byvel_full_names, ]
+            names_dict_arr=[self._byvel_names, ]
         )
 
         # Set alias references by name _bylen_byname.<name>
         self._bylen_byname = AliasAttributes(
             varsobj_arr=[self, ],
-            full_names_dict_arr=[self._bylen_full_names, ]
+            names_dict_arr=[self._bylen_names, ]
         )
 
         # Set alias references by name generally .byname.<name>
         self.byname = AliasAttributes(
             varsobj_arr=[self, self, self],
-            full_names_dict_arr=[
-                self._byalt_full_names,
-                self._byvel_full_names,
-                self._bylen_full_names,
+            names_dict_arr=[
+                self._byalt_names,
+                self._byvel_names,
+                self._bylen_names,
             ]
         )
 
         # Set variable aliases by altitude properties to .byalt.<var>
-        byalt_vars = {key: key for key in self._byalt_full_names.keys()}
+        byalt_vars = {key: key for key in self._byalt_names.keys()}
         self.byalt = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, ],
-            full_names_dict_arr=[
+            names_dict_arr=[
                 byalt_vars,
-                {"_byalt_full_names": "full_names"},
+                {"_byalt_names": "names"},
                 {"_byalt_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byalt_byname": "byname"},
@@ -324,12 +324,12 @@ class FlightCondition(Atmosphere):
         )
 
         # Set variable aliases by velocity properties to .byvel.<var>
-        byvel_vars = {key: key for key in self._byvel_full_names.keys()}
+        byvel_vars = {key: key for key in self._byvel_names.keys()}
         self.byvel = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, ],
-            full_names_dict_arr=[
+            names_dict_arr=[
                 byvel_vars,
-                {"_byvel_full_names": "full_names"},
+                {"_byvel_names": "names"},
                 {"_byvel_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_byvel_byname": "byname"},
@@ -338,12 +338,12 @@ class FlightCondition(Atmosphere):
         )
 
         # Set variable aliases by length properties to .bylen.<var>
-        bylen_vars = {key: key for key in self._bylen_full_names.keys()}
+        bylen_vars = {key: key for key in self._bylen_names.keys()}
         self.bylen = AliasAttributes(
             varsobj_arr=[self, self, self, self, self, self, self, ],
-            full_names_dict_arr=[
+            names_dict_arr=[
                 bylen_vars,
-                {"_bylen_full_names": "full_names"},
+                {"_bylen_names": "names"},
                 {"_bylen_tostring": "tostring"},
                 {"full_output": "full_output"},
                 {"_bylen_byname": "byname"},
@@ -355,7 +355,7 @@ class FlightCondition(Atmosphere):
         # Set all property variable references to .byvar.<var>
         self.byvar = AliasAttributes(
             varsobj_arr=[self.byalt, self.byvel, self.bylen, ],
-            full_names_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
+            names_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
         )
 
     def tostring(self, full_output=True, units=None, pretty_print=True):
@@ -387,14 +387,14 @@ class FlightCondition(Atmosphere):
         # Determine maximum characters to add spaces for and assemble string
         if full_output:
             max_sym_chars = max([  # length of variables
-                max([len(v) for v in self._byalt_full_names.keys()]),
-                max([len(v) for v in self._byvel_full_names.keys()]),
-                max([len(v) for v in self._bylen_full_names.keys()]),
+                max([len(v) for v in self._byalt_names.keys()]),
+                max([len(v) for v in self._byvel_names.keys()]),
+                max([len(v) for v in self._bylen_names.keys()]),
             ])
             max_name_chars = max([  # length of variable names
-                max([len(v) for v in self._byalt_full_names.values()]),
-                max([len(v) for v in self._byvel_full_names.values()]),
-                max([len(v) for v in self._bylen_full_names.values()]),
+                max([len(v) for v in self._byalt_names.values()]),
+                max([len(v) for v in self._byvel_names.values()]),
+                max([len(v) for v in self._bylen_names.values()]),
             ])
         else:
             max_sym_chars = 7  # length of variables
@@ -622,8 +622,8 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_M'):
             if __class__._check_compatible_array_size(
                     arr1=h, arr2=self._M,
-                    arr_name1=self.full_names['h'],
-                    arr_name2=self.full_names['M'],
+                    arr_name1=self.names['h'],
+                    arr_name2=self.names['M'],
                     raise_warning=True):
                 if self._holdconst_vel_var == 'M':
                     self.M = __class__._reshape_arr1_like_arr2(self._M, h)
@@ -639,8 +639,8 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_L'):
             if __class__._check_compatible_array_size(
                     arr1=h, arr2=self._L,
-                    arr_name1=self.full_names['h'],
-                    arr_name2=self.full_names['L'],
+                    arr_name1=self.names['h'],
+                    arr_name2=self.names['L'],
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, h)
 
@@ -660,13 +660,13 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_h'):
             if __class__._check_compatible_array_size(
                     arr1=vel_arr, arr2=self._h,
-                    arr_name1=vel_name, arr_name2=self.full_names["h"],
+                    arr_name1=vel_name, arr_name2=self.names["h"],
                     raise_warning=True, raise_error=True):
                 self._h = __class__._reshape_arr1_like_arr2(self._h, vel_arr)
         if hasattr(self, '_L'):
             if __class__._check_compatible_array_size(
                     arr1=vel_arr, arr2=self._L,
-                    arr_name1=vel_name, arr_name2=self.full_names["L"],
+                    arr_name1=vel_name, arr_name2=self.names["L"],
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, vel_arr)
 
@@ -720,9 +720,9 @@ class FlightCondition(Atmosphere):
 
         # Insert longer variable name into output
         if max_sym_chars is None:
-            max_sym_chars = max([len(v) for v in self.full_names.keys()])
+            max_sym_chars = max([len(v) for v in self.names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.full_names.values()])
+            max_name_chars = max([len(v) for v in self.names.values()])
 
         M_str = self._vartostr(
             var=self.M, var_str='M', to_units='',
@@ -1004,7 +1004,7 @@ class FlightCondition(Atmosphere):
         """Mach number :math:`M` """
         M *= dimless  # add dimless for raw float input
         self._M = __class__._preprocess_arr(M, input_alt=self.h)
-        self._process_input_velocity(self._M, vel_name=self.full_names['M'])
+        self._process_input_velocity(self._M, vel_name=self.names['M'])
 
         self._TAS = self._TAS_from_M(self.M)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
@@ -1024,7 +1024,7 @@ class FlightCondition(Atmosphere):
         """Set true airspeed. """
         self._TAS = __class__._preprocess_arr(TAS, input_alt=self.h)
         self._process_input_velocity(
-            self._TAS, vel_name=self.full_names['TAS'])
+            self._TAS, vel_name=self.names['TAS'])
 
         self._M = self._M_from_TAS(TAS)
         self._EAS = self._EAS_from_TAS(self.TAS, self.M)
@@ -1044,7 +1044,7 @@ class FlightCondition(Atmosphere):
         """Calibrated airspeed. """
         self._CAS = __class__._preprocess_arr(CAS, input_alt=self.h)
         self._process_input_velocity(
-            self._CAS, vel_name=self.full_names['CAS'])
+            self._CAS, vel_name=self.names['CAS'])
 
         self._q_c = self._q_c_from_CAS(self.CAS)
         self._M = self._M_from_q_c(self.q_c)
@@ -1064,7 +1064,7 @@ class FlightCondition(Atmosphere):
         """Set equivalent airspeed. """
         self._EAS = __class__._preprocess_arr(EAS, input_alt=self.h)
         self._process_input_velocity(
-            self._EAS, vel_name=self.full_names['EAS'])
+            self._EAS, vel_name=self.names['EAS'])
 
         self._M = self._M_from_EAS(self.EAS)
         self._TAS = self._TAS_from_M(self.M)
@@ -1207,9 +1207,9 @@ class FlightCondition(Atmosphere):
 
         # Insert longer variable name into output
         if max_sym_chars is None:
-            max_sym_chars = max([len(v) for v in self.full_names.keys()])
+            max_sym_chars = max([len(v) for v in self.names.keys()])
         if max_name_chars is None:
-            max_name_chars = max([len(v) for v in self.full_names.values()])
+            max_name_chars = max([len(v) for v in self.names.values()])
 
         L_str = self._vartostr(
             var=self.L, var_str='L', to_units=L_units,
@@ -1300,16 +1300,16 @@ class FlightCondition(Atmosphere):
         if hasattr(self, '_h'):
             if __class__._check_compatible_array_size(
                     arr1=self._h, arr2=L,
-                    arr_name1=self.full_names['h'],
-                    arr_name2=self.full_names['L'],
+                    arr_name1=self.names['h'],
+                    arr_name2=self.names['L'],
                     raise_warning=True):
                 pass
                 # self._h = __class__._reshape_arr1_like_arr2(self._h, L)
         if hasattr(self, '_M'):
             if __class__._check_compatible_array_size(
                     arr1=self.M, arr2=L,
-                    arr_name1=self.full_names['M'],
-                    arr_name2=self.full_names['L'],
+                    arr_name1=self.names['M'],
+                    arr_name2=self.names['L'],
                     raise_warning=True):
                 pass
                 # self.M = __class__._reshape_arr1_like_arr2(self._M, L)
@@ -1329,8 +1329,8 @@ class FlightCondition(Atmosphere):
         Re = self._preprocess_arr(
             Re, input_alt=self.h, input_vel=self.M)
         __class__._check_compatible_array_size(
-            arr1=self.M, arr2=Re, arr_name1=self.full_names['M'],
-            arr_name2=self.full_names['L'], raise_warning=True,
+            arr1=self.M, arr2=Re, arr_name1=self.names['M'],
+            arr_name2=self.names['L'], raise_warning=True,
             raise_error=True)
         self.TAS = NonDimensional.reynolds_number_velocity(
             Re_L=Re, L=self.L, nu=self.nu)

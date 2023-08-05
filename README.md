@@ -86,24 +86,24 @@ is equivalent to `CAS=233*unit('knots')`.
 #### Output Quantities
 
 The following tables list the quantities and the variables used to access them.
-Quantities may be accessed by either (a) their shorter variable names, e.g.
-`.TAS`, or (b) by their longer, full names, e.g.  `byname.true_airspeed`. They
+Quantities may be accessed by either (a) their abbreviated variable, e.g.
+`.TAS`, or (b) by their full names, e.g.  `byname.true_airspeed`. They
 may also be accessed through their particular sub-category: `byalt`, `byvel`,
 or `bylen`, e.g.  `.byvel.TAS` or `.byvel.byname.true_airspeed`.
 
-| Altitude Quantity     | Name    | Full Name (via `.byname.`) |
-|-----------------------|---------|----------------------------|
-| Geometric altitude    | `h`     | `geometric_altitude`       |
-| Geopotential altitude | `H`     | `geopotential_altitude`    |
-| Pressure              | `p`     | `pressure`                 |
-| Temperature           | `T`     | `temperature`              |
-| Density               | `rho`   | `density`                  |
-| Sound speed           | `a`     | `sounds_speed`             |
-| Dynamic viscosity     | `mu`    | `dynamic_viscosity`        |
-| Kinematic viscosity   | `nu`    | `kinematic_viscosity`      |
-| Thermal conductivity  | `k`     | `thermal_conductivity`     |
-| Gravity               | `g`     | `gravity`                  |
-| Mean free path        | `MFP`   | `mean_free_path`           |
+| Altitude Quantity     | Variable | Full Name (via `.byname.`) |
+|-----------------------|----------|----------------------------|
+| Geometric altitude    | `h`      | `geometric_altitude`       |
+| Geopotential altitude | `H`      | `geopotential_altitude`    |
+| Pressure              | `p`      | `pressure`                 |
+| Temperature           | `T`      | `temperature`              |
+| Density               | `rho`    | `density`                  |
+| Sound speed           | `a`      | `sounds_speed`             |
+| Dynamic viscosity     | `mu`     | `dynamic_viscosity`        |
+| Kinematic viscosity   | `nu`     | `kinematic_viscosity`      |
+| Thermal conductivity  | `k`      | `thermal_conductivity`     |
+| Gravity               | `g`      | `gravity`                  |
+| Mean free path        | `MFP`    | `mean_free_path`           |
 
 | Velocity Quantity                | Name      | Full Name (via `.byname.`)       |
 |----------------------------------|-----------|----------------------------------|
