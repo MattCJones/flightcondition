@@ -24,7 +24,7 @@ class AliasAttributes():
         """Populate full names and link to variable
         Args:
             varsobj (list): List of objects that holds all of the variables
-            names_dict (list): List of dictionaries that maps variables to
+            names_dict_arr (list): List of dictionaries that maps variables to
                 their alias names
         """
         # Avoid infinite loop when setting properties
@@ -32,13 +32,13 @@ class AliasAttributes():
         super().__setattr__("names_dict_arr", names_dict_arr)
 
     def __dir__(self):
-        """Add tab completion for alias names. """
+        """Add tab completion for alias names_dict. """
         # Avoid infinite loop when loading varsobj and names_dict
         names_dict_arr = super().__getattribute__("names_dict_arr")
         names_arr = []
         for names_dict in names_dict_arr:
-            for varname in names_dict.values():
-                names_arr.append(varname)
+            for name in names_dict.values():
+                names_arr.append(name)
         return names_arr
 
     def __getattribute__(self, attr):
@@ -51,8 +51,8 @@ class AliasAttributes():
         varsobj_arr = super().__getattribute__("varsobj_arr")
         names_dict_arr = super().__getattribute__("names_dict_arr")
         for varsobj, names_dict in zip(varsobj_arr, names_dict_arr):
-            for var, varname in names_dict.items():
-                if attr == varname:
+            for var, name in names_dict.items():
+                if attr == name:
                     return getattr(varsobj, var)
 
     def __setattr__(self, attr, attrval):
@@ -66,8 +66,8 @@ class AliasAttributes():
         varsobj_arr = super().__getattribute__("varsobj_arr")
         names_dict_arr = super().__getattribute__("names_dict_arr")
         for varsobj, names_dict in zip(varsobj_arr, names_dict_arr):
-            for var, varname in names_dict.items():
-                if attr == varname:
+            for var, name in names_dict.items():
+                if attr == name:
                     return setattr(varsobj, var, attrval)
 
     def __repr__(self):
@@ -92,7 +92,7 @@ class AliasAttributes():
 class DimensionalData:
     """Parent class to hold dimensional data"""
 
-    names = {}
+    names_dict = {}
 
     def __eq__(self, other):
         """Check equality.
@@ -102,7 +102,7 @@ class DimensionalData:
         if other.__class__ is not self.__class__:
             return NotImplemented
 
-        for var in self.names.keys():
+        for var in self.names_dict.keys():
             a = self.asdict[var]
             b = other.asdict[var]
             if not (np.shape(a) == np.shape(b)):
@@ -152,9 +152,9 @@ class DimensionalData:
             dict: Class data
         """
         if names_dict is None:
-            names_dict = self.names
+            names_dict = self.names_dict
         obj_dict = {}
-        for var, varname in names_dict.items():
+        for var, name in names_dict.items():
             obj_dict[var] = getattr(self, var)
         return obj_dict
 
@@ -165,7 +165,7 @@ class DimensionalData:
         Returns:
             dict: Class data
         """
-        return self._asdict_template(self.names)
+        return self._asdict_template(self.names_dict)
 
     def print(self, *args, **kwargs):
         """Print tostring() function to stdout. """
@@ -201,7 +201,7 @@ class DimensionalData:
             str: formatted string
         """
         pp_ = "~P" if pretty_print else ""
-        var_name = self.names[var_str]
+        name = self.names_dict[var_str]
         if to_units is None:
             var_units_str = ""
         else:
@@ -219,7 +219,7 @@ class DimensionalData:
                            f"{var_units_str}")
         else:
             var_val_str = f"{var:{fmt_val}{pp_}}"
-        var_str = (f"{var_name:{max_name_chars}s} {var_str:{max_sym_chars}s} ="
+        var_str = (f"{name:{max_name_chars}s} {var_str:{max_sym_chars}s} ="
                    f" {var_val_str}")
         return var_str
 
