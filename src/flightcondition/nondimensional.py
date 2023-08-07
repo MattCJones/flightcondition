@@ -63,7 +63,7 @@ class NonDimensional:
 
     @staticmethod
     def reynolds_number(U, L, nu):
-        """Compute Reynolds number :math:`Re`, the ratio of inertial to viscou
+        """Compute Reynolds number :math:`Re`, the ratio of inertial to viscous
         forces.
 
         Args:

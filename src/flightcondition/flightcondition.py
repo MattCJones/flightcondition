@@ -153,7 +153,7 @@ class FlightCondition(Atmosphere):
             units (str): Set to 'US' for US units or 'SI' for SI
             full_output (bool): Set to True for full output
         """
-        # Initalize Atmosphere super class
+        # Initialize Atmosphere super class
         super().__init__(h=h, units=units, full_output=full_output, **kwargs)
         self._byalt_tostring = super().tostring
 
@@ -241,7 +241,7 @@ class FlightCondition(Atmosphere):
             if L_m is not None:
                 L = L_m * unit('m')
 
-        # If length scale is not input, default to unity with dimentionals unit
+        # If length scale is not input, default to unity with dimensional unit
         # based on US or SI determination
         if L is None:
             if Re is None:

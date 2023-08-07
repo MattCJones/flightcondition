@@ -146,7 +146,7 @@ class DimensionalData:
 
         Args:
             names_dict (dict): Optionally specified variable names
-                dicitonary
+                dictionary
 
         Returns:
             dict: Class data
