@@ -283,10 +283,10 @@ density             rho     = 1.1435×10⁻³ slug/ft³
 sound_speed         a       = 1024.5 ft/s
 kinematic_viscosity nu      = 2.8509×10⁻⁴ ft²/s
 ------------------  Velocity Quantities  ------------------
+mach_number         M       = 0.55344
 true_airspeed       TAS     = 335.93 kt
 calibrated_airspeed CAS     = 238.14 kt
 equivalent_airspeed EAS     = 233 kt
-mach_number         M       = 0.55344
 reynolds_per_length Re_by_L = 1.6573×10⁵ 1/in
 ------------------   Length Quantities   ------------------
 length_scale        L       = 4 ft
