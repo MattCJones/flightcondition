@@ -779,11 +779,11 @@ class FlightCondition(Atmosphere):
 
         # Assemble output string
         if full_output:
-            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{mu_M_str}"
+            repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{mu_M_str}"
                         f"{q_inf_str}{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}"
                         f"{Tr_turb_str}{Re_by_L_str}")
         else:
-            repr_str = (f"{TAS_str}{CAS_str}{EAS_str}{M_str}{Re_by_L_str}")
+            repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{Re_by_L_str}")
 
         return repr_str
 
