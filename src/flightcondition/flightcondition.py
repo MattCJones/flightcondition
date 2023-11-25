@@ -127,8 +127,8 @@ class FlightCondition(Atmosphere):
 #                       GENERAL FUNCTIONS & PROPERTIES                        #
 # =========================================================================== #
     def __init__(
-        self, h=None, M=None, TAS=None, CAS=None, EAS=None, L=None, Re=None,
-        units=None, full_output=None, **kwargs,
+        self, h=None, p=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
+        Re=None, units=None, full_output=None, **kwargs,
     ):
         """Constructor based on altitude and input velocity in terms of Mach
         number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
@@ -138,6 +138,8 @@ class FlightCondition(Atmosphere):
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
+            p (pressure): Pressure altitude - aliases are 'p_alt',
+                'pressure_altitude'
             M (dimless): Velocity as Mach number - aliases are 'mach', 'Mach',
                 'M_inf', 'mach_number'
             TAS (speed): Velocity as true airspeed - aliases are 'tas',
@@ -154,6 +156,7 @@ class FlightCondition(Atmosphere):
             full_output (bool): Set to True for full output
         """
         # Initialize Atmosphere super class
+        # TODO 2023-11-24: if pressure altitude is given and no h, use that 
         super().__init__(h=h, units=units, full_output=full_output, **kwargs)
         self._byalt_tostring = super().tostring
 
@@ -358,7 +361,7 @@ class FlightCondition(Atmosphere):
             names_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
         )
 
-    def tostring(self, full_output=True, units=None, pretty_print=True):
+    def tostring(self, full_output=None, units=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
