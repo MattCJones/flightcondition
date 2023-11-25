@@ -296,6 +296,10 @@ reynolds_number     Re      = 7.9551×10⁶
 Alternatively use the `--KEAS 233` syntactic sugar to omit the `knots` unit.
 See also `--KTAS` and `--KCAS`.
 
+## Web Application
+See the web application here: [https://flightcondition.streamlit.app/](
+https://flightcondition.streamlit.app/)
+
 ## Assumptions
 
 -   Atmospheric quantities follow the
