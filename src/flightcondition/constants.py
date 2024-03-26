@@ -79,6 +79,8 @@ class AtmosphereConstants():
         "Mesosphere",
         "Mesosphere",
         "Mesopause",
+        "Thermosphere",
+        "Exosphere",
     ])
 
     # Layer base geopotential heights
@@ -91,7 +93,9 @@ class AtmosphereConstants():
         47.0,
         51.0,
         71.0,
-        80.0
+        84.8525,
+        630.5631,  # h = 700 km
+        3886.3220,  # h = 10000 km
     ]) * unit('km')
 
     # Layer temperature gradients
@@ -104,7 +108,9 @@ class AtmosphereConstants():
         0.0,
         -2.8,
         -2.0,
-        -2.0
+        -2.0,
+        # -2.0,  # unused
+        # -2.0,  # unused
     ]) * 1e-3 * unit('K/m')
 
     # Layer base temperatures
@@ -118,6 +124,8 @@ class AtmosphereConstants():
         270.65,
         214.65,
         196.65,
+        # 196.65,  # unused
+        # 196.65,  # unused
     ]) * unit('K')
 
     # Layer base pressures
@@ -131,4 +139,6 @@ class AtmosphereConstants():
         6.69384e+1,
         3.95639e+0,
         8.86272e-1,
+        # 8.86272e-1,  # unused
+        # 8.86272e-1,  # unused
     ]) * unit('Pa')

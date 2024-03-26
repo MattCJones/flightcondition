@@ -10,9 +10,12 @@ Email: matt.c.jones.aoe@gmail.com
 :license: MIT License, see LICENSE for more details.
 """
 
+import re
 import warnings
 
 import numpy as np
+
+from pymsis import msis
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
@@ -192,6 +195,175 @@ class Layer(DimensionalData):
         return self._p_base
 
 
+class Species(DimensionalData):
+    """Class to store species data. """
+    names_dict = {
+        'N2': 'diatomic_nitrogen',
+        'O2': 'diatomic_oxygen',
+        'O': 'atomic_oxygen',
+        'He': 'helium',
+        'H': 'hydrogen',
+        'Ar': 'argon',
+        'N': 'nitrogen',
+        'aO': 'anomalous_oxygen',
+        'NO': 'nitric_oxide',
+    }
+
+    def __init__(self, species_arr, full_output=True, units=None):
+        """Initialize Species class.
+
+        Args:
+            species_arr (array): Array of species concentrations
+        """
+        self._N2 = species_arr[0]
+        self._O2 = species_arr[1]
+        self._O = species_arr[2]
+        self._He = species_arr[3]
+        self._H = species_arr[4]
+        self._Ar = species_arr[5]
+        self._N = species_arr[6]
+        self._aO = species_arr[7]
+        self._NO = species_arr[8]
+        self.full_output = full_output
+        self.units = units
+
+    def tostring(self, full_output=None, units=None, max_sym_chars=None,
+                 max_name_chars=None, pretty_print=True):
+        """Output string representation of class object.
+
+        Args:
+            full_output (bool): Set to True for full output
+            units (str): Set to 'US' for US units or 'SI' for SI
+            max_sym_chars (int): Maximum characters in symbol name
+            max_name_chars (int): Maximum characters iin full name
+            pretty_print (bool): Pretty print output
+
+        Returns:
+            str: String representation
+        """
+        # Determine full output flag
+        if full_output is None:
+            if self.full_output is None:
+                full_output = True
+            else:
+                full_output = self.full_output
+
+        if units is not None:
+            self.units = units
+
+        if self.units == 'US':
+            species_units   = '1/ft^3'
+        else:  # SI units
+            species_units   = '1/m^3'
+
+        # Insert longer variable name into output
+        if max_sym_chars is None:
+            max_sym_chars = max([len(v) for v in self.names_dict.keys()])
+        if max_name_chars is None:
+            max_name_chars = max([len(v) for v in self.names_dict.values()])
+
+        N2_str = self._vartostr(var=self.N2, var_str='N2',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+        O2_str = self._vartostr(var=self.O2, var_str='O2',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+        O_str = self._vartostr(var=self.O, var_str='O',
+                               to_units=species_units,
+                               max_sym_chars=max_sym_chars,
+                               max_name_chars=max_name_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        He_str = self._vartostr(var=self.He, var_str='He',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+        H_str = self._vartostr(var=self.H, var_str='H',
+                               to_units=species_units,
+                               max_sym_chars=max_sym_chars,
+                               max_name_chars=max_name_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        Ar_str = self._vartostr(var=self.Ar, var_str='Ar',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+        N_str = self._vartostr(var=self.N, var_str='N',
+                               to_units=species_units,
+                               max_sym_chars=max_sym_chars,
+                               max_name_chars=max_name_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+        aO_str = self._vartostr(var=self.aO, var_str='aO',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+        NO_str = self._vartostr(var=self.NO, var_str='NO',
+                                to_units=species_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+
+        # Assemble output string
+        if full_output:
+            repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
+                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}")
+        else:
+            repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
+                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}")
+        return repr_str
+
+
+    @_property_decorators
+    def N2(self):
+        """Diatomic nitrogen. """
+        return self._N2
+
+    @_property_decorators
+    def O2(self):
+        """Diatomic oxygen. """
+        return self._O2
+
+    @_property_decorators
+    def O(self):
+        """Atomic oxygen. """
+        return self._O
+
+    @_property_decorators
+    def He(self):
+        """Helium. """
+        return self._He
+
+    @_property_decorators
+    def H(self):
+        """Atomic hydrogen. """
+        return self._H
+
+    @_property_decorators
+    def Ar(self):
+        """Argon. """
+        return self._Ar
+
+    @_property_decorators
+    def N(self):
+        """Atomic nitrogen. """
+        return self._N
+
+    @_property_decorators
+    def aO(self):
+        """Anomalous oxygen. """
+        return self._aO
+
+    @_property_decorators
+    def NO(self):
+        """Nitric oxide."""
+        return self._NO
+
+
 class Atmosphere(DimensionalData):
     """Compute quantities from International Civil Aviation Organization (ICAO)
     1993, which extends the US 1976 Standard Atmospheric Model to 80 km.
@@ -237,7 +409,9 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    def __init__(self, h=None, units=None, full_output=None, **kwargs):
+    def __init__(self, h=None, units=None, full_output=None, model=None,
+                 date="2003-01-01T00:00", lon=0.0, lat=0.0, f107=150.0,
+                 f107a=150.0, **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
@@ -249,19 +423,29 @@ class Atmosphere(DimensionalData):
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
             units (str): Set to 'US' for US units or 'SI' for SI
             full_output (bool): Set to True for full output
+            model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
+                MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
+            date (str): datetime in format "YYYY-MM-DDTHH:SS", e.g.,
+                "2024-01-01T00:00" (msis models only)
+            lon (float): longitude in degrees (msis only)
+            lat (float): latitude in degrees (msis only)
+            f107 (float): daily F10.7 solar flux on the previous day (msis
+                only)
+            f107a (float): F10.7 solar flux 81-day average centered on the
+                input date (msis only)
         """
         self.full_output = full_output
+        self._date = date
+        self._lon = lon
+        self._lat = lat
+        self._f107 = f107
+        self._f107a = f107a
+        self._species = None
         # Check units and set initially
         if units in dir(unit.sys):
             self.units = units
         else:
             self.units = 'SI'
-
-        # Compute altitude bounds
-        self._H_min = Atmo.H_base[0]
-        self._H_max = Atmo.H_base[-1]
-        self._h_min = __class__._h_from_H(self._H_min)
-        self._h_max = __class__._h_from_H(self._H_max)
 
         # Process altitude input
         # Check for hidden aliases
@@ -283,9 +467,31 @@ class Atmosphere(DimensionalData):
             if h_km is not None:
                 h = h_km * unit('km')
 
+        # Compute altitude bounds
+        H_max_standard = Atmo.H_base[8]
+        H_max_msis = Atmo.H_base[-1]
+        h_max_msis = __class__._h_from_H(H_max_msis)
+        h_max_standard = __class__._h_from_H(H_max_standard)
+
         # Default to 0 kft
         if h is None:
             h = 0 * unit('ft')
+
+        # Set model type
+        if model is None:
+            self.model = "msis" if h > h_max_standard else "standard"
+        else:
+            self.model = model
+
+        #  Set altitude bounds and set altitude
+        self._H_min = Atmo.H_base[0]
+        self._h_min = __class__._h_from_H(self._H_min)
+        if "msis" in self.model:
+            self._H_max = H_max_msis
+            self._h_max = h_max_msis
+        else:
+            self._H_max = H_max_standard
+            self._h_max = h_max_standard
         self.h = h
 
         # Further process unit system
@@ -418,6 +624,53 @@ class Atmosphere(DimensionalData):
                         f"{nu_str}")
         return repr_str
 
+    def _run_msis(self):
+        """Run NRL MSIS model.
+
+        Returns:
+            pressure: Pressure
+            temperature: Temperature
+        """
+        h_km = self._h.to('km').magnitude
+
+        # Determine version
+        pattern = r"msis(\d+(\.\d+)?)"
+        match = re.search(pattern, self.model)
+        _default_version = 2.1
+        _version = float(match.group(1)) if match else _default_version
+        self.model = f"msis{_version:1.1f}"
+
+        out = msis.run(dates=self._date, lons=self._lon, lats=self._lat,
+                       alts=h_km, f107s=self._f107, f107as=self._f107a,
+                       version=_version)
+
+        # Unpack # TODO 2024-03-25: get this to work for arrays of altitudes
+        rho_kgpm3 = out[:, 0]
+        N2_mn3 = out[:, 1]
+        O2_mn3 = out[:, 2]
+        O_mn3 = out[:, 3]
+        He_mn3 = out[:, 4]
+        H_mn3 = out[:, 5]
+        Ar_mn3 = out[:, 6]
+        N_mn3 = out[:, 7]
+        aO_mn3 = out[:, 8]
+        NO_mn3 = out[:, 9]
+        T_K = out[:, 10]
+
+        # Dimensionalize
+        rho = rho_kgpm3 * unit('kg/m^3')
+        T = T_K * unit('degK')
+
+        self._species = Species(np.array([N2_mn3, O2_mn3, O_mn3, He_mn3, H_mn3,
+                                          Ar_mn3, N_mn3, aO_mn3, NO_mn3]
+                                         ) * unit('1/m^3'))
+
+        # Find pressure from temperature and density
+        R_air = Phys.R_air
+        p =  rho*(R_air*T)  # TODO 2024-03-24: fix for high altitudes
+
+        return p, T
+
     @staticmethod
     @unit.wraps(unit.m, (unit.m, unit.m))
     def _H_from_h(h, R_earth=Phys.R_earth):
@@ -450,6 +703,7 @@ class Atmosphere(DimensionalData):
             length: Geometric altitude
         """
         h = R_earth*H/(R_earth - H)
+
         return h
 
     @staticmethod
@@ -559,6 +813,8 @@ class Atmosphere(DimensionalData):
                            units=self.units)
         self._T = None
         self._p = None
+        if not self.model == "standard":
+            _, _ = self._run_msis()
 
     @_property_decorators
     def H(self):
@@ -569,29 +825,32 @@ class Atmosphere(DimensionalData):
     def p(self):
         """Air pressure :math:`p` """
         # Only compute p if not set by user
-        if self._p is not None:
+        if self._p is None:
+            if self.model == "standard":
+                H_base = np.atleast_1d(self.layer.H_base)
+                T_base = np.atleast_1d(self.layer.T_base)
+                T_grad = np.atleast_1d(self.layer.T_grad)
+                p_base = np.atleast_1d(self.layer.p_base)
+
+                H = np.atleast_1d(self.H)
+                T = np.atleast_1d(self.T)
+                g_0 = Phys.g
+                R_air = Phys.R_air
+
+                p = np.zeros_like(H) * unit('Pa')
+
+                # Pressure equation changes between T_grad == 0 and T_grad != 0
+                s = T_grad == 0
+                p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
+
+                s = T_grad != 0
+                p[s] = p_base[s]*(
+                    1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
+                )**((1/T_grad[s])*(-g_0/R_air))
+            else:
+                p, _ = self._run_msis()
+        else:  # return user set value
             p = self._p
-        else:
-            H_base = np.atleast_1d(self.layer.H_base)
-            T_base = np.atleast_1d(self.layer.T_base)
-            T_grad = np.atleast_1d(self.layer.T_grad)
-            p_base = np.atleast_1d(self.layer.p_base)
-
-            H = np.atleast_1d(self.H)
-            T = np.atleast_1d(self.T)
-            g_0 = Phys.g
-            R_air = Phys.R_air
-
-            p = np.zeros_like(H) * unit('Pa')
-
-            # Pressure equation changes between T_grad == 0 and T_grad != 0
-            s = T_grad == 0
-            p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
-
-            s = T_grad != 0
-            p[s] = p_base[s]*(
-                1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
-            )**((1/T_grad[s])*(-g_0/R_air))
 
         return p
 
@@ -609,13 +868,16 @@ class Atmosphere(DimensionalData):
     def T(self):
         """Ambient air temperature :math:`T` """
         # Only compute T if not user set
-        if self._T is not None:
+        if self._T is None:
+            if self.model == "standard":
+                T_grad = np.atleast_1d(self.layer.T_grad)
+                H_base = np.atleast_1d(self.layer.H_base)
+                T_base = np.atleast_1d(self.layer.T_base)
+                T = T_base + T_grad*(self.H - H_base)
+            else:
+                _, T = self._run_msis()
+        else:  # return user set value
             T = self._T
-        else:
-            T_grad = np.atleast_1d(self.layer.T_grad)
-            H_base = np.atleast_1d(self.layer.H_base)
-            T_base = np.atleast_1d(self.layer.T_base)
-            T = T_base + T_grad*(self.H - H_base)
 
         return T
 
@@ -691,3 +953,8 @@ class Atmosphere(DimensionalData):
         n = N_A*p/(R*T)  # number density
         MFP = 1/(np.sqrt(2)*np.pi*sigma**2*n)
         return MFP
+
+    @property
+    def species(self):
+        """Species concentrations. """
+        return self._species

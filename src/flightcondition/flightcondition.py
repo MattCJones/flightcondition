@@ -128,13 +128,17 @@ class FlightCondition(Atmosphere):
 # =========================================================================== #
     def __init__(
         self, h=None, p=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
-        Re=None, units=None, full_output=None, **kwargs,
+        Re=None, units=None, full_output=None, model=None, **kwargs,
     ):
         """Constructor based on altitude and input velocity in terms of Mach
         number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
         length scale.  Reynolds number can be input as an alternative to either
         velocity or length scale but not both.  All inputs must be dimensional
         unit quantities.
+
+        If an "msis" model is selected, then there are additional arguments
+        defining the datetime, longitude, latitude, and other settings. See the
+        Atmosphere class to see those arguments.
 
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
@@ -154,14 +158,17 @@ class FlightCondition(Atmosphere):
                 scale but not both - aliases are 'Re_L', 'reynolds_number'
             units (str): Set to 'US' for US units or 'SI' for SI
             full_output (bool): Set to True for full output
+            model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
+                MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
         """
         # Initialize Atmosphere super class
         # TODO 2023-11-24: if pressure altitude is given and no h, use that 
-        super().__init__(h=h, units=units, full_output=full_output, **kwargs)
+        super().__init__(h=h, units=units, full_output=full_output,
+                         model=model, **kwargs)
         self._byalt_tostring = super().tostring
 
         # Computer sea level properties
-        self._atm0 = Atmosphere(h=0*unit('kft'))
+        self._atm0 = Atmosphere(h=0*unit('kft'), model=model, **kwargs)
 
         # Need to cycle self.units to properly set default units
         self.units = self.units
