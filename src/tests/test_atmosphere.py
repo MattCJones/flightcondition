@@ -13,10 +13,12 @@ Email: matt.c.jones.aoe@gmail.com
 
 import pytest
 
+from numpy import array
+
 from flightcondition import Atmosphere, unit
 from common import assert_field
 
-# Atmospheric ground truth data
+# Standard Atmospheric ground truth data
 h_geom_truth_arr = [
     0, 5000, 10000, 15000, 20000, 25000, 30000, 35000, 40000, 45000,
     50000, 55000, 60000, 65000, 70000, 75000, 80000] * unit('m')
@@ -55,6 +57,26 @@ nu_inf_truth_arr = [
     5.11412252e-02, 9.26179078e-02, 1.73576137e-01, 3.44655513e-01,
     7.15580116e-01] * unit('m^2/s')
 
+# NRL MSIS ground truth data
+reltol_msis = 0.001
+# Version 2.0:
+datetime_msis2 = "2014-03-25T00:00"
+f107_msis2 = 150
+f107a_msis2 = 150
+ap_msis2 = 7
+h_msis2 = array([500.0, 1000.0]) * unit('km')
+lon_msis2 = 15.0
+lat_msis2 = 65.0
+O_msis2 = array([2.363E+07, 1.776E+04]) * unit('1/cm^3')
+N2_msis2 = array([5.129E+05, 1.738E+00]) * unit('1/cm^3')
+O2_msis2 = array([8.620E+03, 4.869E-03]) * unit('1/cm^3')
+#rho_msis2 = array([6.752E-16, 3.075E-18]) * unit('1/cm^3')
+T_msis2 = array([1052.8, 1052.9]) * unit('degK')
+He_msis2 = array([2.102E+06, 3.480E+05]) * unit('1/cm^3')
+Ar_msis2 = array([1.919E+01, 3.039E-07]) * unit('1/cm^3')
+H_msis2 = array([6.582E+04, 4.198E+04]) * unit('1/cm^3')
+N_msis2 = array([3.529E+05, 6.497E+02]) * unit('1/cm^3')
+
 
 @pytest.fixture
 def atm():
@@ -67,7 +89,7 @@ def atm():
     return Atmosphere(h_geom_truth_arr)
 
 def test_h_geop(atm):
-    """Test geopential altitude calculations. """
+    """Test geopotential altitude calculations. """
     assert_field(atm.H, h_geop_truth_arr)
 
 def test_T_inf(atm):
@@ -89,3 +111,52 @@ def test_a_inf(atm):
 def test_nu_inf(atm):
     """Test kinematic viscosity calculations. """
     assert_field(atm.nu, nu_inf_truth_arr)
+
+@pytest.fixture
+def atm_msis2():
+    """Fixture to compute MSIS 2.0 atmospheric properties just once before
+    tests.
+
+    Returns:
+        Atmosphere object
+
+    """
+    return Atmosphere(h_msis2, datetime=datetime_msis2, lon=lon_msis2, 
+				      lat=lat_msis2, f107=f107_msis2, f107a=f107a_msis2, ap=7,
+                      model="msis2.0")
+
+def test_O_msis2(atm_msis2):
+    """Test MSIS 2.0 O. """
+    assert_field(atm_msis2.species.O.to('1/cm^3'), O_msis2, reltol=reltol_msis)
+
+def test_N2_msis2(atm_msis2):
+    """Test MSIS 2.0 N2. """
+    assert_field(atm_msis2.species.N2.to('1/cm^3'), N2_msis2,
+                 reltol=reltol_msis)
+
+def test_O2_msis2(atm_msis2):
+    """Test MSIS 2.0 O2. """
+    assert_field(atm_msis2.species.O2.to('1/cm^3'), O2_msis2,
+                 reltol=reltol_msis)
+
+def test_T_msis2(atm_msis2):
+    """Test MSIS 2.0 T. """
+    assert_field(atm_msis2.T.to('degK'), T_msis2, reltol=reltol_msis)
+
+def test_He_msis2(atm_msis2):
+    """Test MSIS 2.0 He. """
+    assert_field(atm_msis2.species.He.to('1/cm^3'), He_msis2,
+                 reltol=reltol_msis)
+
+def test_Ar_msis2(atm_msis2):
+    """Test MSIS 2.0 Ar. """
+    assert_field(atm_msis2.species.Ar.to('1/cm^3'), Ar_msis2,
+                 reltol=reltol_msis)
+
+def test_H_msis2(atm_msis2):
+    """Test MSIS 2.0 H. """
+    assert_field(atm_msis2.species.H.to('1/cm^3'), H_msis2, reltol=reltol_msis)
+
+def test_N_msis2(atm_msis2):
+    """Test MSIS 2.0 N. """
+    assert_field(atm_msis2.species.N.to('1/cm^3'), N_msis2, reltol=reltol_msis)

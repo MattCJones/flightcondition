@@ -311,7 +311,7 @@ def test_input_altitude_bounds():
     """
 
     M_ = 0.44 * dimless
-    atm = Atmosphere(0*unit('km'))
+    atm = Atmosphere(0*unit('km'), model="msis")
 
     h_below_min = atm._h_min*1.01
     with pytest.raises(ValueError) as e_info:
@@ -407,7 +407,7 @@ def test_command_line_interface():
     out = run(split(cmd_str), capture_output=True)
     out_str = out.stdout.decode()
     out_regex = r"""[=]+
-\s+Flight Condition.*
+Flight Condition.*
 [=]+
 [-]+\s+Altitude Quantities\s+[-]+
 .*h\s+= 23 \w+

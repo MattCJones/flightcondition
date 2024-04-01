@@ -8,11 +8,13 @@ more with built-in unit checking.  Specific sub-modules include:
 * `flightcondition`: input altitude to compute common flight condition data.
   Easily swap between true airspeed, calibrated airspeed, equivalent airspeed,
   and Mach number.  Includes atmospheric data.
-* `atmosphere`: input altitude to compute
+* `atmosphere`: input altitude to compute atmospheric
+  data.  Many relevant, derived quantities are included. The upper limit is
+  86 km for the 
   [1993 International Standard Atmosphere](
-  https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
-  data.  Many relevant, derived quantities are included. The upper limit is 80
-  kilometers.
+  https://en.wikipedia.org/wiki/International_Standard_Atmosphere) model and
+  10,000 kilometers for the [NRL MSIS](
+  https://en.wikipedia.org/wiki/International_Standard_Atmosphere) model.
 * `units`: built-in unit-checking and conversion using the
   [pint](https://pint.readthedocs.io) package.
 
@@ -46,6 +48,8 @@ pip install <path/to/flightcondition>
 
 -   [numpy](https://numpy.org): package for scientific computing.
 -   [pint](https://pint.readthedocs.io): package for dealing with units.
+-   [pymsis](https://swxtrec.github.io/pymsis/index.html): package for NRL MSIS
+    atmospheric model.
 
 ## Usage
 
@@ -302,10 +306,13 @@ https://flightcondition.streamlit.app/)
 
 ## Assumptions
 
--   Atmospheric quantities follow the
+-   When using `model=standard`, Atmospheric quantities follow the
     [1993 International Standard Atmosphere](
-    https://en.wikipedia.org/wiki/International_Standard_Atmosphere)
-    model.
+    https://en.wikipedia.org/wiki/NRLMSISE-00) model.
+-   When using `model=msis`, atmospheric quantities follow the [NRL MSIS](
+    https://en.wikipedia.org/wiki/International_Standard_Atmosphere) model.
+    Note that `model=msis` is automatically enabled for altitudes higher than
+    80 kilometers.
 -   Velocity computations include varying degrees of the following assumptions.
     Note that several assumptions break down for hypersonic flow.
     -   Continuum flow (mean free path is much smaller than the characteristic

@@ -126,6 +126,19 @@ def _parse_args(args_arr):
     parser.add_argument(  # hidden option to turn off pretty print
         '--no-pretty-print', dest='no_pretty_print', default=False,
         action='store_true', help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--model', dest='model', metavar='', nargs=None,
+        type=str, default=None,
+        help=f"Atmospheric model, e.g., 'standard' or 'msis2.1'")
+    parser.add_argument(
+        '--datetime', dest='datetime', metavar='', nargs=None, type=str,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--lon', dest='lon', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--lat', dest='lat', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
 
     args = parser.parse_args(args_arr)
 
@@ -163,7 +176,8 @@ def main():
     L_ = L_ if args.ft is None else args.ft*unit('ft')
     L_ = L_ if args.m is None else args.m*unit('m')
     fc = FlightCondition(h=h_, M=M_, TAS=TAS_, CAS=CAS_, EAS=EAS_, L=L_,
-                         units=args.units)
+                         units=args.units, model=args.model,
+                         datetime=args.datetime, lon=args.lon, lat=args.lat)
 
     # Print output but catch common unicode exception
     full_output = not args.no_full_output

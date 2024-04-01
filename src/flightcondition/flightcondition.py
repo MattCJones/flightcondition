@@ -230,7 +230,7 @@ class FlightCondition(Atmosphere):
         # Check that computations are within valid Mach number limits
         M_ = np.atleast_1d(self.M)
         self._mach_min = 0 * dimless
-        self._mach_max = 30 * dimless
+        self._mach_max = 100 * dimless
         if (M_ < self._mach_min).any() or (self._mach_max < M_).any():
             raise ValueError(
                 f"Mach number is out of bounds "
@@ -426,14 +426,33 @@ class FlightCondition(Atmosphere):
 
         unit_str = self.units
         ext_str = "full_output=True" if full_output else "full_output=False"
-        top_hdr = f"   Flight Condition (units={unit_str}, {ext_str})"
-        lin_str = "==========================================================="
-        alt_hdr = "------------------  Altitude Quantities  ------------------"
-        vel_hdr = "------------------  Velocity Quantities  ------------------"
-        len_hdr = "------------------   Length Quantities   ------------------"
+        if "msis" in self.model:
+            spaces = "                  "
+            top_hdr2 = (f",\n{spaces}datetime={self._datetime}, "
+                        f"\n{spaces}lon={self._lon}, lat={self._lat})")
+        else:
+            top_hdr2 = ")"
+        top_hdr = (f"Flight Condition (units={unit_str}, {ext_str}, model="
+                   f"{self.model}{top_hdr2}")
+        line_str = "="*61
+        dash_str = "-"*19
+        alt_hdr = dash_str + "  Altitude Quantities  " + dash_str
+        vel_hdr = dash_str + "  Velocity Quantities  " + dash_str
+        len_hdr = dash_str + "   Length Quantities   " + dash_str
 
-        repr_str = (f"{lin_str}\n{top_hdr}\n{lin_str}"
+        if self.species and full_output:
+            subdiv_str = " "*19
+            spec_hdr = f"{subdiv_str}  Species Quantities   {subdiv_str}"
+            spec_repr_str = self.species.tostring(
+                full_output=True, units=self.units, max_sym_chars=max_sym_chars,
+                max_name_chars=max_name_chars)
+            spec_str = "\n" + spec_hdr + "\n" + spec_repr_str
+        else:
+            spec_str = ""
+
+        repr_str = (f"{line_str}\n{top_hdr}\n{line_str}"
                     f"\n{alt_hdr}" f"\n{alti_str}"
+                    f"{spec_str}"
                     f"\n{vel_hdr}" f"\n{spee_str}"
                     f"\n{len_hdr}" f"\n{leng_str}"
                     )

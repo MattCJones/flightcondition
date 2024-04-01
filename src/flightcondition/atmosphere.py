@@ -410,8 +410,8 @@ class Atmosphere(DimensionalData):
     }
 
     def __init__(self, h=None, units=None, full_output=None, model=None,
-                 date="2003-01-01T00:00", lon=0.0, lat=0.0, f107=150.0,
-                 f107a=150.0, **kwargs):
+                 datetime=None, lon=None, lat=None, f107=None,
+                 f107a=None, **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
@@ -425,21 +425,22 @@ class Atmosphere(DimensionalData):
             full_output (bool): Set to True for full output
             model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
                 MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
-            date (str): datetime in format "YYYY-MM-DDTHH:SS", e.g.,
-                "2024-01-01T00:00" (msis models only)
-            lon (float): longitude in degrees (msis only)
-            lat (float): latitude in degrees (msis only)
-            f107 (float): daily F10.7 solar flux on the previous day (msis
+            datetime (str): UTC datetime in format "YYYY-MM-DDTHH:SS", e.g.,
+                "2024-01-01T00:00" (MSIS models only)
+            lon (float): Longitude in degrees (MSIS only)
+            lat (float): Latitude in degrees (MSIS only)
+            f107 (float): Daily F10.7 solar flux on the previous day (MSIS
                 only)
             f107a (float): F10.7 solar flux 81-day average centered on the
-                input date (msis only)
+                input datetime (MSIS only)
+            ap (float): Daily magnetic index
         """
         self.full_output = full_output
-        self._date = date
-        self._lon = lon
-        self._lat = lat
-        self._f107 = f107
-        self._f107a = f107a
+        self._datetime = "2003-01-01T00:00" if datetime is None else datetime
+        self._lon = 0.0 if lon is None else lon
+        self._lat = 45.0 if lat is None else lat
+        self._f107 = 150.0 if f107 is None else f107
+        self._f107a = 150.0 if f107a is None else f107a
         self._species = None
         # Check units and set initially
         if units in dir(unit.sys):
@@ -479,7 +480,7 @@ class Atmosphere(DimensionalData):
 
         # Set model type
         if model is None:
-            self.model = "msis" if h > h_max_standard else "standard"
+            self.model = "msis" if (h > h_max_standard).any() else "standard"
         else:
             self.model = model
 
@@ -634,15 +635,23 @@ class Atmosphere(DimensionalData):
         h_km = self._h.to('km').magnitude
 
         # Determine version
-        pattern = r"msis(\d+(\.\d+)?)"
-        match = re.search(pattern, self.model)
+        pattern = r"msis\s*(\d+(\.\d+)?)"
+        match = re.search(pattern, str(self.model).lower())
         _default_version = 2.1
         _version = float(match.group(1)) if match else _default_version
+
+        # Format version to int if 0 or 2 to accommodate pymsis
+        _version = 0 if _version == 0.0 else _version
+        _version = 2 if _version == 2.0 else _version
+
         self.model = f"msis{_version:1.1f}"
 
-        out = msis.run(dates=self._date, lons=self._lon, lats=self._lat,
-                       alts=h_km, f107s=self._f107, f107as=self._f107a,
-                       version=_version)
+        _out = msis.run(dates=self._datetime, lons=self._lon, lats=self._lat,
+                        alts=h_km, f107s=self._f107, f107as=self._f107a,
+                        version=_version)
+        N_species = 9  # N2 O2 O He H Ar N aO NO
+        N_fc = len(self._h)
+        out = _out.reshape((N_fc, N_species+2))
 
         # Unpack # TODO 2024-03-25: get this to work for arrays of altitudes
         rho_kgpm3 = out[:, 0]
@@ -814,7 +823,9 @@ class Atmosphere(DimensionalData):
         self._T = None
         self._p = None
         if not self.model == "standard":
-            _, _ = self._run_msis()
+            p, T = self._run_msis()
+            self._p = p
+            self._T = T
 
     @_property_decorators
     def H(self):
