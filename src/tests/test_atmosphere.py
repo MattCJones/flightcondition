@@ -67,15 +67,15 @@ ap_msis2 = 7
 h_msis2 = array([500.0, 1000.0]) * unit('km')
 lon_msis2 = 15.0
 lat_msis2 = 65.0
-O_msis2 = array([2.363E+07, 1.776E+04]) * unit('1/cm^3')
-N2_msis2 = array([5.129E+05, 1.738E+00]) * unit('1/cm^3')
-O2_msis2 = array([8.620E+03, 4.869E-03]) * unit('1/cm^3')
+nO_msis2 = array([2.363E+07, 1.776E+04]) * unit('1/cm^3')
+nN2_msis2 = array([5.129E+05, 1.738E+00]) * unit('1/cm^3')
+nO2_msis2 = array([8.620E+03, 4.869E-03]) * unit('1/cm^3')
 #rho_msis2 = array([6.752E-16, 3.075E-18]) * unit('1/cm^3')
 T_msis2 = array([1052.8, 1052.9]) * unit('degK')
-He_msis2 = array([2.102E+06, 3.480E+05]) * unit('1/cm^3')
-Ar_msis2 = array([1.919E+01, 3.039E-07]) * unit('1/cm^3')
-H_msis2 = array([6.582E+04, 4.198E+04]) * unit('1/cm^3')
-N_msis2 = array([3.529E+05, 6.497E+02]) * unit('1/cm^3')
+nHe_msis2 = array([2.102E+06, 3.480E+05]) * unit('1/cm^3')
+nAr_msis2 = array([1.919E+01, 3.039E-07]) * unit('1/cm^3')
+nH_msis2 = array([6.582E+04, 4.198E+04]) * unit('1/cm^3')
+nN_msis2 = array([3.529E+05, 6.497E+02]) * unit('1/cm^3')
 
 
 @pytest.fixture
@@ -127,16 +127,17 @@ def atm_msis2():
 
 def test_O_msis2(atm_msis2):
     """Test MSIS 2.0 O. """
-    assert_field(atm_msis2.species.O.to('1/cm^3'), O_msis2, reltol=reltol_msis)
+    assert_field(atm_msis2.species.O*atm_msis2.species.nrho, nO_msis2,
+                 reltol=reltol_msis)
 
 def test_N2_msis2(atm_msis2):
     """Test MSIS 2.0 N2. """
-    assert_field(atm_msis2.species.N2.to('1/cm^3'), N2_msis2,
+    assert_field(atm_msis2.species.N2*atm_msis2.species.nrho, nN2_msis2,
                  reltol=reltol_msis)
 
 def test_O2_msis2(atm_msis2):
     """Test MSIS 2.0 O2. """
-    assert_field(atm_msis2.species.O2.to('1/cm^3'), O2_msis2,
+    assert_field(atm_msis2.species.O2*atm_msis2.species.nrho, nO2_msis2,
                  reltol=reltol_msis)
 
 def test_T_msis2(atm_msis2):
@@ -145,18 +146,20 @@ def test_T_msis2(atm_msis2):
 
 def test_He_msis2(atm_msis2):
     """Test MSIS 2.0 He. """
-    assert_field(atm_msis2.species.He.to('1/cm^3'), He_msis2,
+    assert_field(atm_msis2.species.He*atm_msis2.species.nrho, nHe_msis2,
                  reltol=reltol_msis)
 
 def test_Ar_msis2(atm_msis2):
     """Test MSIS 2.0 Ar. """
-    assert_field(atm_msis2.species.Ar.to('1/cm^3'), Ar_msis2,
+    assert_field(atm_msis2.species.Ar*atm_msis2.species.nrho, nAr_msis2,
                  reltol=reltol_msis)
 
 def test_H_msis2(atm_msis2):
     """Test MSIS 2.0 H. """
-    assert_field(atm_msis2.species.H.to('1/cm^3'), H_msis2, reltol=reltol_msis)
+    assert_field(atm_msis2.species.H*atm_msis2.species.nrho, nH_msis2,
+                 reltol=reltol_msis)
 
 def test_N_msis2(atm_msis2):
     """Test MSIS 2.0 N. """
-    assert_field(atm_msis2.species.N.to('1/cm^3'), N_msis2, reltol=reltol_msis)
+    assert_field(atm_msis2.species.N*atm_msis2.species.nrho, nN_msis2,
+                 reltol=reltol_msis)

@@ -117,6 +117,7 @@ class FlightCondition(Atmosphere):
         'Cf_lamr': 'friction_coefficient_laminar',
         'Cf_turb': 'friction_coefficient_turbulent',
         'h_yplus1': 'wall_distance_yplus1',
+        'Kn': 'knudsen_number',
     }
     names_dict = {}
     names_dict.update(_byalt_names)
@@ -1268,11 +1269,15 @@ class FlightCondition(Atmosphere):
             var=self.h_yplus1, var_str='h_yplus1', to_units=h_BL_units,
             max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
             fmt_val="10.5g", pretty_print=pretty_print)
+        Kn_str = self._vartostr(
+            var=self.Kn, var_str='Kn', to_units='',
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
 
         if full_output:
             repr_str = (f"{L_str}\n{Re_str}\n{h_BL_lamr_str}\n"
                         f"{h_BL_turb_str}\n{Cf_lamr_str}\n{Cf_turb_str}\n"
-                        f"{h_yplus1_str}")
+                        f"{h_yplus1_str}\n{Kn_str}")
         else:
             repr_str = (f"{L_str}\n{Re_str}")
 
@@ -1405,3 +1410,10 @@ class FlightCondition(Atmosphere):
         """Get height from flat plate wall in turbulent flow where yplus=1. """
         h_yplus1 = self.wall_distance_from_yplus(1)
         return h_yplus1
+
+    @_property_decorators
+    def Kn(self):
+        """Get Knudsen number :math:`Kn`"""
+        Kn = NonDimensional.knudsen_number(
+            L=self.L, MFP=self.MFP)
+        return Kn

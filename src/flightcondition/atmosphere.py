@@ -207,6 +207,7 @@ class Species(DimensionalData):
         'N': 'nitrogen',
         'aO': 'anomalous_oxygen',
         'NO': 'nitric_oxide',
+        'nrho': 'number_density',
     }
 
     def __init__(self, species_arr, full_output=True, units=None):
@@ -215,15 +216,29 @@ class Species(DimensionalData):
         Args:
             species_arr (array): Array of species concentrations
         """
-        self._N2 = species_arr[0]
-        self._O2 = species_arr[1]
-        self._O = species_arr[2]
-        self._He = species_arr[3]
-        self._H = species_arr[4]
-        self._Ar = species_arr[5]
-        self._N = species_arr[6]
-        self._aO = species_arr[7]
-        self._NO = species_arr[8]
+        N2_mn3 = species_arr[0]
+        O2_mn3 = species_arr[1]
+        O_mn3 = species_arr[2]
+        He_mn3 = species_arr[3]
+        H_mn3 = species_arr[4]
+        Ar_mn3 = species_arr[5]
+        N_mn3 = species_arr[6]
+        aO_mn3 = species_arr[7]
+        NO_mn3 = species_arr[8]
+
+        self._nrho = N2_mn3 + O2_mn3 + O_mn3 + He_mn3 + H_mn3 + Ar_mn3 + N_mn3\
+                   + aO_mn3 + NO_mn3
+
+        self._N2 = N2_mn3/self._nrho
+        self._O2 = O2_mn3/self._nrho
+        self._O = O_mn3/self._nrho
+        self._He = He_mn3/self._nrho
+        self._H = H_mn3/self._nrho
+        self._Ar = Ar_mn3/self._nrho
+        self._N = N_mn3/self._nrho
+        self._aO = aO_mn3/self._nrho
+        self._NO = NO_mn3/self._nrho
+
         self.full_output = full_output
         self.units = units
 
@@ -252,9 +267,10 @@ class Species(DimensionalData):
             self.units = units
 
         if self.units == 'US':
-            species_units   = '1/ft^3'
+            nrho_units   = '1/ft^3'
         else:  # SI units
-            species_units   = '1/m^3'
+            nrho_units   = '1/m^3'
+        species_units   = ''
 
         # Insert longer variable name into output
         if max_sym_chars is None:
@@ -308,13 +324,19 @@ class Species(DimensionalData):
                                 max_name_chars=max_name_chars,
                                 fmt_val="10.5g", pretty_print=pretty_print)
 
+        nrho_str = self._vartostr(var=self.nrho, var_str='nrho',
+                                to_units=nrho_units,
+                                max_sym_chars=max_sym_chars,
+                                max_name_chars=max_name_chars,
+                                fmt_val="10.5g", pretty_print=pretty_print)
+
         # Assemble output string
         if full_output:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
-                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}")
+                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}")
         else:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
-                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}")
+                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}")
         return repr_str
 
 
@@ -360,8 +382,13 @@ class Species(DimensionalData):
 
     @_property_decorators
     def NO(self):
-        """Nitric oxide."""
+        """Nitric oxide. """
         return self._NO
+
+    @_property_decorators
+    def nrho(self):
+        """Number density. """
+        return self._nrho
 
 
 class Atmosphere(DimensionalData):
@@ -649,6 +676,7 @@ class Atmosphere(DimensionalData):
         _out = msis.run(dates=self._datetime, lons=self._lon, lats=self._lat,
                         alts=h_km, f107s=self._f107, f107as=self._f107a,
                         version=_version)
+        _out[np.isnan(_out)] = 0.0
         N_species = 9  # N2 O2 O He H Ar N aO NO
         N_fc = len(self._h)
         out = _out.reshape((N_fc, N_species+2))

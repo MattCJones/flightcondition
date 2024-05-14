@@ -21,17 +21,17 @@ class NonDimensional:
     """Compute non-dimensional flow quantities. """
 
     @staticmethod
-    def knudsen_number(ell, MFP):
+    def knudsen_number(L, MFP):
         """Compute the Knudsen number :math:`K_n`
 
         Args:
-            ell (length): Length scale
+            L (length): Length scale
             MFP (length): Mean free path
 
         Returns:
             dimless: Knudsen number
         """
-        Kn = MFP/ell
+        Kn = MFP/L
         return Kn
 
     @staticmethod
