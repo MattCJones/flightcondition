@@ -129,7 +129,10 @@ def _parse_args(args_arr):
     parser.add_argument(
         '--model', dest='model', metavar='', nargs=None,
         type=str, default=None,
-        help=f"Atmospheric model, e.g., 'standard' or 'msis2.1'")
+        help=("Atmospheric model, e.g., 'standard' or 'msis2.1'. If using msis"
+              " use '--datetime' for the date/time "
+              "(default='2003-01-01T00:00') , '--lon' for longitude "
+              "(default=0), and '--lat' for latitude (default=0)"))
     parser.add_argument(
         '--datetime', dest='datetime', metavar='', nargs=None, type=str,
         default=None, help=argparse.SUPPRESS)
