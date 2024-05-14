@@ -18,6 +18,9 @@ more with built-in unit checking.  Specific sub-modules include:
 * `units`: built-in unit-checking and conversion using the
   [pint](https://pint.readthedocs.io) package.
 
+See the web application here: [https://flightcondition.streamlit.app](
+https://flightcondition.streamlit.app/)
+
 ![Flight Condition Demo](
 https://github.com/MattCJones/videos/blob/main/flightcondition/flightcondition_demo.gif
 )
@@ -301,7 +304,7 @@ Alternatively use the `--KEAS 233` syntactic sugar to omit the `knots` unit.
 See also `--KTAS` and `--KCAS`.
 
 ## Web Application
-See the web application here: [https://flightcondition.streamlit.app/](
+See the web application here: [https://flightcondition.streamlit.app](
 https://flightcondition.streamlit.app/)
 
 ## Assumptions
