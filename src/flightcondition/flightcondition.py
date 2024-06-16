@@ -929,7 +929,6 @@ class FlightCondition(Atmosphere):
         a_h0 = self._atm0.a
         p_h0 = self._atm0.p
         # Account for compressibility with the isentropic flow equation
-        # M_should = __class__._isentropic_mach(p0=q_c, p=p_h0)  # DEPRECATED
         M = IsentropicFlow.M_from_p0_by_p((q_c+p_h0)/p_h0)
         CAS = NonDimensional.mach_velocity(M, a_h0)  # subsonic
         return CAS
@@ -946,7 +945,6 @@ class FlightCondition(Atmosphere):
         """
         p_inf = self.p
         # Isentropic flow equation
-        # M_should = __class__._isentropic_mach(p0=q_c, p=p_inf)  # DEPRECATED
         M = IsentropicFlow.M_from_p0_by_p((q_c+p_inf)/p_inf)
 
         return M
