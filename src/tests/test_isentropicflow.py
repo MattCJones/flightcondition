@@ -21,7 +21,7 @@ p0_by_p_truth_arr = [1/0.84301917, 1/0.52828178, 1/0.02722368] * dimless
 T0_by_T_truth_arr = [1/0.95238095, 1/0.83333333, 1/0.35714285] * dimless
 rho0_by_rho_truth_arr = [1/0.88517013, 1/0.63393814, 1/0.07622631] * dimless
 
-gamma_air = Phys.gamma_air
+y_air = Phys.y_air
 R_air = Phys.R_air
 a0_by_a_truth_arr = np.sqrt(T0_by_T_truth_arr)
 

@@ -208,39 +208,109 @@ class Species(DimensionalData):
         'aO': 'anomalous_oxygen',
         'NO': 'nitric_oxide',
         'nrho': 'number_density',
+        'R_gas': 'gas_constant',
+        'y': 'specific_heat_ratio',
     }
 
-    def __init__(self, species_arr, full_output=True, units=None):
+    def __init__(self, species_arr, rho_mix, full_output=True,
+                 units=None):
         """Initialize Species class.
 
         Args:
             species_arr (array): Array of species concentrations
+            rho_mix (density): Density of the mixture
         """
-        N2_mn3 = species_arr[0]
-        O2_mn3 = species_arr[1]
-        O_mn3 = species_arr[2]
-        He_mn3 = species_arr[3]
-        H_mn3 = species_arr[4]
-        Ar_mn3 = species_arr[5]
-        N_mn3 = species_arr[6]
-        aO_mn3 = species_arr[7]
-        NO_mn3 = species_arr[8]
-
-        self._nrho = N2_mn3 + O2_mn3 + O_mn3 + He_mn3 + H_mn3 + Ar_mn3 + N_mn3\
-                   + aO_mn3 + NO_mn3
-
-        self._N2 = N2_mn3/self._nrho
-        self._O2 = O2_mn3/self._nrho
-        self._O = O_mn3/self._nrho
-        self._He = He_mn3/self._nrho
-        self._H = H_mn3/self._nrho
-        self._Ar = Ar_mn3/self._nrho
-        self._N = N_mn3/self._nrho
-        self._aO = aO_mn3/self._nrho
-        self._NO = NO_mn3/self._nrho
+        nN2 = species_arr[0]
+        nO2 = species_arr[1]
+        nO = species_arr[2]
+        nHe = species_arr[3]
+        nH = species_arr[4]
+        nAr = species_arr[5]
+        nN = species_arr[6]
+        naO = species_arr[7]
+        nNO = species_arr[8]
 
         self.full_output = full_output
         self.units = units
+
+        self._nrho = nN2 + nO2 + nO + nHe + nH + nAr + nN\
+                   + naO + nNO
+
+        # Compute number concentrations of each species
+        self._N2 = nN2/self._nrho
+        self._O2 = nO2/self._nrho
+        self._O = nO/self._nrho
+        self._He = nHe/self._nrho
+        self._H = nH/self._nrho
+        self._Ar = nAr/self._nrho
+        self._N = nN/self._nrho
+        self._aO = naO/self._nrho
+        self._NO = nNO/self._nrho
+
+        # Compute individual gas constant for the mixture
+        N_A = Phys.N_A
+        _N = 14.0067 * unit("g/mol")
+        _O = 15.9994 * unit("g/mol")
+        _He = 4.002602 * unit("g/mol")
+        _H = 1.00794 * unit("g/mol")
+        _Ar = 39.948 * unit("g/mol")
+        MW_N2 = _N*2
+        MW_O2 = _O*2
+        MW_O = _O
+        MW_He = _He
+        MW_H = _H
+        MW_Ar = _Ar
+        MW_N = _N
+        MW_aO = _O
+        MW_NO = _N + _O
+
+        # Compute species densities
+        rho_N2 = nN2*MW_N2/N_A
+        rho_O2 = nO2*MW_O2/N_A
+        rho_O = nO*MW_O/N_A
+        rho_He = nHe*MW_He/N_A
+        rho_H = nH*MW_H/N_A
+        rho_Ar = nAr*MW_Ar/N_A
+        rho_N = nN*MW_N/N_A
+        rho_aO = naO*MW_aO/N_A
+        rho_NO = nNO*MW_NO/N_A
+
+        # Compute gas constants
+        R = Phys.R
+        R_N2 = R/MW_N2
+        R_O2 = R/MW_O2
+        R_O = R/MW_O
+        R_He = R/MW_He
+        R_H = R/MW_H
+        R_Ar = R/MW_Ar
+        R_N = R/MW_N
+        R_aO = R/MW_aO
+        R_NO = R/MW_NO
+
+        self._R_gas = (
+                R_N2*rho_N2 + R_O2*rho_O2 + R_O*rho_O + R_He*rho_He
+                + R_H*rho_H + R_Ar*rho_Ar + R_N*rho_N + R_aO*rho_aO
+                + R_NO*rho_NO
+                ) / rho_mix
+
+        # Compute ratio of specific heats
+        # TODO 2024-06-15: probably more complexity, e.g., temperature
+        y_N2 = 1.400
+        y_O2 = 1.395
+        y_O = 1.395  # TODO 2024-06-15: determine this
+        y_He = 1.667
+        y_H = 1.405
+        y_Ar = 1.667
+        y_N = 1.400  # TODO 2024-06-15: determine this
+        y_aO = 1.395  # TODO 2024-06-15: determine this
+        y_NO = 1.386
+
+        self._y = (
+                y_N2*rho_N2 + y_O2*rho_O2 + y_O*rho_O + y_He*rho_He
+                + y_H*rho_H + y_Ar*rho_Ar + y_N*rho_N + y_aO*rho_aO
+                + y_NO*rho_NO
+                ) / rho_mix
+
 
     def tostring(self, full_output=None, units=None, max_sym_chars=None,
                  max_name_chars=None, pretty_print=True):
@@ -267,10 +337,12 @@ class Species(DimensionalData):
             self.units = units
 
         if self.units == 'US':
-            nrho_units   = '1/ft^3'
+            nrho_units   = "1/ft^3"
+            R_gas_units   = "ft lbf/(slug degR)"
         else:  # SI units
-            nrho_units   = '1/m^3'
-        species_units   = ''
+            nrho_units   = "1/m^3"
+            R_gas_units   = "J/(kg degK)"
+        species_units   = ""
 
         # Insert longer variable name into output
         if max_sym_chars is None:
@@ -330,10 +402,23 @@ class Species(DimensionalData):
                                 max_name_chars=max_name_chars,
                                 fmt_val="10.5g", pretty_print=pretty_print)
 
+        R_gas_str = self._vartostr(var=self.R_gas, var_str='R_gas',
+                                   to_units=R_gas_units,
+                                   max_sym_chars=max_sym_chars,
+                                   max_name_chars=max_name_chars,
+                                   fmt_val="10.5g", pretty_print=pretty_print)
+
+        y_str = self._vartostr(var=self.y, var_str='y', to_units="",
+                               max_sym_chars=max_sym_chars,
+                               max_name_chars=max_name_chars,
+                               fmt_val="10.5g", pretty_print=pretty_print)
+
         # Assemble output string
         if full_output:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
-                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}")
+                        f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}"
+                        #f"\n{R_gas_str}\n{y_str}"
+                       )
         else:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
                         f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}")
@@ -389,6 +474,16 @@ class Species(DimensionalData):
     def nrho(self):
         """Number density. """
         return self._nrho
+
+    @_property_decorators
+    def R_gas(self):
+        """Individual gas constant of gas mixture. """
+        return self._R_gas
+
+    @_property_decorators
+    def y(self):
+        """Individual gas constant of gas mixture. """
+        return self._y
 
 
 class Atmosphere(DimensionalData):
@@ -681,30 +776,25 @@ class Atmosphere(DimensionalData):
         N_fc = len(self._h)
         out = _out.reshape((N_fc, N_species+2))
 
-        # Unpack # TODO 2024-03-25: get this to work for arrays of altitudes
-        rho_kgpm3 = out[:, 0]
-        N2_mn3 = out[:, 1]
-        O2_mn3 = out[:, 2]
-        O_mn3 = out[:, 3]
-        He_mn3 = out[:, 4]
-        H_mn3 = out[:, 5]
-        Ar_mn3 = out[:, 6]
-        N_mn3 = out[:, 7]
-        aO_mn3 = out[:, 8]
-        NO_mn3 = out[:, 9]
-        T_K = out[:, 10]
+        # Unpack number densities
+        rho = out[:, 0] * unit('kg/m^3')
+        nN2 = out[:, 1] * unit('1/m^3')
+        nO2 = out[:, 2] * unit('1/m^3')
+        nO = out[:, 3] * unit('1/m^3')
+        nHe = out[:, 4] * unit('1/m^3')
+        nH = out[:, 5] * unit('1/m^3')
+        nAr = out[:, 6] * unit('1/m^3')
+        nN = out[:, 7] * unit('1/m^3')
+        naO = out[:, 8] * unit('1/m^3')
+        nNO = out[:, 9] * unit('1/m^3')
+        T = out[:, 10] * unit('degK')
 
-        # Dimensionalize
-        rho = rho_kgpm3 * unit('kg/m^3')
-        T = T_K * unit('degK')
-
-        self._species = Species(np.array([N2_mn3, O2_mn3, O_mn3, He_mn3, H_mn3,
-                                          Ar_mn3, N_mn3, aO_mn3, NO_mn3]
-                                         ) * unit('1/m^3'))
+        self._species = Species([nN2, nO2, nO, nHe, nH, nAr, nN, naO, nNO],
+                                 rho)
 
         # Find pressure from temperature and density
-        R_air = Phys.R_air
-        p =  rho*(R_air*T)  # TODO 2024-03-24: fix for high altitudes
+        R_gas = self._species.R_gas
+        p =  rho*(R_gas*T)
 
         return p, T
 
@@ -874,20 +964,20 @@ class Atmosphere(DimensionalData):
                 H = np.atleast_1d(self.H)
                 T = np.atleast_1d(self.T)
                 g_0 = Phys.g
-                R_air = Phys.R_air
+                R_gas = Phys.R_air
 
                 p = np.zeros_like(H) * unit('Pa')
 
                 # Pressure equation changes between T_grad == 0 and T_grad != 0
                 s = T_grad == 0
-                p[s] = p_base[s]*np.exp((-g_0/(R_air*T[s]))*(H[s] - H_base[s]))
+                p[s] = p_base[s]*np.exp((-g_0/(R_gas*T[s]))*(H[s] - H_base[s]))
 
                 s = T_grad != 0
                 p[s] = p_base[s]*(
                     1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
-                )**((1/T_grad[s])*(-g_0/R_air))
+                )**((1/T_grad[s])*(-g_0/R_gas))
             else:
-                p, _ = self._run_msis()
+                p, _, _ = self._run_msis()
         else:  # return user set value
             p = self._p
 
@@ -935,17 +1025,24 @@ class Atmosphere(DimensionalData):
         """Ambient air density :math:`\\rho` """
         p = self.p
         T = self.T
-        R_air = Phys.R_air
-        rho = p/(R_air*T)  # TODO 2022-08-07: separate out
+        if self.model == "standard":
+            R_gas = Phys.R_air
+        else:
+            R_gas = self._species.R_gas
+        rho = p/(R_gas*T)  # TODO 2022-08-07: separate out eqns
         return rho
 
     @_property_decorators
     def a(self):
         """Ambient speed of sound :math:`a` """
         T = self.T
-        gamma_air = Phys.gamma_air
-        R_air = Phys.R_air
-        a = np.sqrt(gamma_air*R_air*T)  # TODO 2022-08-07: separate out
+        if self.model == "standard":
+            y_air = Phys.y_air
+            R_gas = Phys.R_air
+        else:
+            R_gas = self._species.R_gas
+            y_air = self._species.y
+        a = np.sqrt(y_air*R_gas*T)  # TODO 2022-08-07: separate out eqns
         return a
 
     @_property_decorators

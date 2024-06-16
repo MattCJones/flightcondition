@@ -23,7 +23,7 @@ class BoundaryLayer:
     """Compute properties related to boundary layer flow. """
 
     @staticmethod
-    def recovery_temperature_laminar(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
+    def recovery_temperature_laminar(M, T, y=Phys.y_air, Pr=Phys.Pr_air):
         """Adiabiatic wall temperature on infinite flat plate in laminar flow.
 
         Assumes:
@@ -43,7 +43,7 @@ class BoundaryLayer:
         return T0
 
     @staticmethod
-    def recovery_temperature_turbulent(M, T, y=Phys.gamma_air, Pr=Phys.Pr_air):
+    def recovery_temperature_turbulent(M, T, y=Phys.y_air, Pr=Phys.Pr_air):
         """Adiabiatic wall temperature on infinite flat plate in turbulent
         flow.
 

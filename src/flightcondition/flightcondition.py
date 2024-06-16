@@ -829,7 +829,7 @@ class FlightCondition(Atmosphere):
             pressure: Impact pressure
         """
         # p0 = p + q_c
-        y = Phys.gamma_air
+        y = Phys.y_air
         p0 = IsentropicFlow.p0_by_p(M, y)*p
         q_c = p0 - p
         return q_c
@@ -1164,7 +1164,7 @@ class FlightCondition(Atmosphere):
         """Get stagnation pressure :math:`p_0`"""
         M = self.M
         p = self.p
-        y = Phys.gamma_air
+        y = Phys.y_air
         p0 = IsentropicFlow.p0_by_p(M, y)*p
         return p0
 
@@ -1173,7 +1173,7 @@ class FlightCondition(Atmosphere):
         """Get stagnation temperature :math:`T_0`"""
         M = self.M
         T = self.T
-        y = Phys.gamma_air
+        y = Phys.y_air
         T0 = IsentropicFlow.T0_by_T(M, y)*T
         return T0
 

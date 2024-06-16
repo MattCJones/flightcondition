@@ -21,7 +21,7 @@ class NormalShock:
     """Compute normal shock quantities. """
 
     @staticmethod
-    def M2(M1, y=Phys.gamma_air):
+    def M2(M1, y=Phys.y_air):
         """Compute Mach number downstream of the shock.
 
         Args:
@@ -34,7 +34,7 @@ class NormalShock:
         return M2
 
     @staticmethod
-    def p2_by_p1(M1, y=Phys.gamma_air):
+    def p2_by_p1(M1, y=Phys.y_air):
         """Compute ratio of static pressure over shock, downstream/upstream.
 
         Args:
@@ -47,7 +47,7 @@ class NormalShock:
         return p2_by_p1
 
     @staticmethod
-    def rho2_by_rho1(M1, y=Phys.gamma_air):
+    def rho2_by_rho1(M1, y=Phys.y_air):
         """Compute ratio of density over shock, downstream/upstream.
 
         Args:
@@ -60,7 +60,7 @@ class NormalShock:
         return rho2_by_rho1
 
     @staticmethod
-    def T2_by_T1(M1, y=Phys.gamma_air):
+    def T2_by_T1(M1, y=Phys.y_air):
         """Compute ratio of static pressure over shock, downstream/upstream.
 
         Args:
@@ -79,7 +79,7 @@ class NormalShock:
         return T2_by_T1
 
     @staticmethod
-    def p02_by_p01(M1, y=Phys.gamma_air):
+    def p02_by_p01(M1, y=Phys.y_air):
         """Compute ratio of stagnation pressure over shock, downstream/upstream.
 
         Args:

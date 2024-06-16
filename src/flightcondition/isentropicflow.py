@@ -28,7 +28,7 @@ class IsentropicFlow:
     rho_star_by_rho0 = 0.634
 
     @staticmethod
-    def p0_by_p(M, y=Phys.gamma_air.magnitude):
+    def p0_by_p(M, y=Phys.y_air.magnitude):
         """Compute ratio of stagnation pressure (brought to rest
         isentropically) to static pressure.
 
@@ -43,7 +43,7 @@ class IsentropicFlow:
         p0_by_p = T0_by_T**(y/(y-1))
         return p0_by_p
     @staticmethod
-    def p_by_p0(M, y=Phys.gamma_air.magnitude):
+    def p_by_p0(M, y=Phys.y_air.magnitude):
         """Compute ratio of static pressure to stagnation pressure (brought to
         rest isentropically).
 
@@ -57,7 +57,7 @@ class IsentropicFlow:
         return 1/__class__.p0_by_p(M, y=y)
 
     @staticmethod
-    def T0_by_T(M, y=Phys.gamma_air.magnitude, r=1):
+    def T0_by_T(M, y=Phys.y_air.magnitude, r=1):
         """Compute ratio of stagnation temperature (brought to rest
         isentropically) to static temperature.
 
@@ -73,7 +73,7 @@ class IsentropicFlow:
         return T0_by_T
 
     @staticmethod
-    def T_by_T0(M, y=Phys.gamma_air.magnitude, r=1):
+    def T_by_T0(M, y=Phys.y_air.magnitude, r=1):
         """Compute ratio of static temperature to stagnation temperature
         (brought to rest isentropically).
 
@@ -88,7 +88,7 @@ class IsentropicFlow:
         return 1/__class__.T0_by_T(M, y=y, r=r)
 
     @staticmethod
-    def a0_by_a(M, y=Phys.gamma_air.magnitude):
+    def a0_by_a(M, y=Phys.y_air.magnitude):
         """Compute ratio of stagnation sound speed (brought to rest
         isentropically) to ambient sound speed.
 
@@ -101,11 +101,11 @@ class IsentropicFlow:
         a0_by_a = np.sqrt(__class__.T0_by_T(M, y))
         return a0_by_a
     @staticmethod
-    def a_by_a0(M, y=Phys.gamma_air.magnitude):
+    def a_by_a0(M, y=Phys.y_air.magnitude):
         return 1/__class__.a0_by_a(M, y=y)
 
     @staticmethod
-    def rho0_by_rho(M, y=Phys.gamma_air.magnitude):
+    def rho0_by_rho(M, y=Phys.y_air.magnitude):
         """Compute ratio of stagnation density (brought to rest
         isentropically) to ambient density.
 
@@ -121,7 +121,7 @@ class IsentropicFlow:
         return rho0_by_rho
 
     @staticmethod
-    def rho_by_rho0(M, y=Phys.gamma_air.magnitude):
+    def rho_by_rho0(M, y=Phys.y_air.magnitude):
         """Compute ratio of ambient density to stagnation density (brought to
         rest isentropically).
 
@@ -135,7 +135,7 @@ class IsentropicFlow:
         return 1/__class__.rho0_by_rho(M, y=y)
 
     @staticmethod
-    def A_star_by_A(M, y=Phys.gamma_air.magnitude):
+    def A_star_by_A(M, y=Phys.y_air.magnitude):
         """Compute ratio of local area to area at which Mach equals 1.
 
         Args:
@@ -151,7 +151,7 @@ class IsentropicFlow:
         return A_star_by_A
 
     @staticmethod
-    def A_by_A_star(M, y=Phys.gamma_air.magnitude):
+    def A_by_A_star(M, y=Phys.y_air.magnitude):
         """Compute ratio of area at which Mach equals 1 to local area.
 
         Args:
@@ -163,7 +163,7 @@ class IsentropicFlow:
         return 1/__class__.A_star_by_A(M, y=y)
 
     @staticmethod
-    def M_from_p0_by_p(p0_by_p, y=Phys.gamma_air.magnitude):
+    def M_from_p0_by_p(p0_by_p, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of stagnation pressure (brought to
         rest isentropically) to static pressure.
 
@@ -179,7 +179,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def M_from_p_by_p0(p_by_p0, y=Phys.gamma_air.magnitude):
+    def M_from_p_by_p0(p_by_p0, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of static pressure to stagnation
         pressure (brought to rest isentropically).
 
@@ -193,7 +193,7 @@ class IsentropicFlow:
         return __class__.M_from_p0_by_p(1/p_by_p0, y=y)
 
     @staticmethod
-    def M_from_T0_by_T(T0_by_T, y=Phys.gamma_air.magnitude):
+    def M_from_T0_by_T(T0_by_T, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of stagnation temperature (brought to
         rest isentropically) to static temperature.
 
@@ -209,7 +209,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def M_from_T_by_T0(T_by_T0, y=Phys.gamma_air.magnitude):
+    def M_from_T_by_T0(T_by_T0, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of static temperature to stagnation
         temperature (brought to rest isentropically).
 
@@ -223,7 +223,7 @@ class IsentropicFlow:
         return __class__.M_from_T0_by_T(1/T_by_T0, y=y)
 
     @staticmethod
-    def M_from_a0_by_a(a0_by_a, y=Phys.gamma_air.magnitude):
+    def M_from_a0_by_a(a0_by_a, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of stagnation sound speed (brought to
         rest isentropically) to ambient sound speed.
 
@@ -239,7 +239,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def M_from_a_by_a0(a_by_a0, y=Phys.gamma_air.magnitude):
+    def M_from_a_by_a0(a_by_a0, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of ambient sound speed to stagnation
         sound speed (brought to rest isentropically).
 
@@ -253,7 +253,7 @@ class IsentropicFlow:
         return __class__.M_from_a0_by_a(1/a_by_a0, y=y)
 
     @staticmethod
-    def M_from_rho0_by_rho(rho0_by_rho, y=Phys.gamma_air.magnitude):
+    def M_from_rho0_by_rho(rho0_by_rho, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of stagnation density (brought to
         rest isentropically) to ambient density.
 
@@ -269,7 +269,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def M_from_rho_by_rho0(rho_by_rho0, y=Phys.gamma_air.magnitude):
+    def M_from_rho_by_rho0(rho_by_rho0, y=Phys.y_air.magnitude):
         """Compute Mach number from ratio of ambient density to stagnation
         density (brought to rest isentropically).
 
@@ -283,7 +283,7 @@ class IsentropicFlow:
         return __class__.M_from_rho0_by_rho(1/rho_by_rho0, y=y)
 
     @staticmethod
-    def _M_from_A_by_A_star(A_by_A_star, y=Phys.gamma_air.magnitude,
+    def _M_from_A_by_A_star(A_by_A_star, y=Phys.y_air.magnitude,
                             M_guess=5.0, tol=1e-10, max_iter=1e4):
         """Solve for subsonic or supersonic Mach number from ratio of local
         area to choked flow area.
@@ -310,7 +310,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def subsonic_M_from_A_by_A_star(A_by_A_star, y=Phys.gamma_air.magnitude,
+    def subsonic_M_from_A_by_A_star(A_by_A_star, y=Phys.y_air.magnitude,
                                     M_guess=None, tol=1e-10, max_iter=1e4):
         """Solve for subsonic Mach number from ratio of local area to choked
         flow area.
@@ -331,7 +331,7 @@ class IsentropicFlow:
         return M
 
     @staticmethod
-    def supersonic_M_from_A_by_A_star(A_by_A_star, y=Phys.gamma_air.magnitude,
+    def supersonic_M_from_A_by_A_star(A_by_A_star, y=Phys.y_air.magnitude,
                                       M_guess=None, tol=1e-10, max_iter=1e4):
         """Solve for supersonic Mach number from ratio of local area to choked
         flow area.

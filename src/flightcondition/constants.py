@@ -29,7 +29,7 @@ class PhysicalConstants():
             for air (non-extreme conditions)
         Cv_air (energy/temperature/mass): Specific heat at constant volume
             for air (non-extreme conditions)
-        gamma_air (dimless): Ratio of specific heats for air (low temperature
+        y_air (dimless): Ratio of specific heats for air (low temperature
             and pressure conditions)
         collision_diam_air (length): Effective collision diameter of an air
             molecule
@@ -41,7 +41,7 @@ class PhysicalConstants():
     R_air = 287.05287 * unit('J/(K kg)')
     Cp_air = 1.005e3 * unit('J/(K kg)')
     Cv_air = 0.718e3 * unit('J/(K kg)')
-    gamma_air = 1.4 * dimless
+    y_air = 1.4 * dimless
     Pr_air = 0.7 * dimless
     collision_diam_air = 0.365e-9 * unit('m')
     N_A = 6.02257e23 * unit('1/mol')
