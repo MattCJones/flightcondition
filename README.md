@@ -121,8 +121,8 @@ or `bylen`, e.g.  `.byvel.TAS` or `.byvel.byname.true_airspeed`.
 | Mach angle                       | `mu_M`    | `mach_angle`                     |
 | Dynamic pressure                 | `q_inf`   | `dynamic_pressure`               |
 | Impact pressure                  | `q_c`     | `impact_pressure`                |
-| Stagnation pressure              | `q_0`     | `stagnation_pressure`            |
-| Stagnation temperature           | `T_0`     | `stagnation_temperature`         |
+| Stagnation pressure              | `p0`      | `stagnation_pressure`            |
+| Stagnation temperature           | `T0`      | `stagnation_temperature`         |
 | Recovery temperature (laminar)   | `Tr_lamr` | `recovery_temperature_laminar`   |
 | Recovery temperature (turbulent) | `Tr_turb` | `recovery_temperature_turbulent` |
 | Reynolds number per unit length  | `Re_by_L` | `recovery_temperature_turbulent` |
