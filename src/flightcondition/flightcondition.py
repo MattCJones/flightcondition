@@ -107,6 +107,7 @@ class FlightCondition(Atmosphere):
         'Tr_lamr': 'recovery_temperature_laminar',
         'Tr_turb': 'recovery_temperature_turbulent',
         'Re_by_L': 'reynolds_per_length',
+        'S': 'speed_ratio',
     }
 
     _bylen_names = {
@@ -729,8 +730,8 @@ class FlightCondition(Atmosphere):
             EAS_units   = 'knots'
             TAS_units   = 'knots'
             CAS_units   = 'knots'
-            q_inf_units     = 'lbf/ft^2'
-            q_c_units     = 'lbf/ft^2'
+            q_inf_units = 'lbf/ft^2'
+            q_c_units   = 'lbf/ft^2'
             p0_units    = 'lbf/ft^2'
             T0_units    = 'degR'
             Tr_lamr_units = 'degR'
@@ -740,8 +741,8 @@ class FlightCondition(Atmosphere):
             TAS_units   = 'm/s'
             CAS_units   = 'm/s'
             EAS_units   = 'm/s'
-            q_inf_units     = 'Pa'
-            q_c_units     = 'Pa'
+            q_inf_units = 'Pa'
+            q_c_units   = 'Pa'
             p0_units    = 'Pa'
             T0_units    = 'degK'
             Tr_lamr_units = 'degK'
@@ -797,7 +798,11 @@ class FlightCondition(Atmosphere):
         Re_by_L_str = self._vartostr(
             var=self.Re_by_L, var_str='Re_by_L', to_units=Re_by_L_units,
             max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
-            fmt_val="10.4e", pretty_print=pretty_print)
+            fmt_val="10.4e", pretty_print=pretty_print) + "\n"
+        S_str = self._vartostr(
+            var=self.S, var_str='S', to_units='',
+            max_sym_chars=max_sym_chars, max_name_chars=max_name_chars,
+            fmt_val="10.5g", pretty_print=pretty_print)
 
         if np.isnan(np.atleast_1d(self.mu_M)).all():
             mu_M_str = ""
@@ -811,7 +816,9 @@ class FlightCondition(Atmosphere):
         if full_output:
             repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{mu_M_str}"
                         f"{q_inf_str}{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}"
-                        f"{Tr_turb_str}{Re_by_L_str}")
+                        f"{Tr_turb_str}{Re_by_L_str}"
+                        #f"{S_str}"
+                        )
         else:
             repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{Re_by_L_str}")
 
@@ -1197,6 +1204,14 @@ class FlightCondition(Atmosphere):
                                                      nu=self.nu,
                                                      length_unit=length_unit)
         return Re_by_L
+
+    @_property_decorators
+    def S(self):
+        """Get Speed Ratio :math:`V_th`"""
+        length_unit = 'in' if self.units == 'US' else None
+        # TODO 2024-06-15: work for standard model too
+        S = self._TAS/self._species._V_th
+        return S
 
 # =========================================================================== #
 #                        LENGTH FUNCTIONS & PROPERTIES                        #

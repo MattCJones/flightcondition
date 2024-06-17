@@ -45,6 +45,7 @@ class PhysicalConstants():
     Pr_air = 0.7 * dimless
     collision_diam_air = 0.365e-9 * unit('m')
     N_A = 6.02257e23 * unit('1/mol')
+    k_B = R/N_A
     R_earth = 6.356766e3 * unit('km')
 
 

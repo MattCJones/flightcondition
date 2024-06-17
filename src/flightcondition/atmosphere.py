@@ -210,15 +210,17 @@ class Species(DimensionalData):
         'nrho': 'number_density',
         'R_gas': 'gas_constant',
         'y': 'specific_heat_ratio',
+        'V_th': 'thermal_velocity',
     }
 
-    def __init__(self, species_arr, rho_mix, full_output=True,
+    def __init__(self, species_arr, rho, T, full_output=True,
                  units=None):
         """Initialize Species class.
 
         Args:
             species_arr (array): Array of species concentrations
-            rho_mix (density): Density of the mixture
+            rho (density): Density of the mixture
+            T (temperature): Temperature of the mixture
         """
         nN2 = species_arr[0]
         nO2 = species_arr[1]
@@ -287,11 +289,12 @@ class Species(DimensionalData):
         R_aO = R/MW_aO
         R_NO = R/MW_NO
 
-        self._R_gas = (
+        R_gas = (
                 R_N2*rho_N2 + R_O2*rho_O2 + R_O*rho_O + R_He*rho_He
                 + R_H*rho_H + R_Ar*rho_Ar + R_N*rho_N + R_aO*rho_aO
                 + R_NO*rho_NO
-                ) / rho_mix
+                ) / rho
+        self._R_gas = R_gas
 
         # Compute ratio of specific heats
         # TODO 2024-06-15: probably more complexity, e.g., temperature
@@ -309,7 +312,13 @@ class Species(DimensionalData):
                 y_N2*rho_N2 + y_O2*rho_O2 + y_O*rho_O + y_He*rho_He
                 + y_H*rho_H + y_Ar*rho_Ar + y_N*rho_N + y_aO*rho_aO
                 + y_NO*rho_NO
-                ) / rho_mix
+                ) / rho
+
+        # Compute thermal velocity
+        k_B = Phys.k_B
+        MW_gas = R/R_gas
+        m = MW_gas/N_A
+        self._V_th = np.sqrt((2*k_B*T)/m)
 
 
     def tostring(self, full_output=None, units=None, max_sym_chars=None,
@@ -339,9 +348,11 @@ class Species(DimensionalData):
         if self.units == 'US':
             nrho_units   = "1/ft^3"
             R_gas_units   = "ft lbf/(slug degR)"
+            speed_units = ("ft/s")
         else:  # SI units
             nrho_units   = "1/m^3"
             R_gas_units   = "J/(kg degK)"
+            speed_units = ("m/s")
         species_units   = ""
 
         # Insert longer variable name into output
@@ -413,11 +424,18 @@ class Species(DimensionalData):
                                max_name_chars=max_name_chars,
                                fmt_val="10.5g", pretty_print=pretty_print)
 
+        V_th_str = self._vartostr(var=self.V_th, var_str='V_th',
+                                  to_units=speed_units,
+                                  max_sym_chars=max_sym_chars,
+                                  max_name_chars=max_name_chars,
+                                  fmt_val="10.5g", pretty_print=pretty_print)
+
         # Assemble output string
         if full_output:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
                         f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}"
                         #f"\n{R_gas_str}\n{y_str}"
+                        #f"\n{V_th_str}"
                        )
         else:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
@@ -484,6 +502,11 @@ class Species(DimensionalData):
     def y(self):
         """Individual gas constant of gas mixture. """
         return self._y
+
+    @_property_decorators
+    def V_th(self):
+        """Thermal velocity of gas mixture. """
+        return self._V_th
 
 
 class Atmosphere(DimensionalData):
@@ -790,7 +813,7 @@ class Atmosphere(DimensionalData):
         T = out[:, 10] * unit('degK')
 
         self._species = Species([nN2, nO2, nO, nHe, nH, nAr, nN, naO, nNO],
-                                 rho)
+                                 rho, T)
 
         # Find pressure from temperature and density
         R_gas = self._species.R_gas
