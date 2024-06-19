@@ -130,7 +130,8 @@ class FlightCondition(Atmosphere):
 # =========================================================================== #
     def __init__(
         self, h=None, p=None, M=None, TAS=None, CAS=None, EAS=None, L=None,
-        Re=None, units=None, full_output=None, model=None, **kwargs,
+        Re=None, units=None, full_output=None, highalt_output=None, model=None,
+        **kwargs,
     ):
         """Constructor based on altitude and input velocity in terms of Mach
         number, TAS, CAS, or EAS.  Input altitude, one format of velocity, and
@@ -160,13 +161,15 @@ class FlightCondition(Atmosphere):
                 scale but not both - aliases are 'Re_L', 'reynolds_number'
             units (str): Set to 'US' for US units or 'SI' for SI
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
                 MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
         """
         # Initialize Atmosphere super class
-        # TODO 2023-11-24: if pressure altitude is given and no h, use that 
+        # TODO 2023-11-24: if pressure altitude is given and no h, use that
         super().__init__(h=h, units=units, full_output=full_output,
-                         model=model, **kwargs)
+                         highalt_output=highalt_output, model=model, **kwargs)
         self._byalt_tostring = super().tostring
 
         # Computer sea level properties
@@ -370,11 +373,14 @@ class FlightCondition(Atmosphere):
             names_dict_arr=[byalt_vars, byvel_vars, bylen_vars, ]
         )
 
-    def tostring(self, full_output=None, units=None, pretty_print=True):
+    def tostring(self, full_output=None, highalt_output=None, units=None,
+                 pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             units (str): Set to 'US' for US units or 'SI' for SI
             pretty_print (bool): Pretty print output
 
@@ -387,6 +393,13 @@ class FlightCondition(Atmosphere):
                 full_output = True
             else:
                 full_output = self.full_output
+
+        # Determine high-altitude output flag
+        if highalt_output is None:
+            if self.highalt_output is None:
+                highalt_output = False
+            else:
+                highalt_output = self.highalt_output
 
         # Determine units
         if units is not None:
@@ -413,15 +426,21 @@ class FlightCondition(Atmosphere):
             max_name_chars = 19  # length of variable names
 
         # Build output strings from sub-categories
-        alti_str = self._byalt_tostring(full_output, self.units,
+        alti_str = self._byalt_tostring(full_output=full_output,
+                                        highalt_output=highalt_output,
+                                        units=self.units,
                                         max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
-        spee_str = self._byvel_tostring(full_output, self.units,
+        spee_str = self._byvel_tostring(full_output=full_output,
+                                        highalt_output=highalt_output,
+                                        units=self.units,
                                         max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
-        leng_str = self._bylen_tostring(full_output, self.units,
+        leng_str = self._bylen_tostring(full_output=full_output,
+                                        highalt_output=highalt_output,
+                                        units=self.units,
                                         max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars,
                                         pretty_print=pretty_print)
@@ -446,17 +465,18 @@ class FlightCondition(Atmosphere):
             subdiv_str = " "*19
             spec_hdr = f"{subdiv_str}  Species Quantities   {subdiv_str}"
             spec_repr_str = self.species.tostring(
-                full_output=True, units=self.units, max_sym_chars=max_sym_chars,
+                full_output=True, highalt_output=highalt_output,
+                units=self.units, max_sym_chars=max_sym_chars,
                 max_name_chars=max_name_chars)
             spec_str = "\n" + spec_hdr + "\n" + spec_repr_str
         else:
             spec_str = ""
 
         repr_str = (f"{line_str}\n{top_hdr}\n{line_str}"
-                    f"\n{alt_hdr}" f"\n{alti_str}"
+                    f"\n{alt_hdr}"f"\n{alti_str}"
                     f"{spec_str}"
-                    f"\n{vel_hdr}" f"\n{spee_str}"
-                    f"\n{len_hdr}" f"\n{leng_str}"
+                    f"\n{vel_hdr}"f"\n{spee_str}"
+                    f"\n{len_hdr}"f"\n{leng_str}"
                     )
         return repr_str
 
@@ -701,12 +721,15 @@ class FlightCondition(Atmosphere):
                     raise_warning=True):
                 self._L = __class__._reshape_arr1_like_arr2(self._L, vel_arr)
 
-    def _byvel_tostring(self, full_output=None, units=None, max_sym_chars=None,
+    def _byvel_tostring(self, full_output=None, highalt_output=None,
+                        units=None, max_sym_chars=None,
                         max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             units (str): Set to 'US' for US units or 'SI' for SI
             max_sym_chars (int): Maximum characters in symbol name
             max_name_chars (int): Maximum characters in full name
@@ -721,6 +744,13 @@ class FlightCondition(Atmosphere):
                 full_output = True
             else:
                 full_output = self.full_output
+
+        # Determine high-altitude output flag
+        if highalt_output is None:
+            if self.highalt_output is None:
+                highalt_output = False
+            else:
+                highalt_output = self.highalt_output
 
         # Set default unit system
         if units is None:
@@ -817,10 +847,13 @@ class FlightCondition(Atmosphere):
             repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{mu_M_str}"
                         f"{q_inf_str}{q_c_str}{p0_str}{T0_str}{Tr_lamr_str}"
                         f"{Tr_turb_str}{Re_by_L_str}"
-                        #f"{S_str}"
                         )
+            if highalt_output:
+                repr_str += f"{S_str}"
         else:
             repr_str = (f"{M_str}{TAS_str}{CAS_str}{EAS_str}{Re_by_L_str}")
+            if highalt_output:
+                repr_str += f"{S_str}"
 
         return repr_str
 
@@ -1208,20 +1241,43 @@ class FlightCondition(Atmosphere):
     @_property_decorators
     def S(self):
         """Get Speed Ratio :math:`V_th`"""
-        length_unit = 'in' if self.units == 'US' else None
-        # TODO 2024-06-15: work for standard model too
-        S = self._TAS/self._species._V_th
+        if "msis" in self.model:
+            S = self._TAS/self._species._V_th
+        else:
+            # Compute thermal velocity using standard air gas constant
+            k_B = Phys.k_B
+            R = Phys.R
+            N_A = Phys.N_A
+            R_gas = Phys.R_air
+            T = self.T
+            MW_gas = R/R_gas
+            m = MW_gas/N_A
+            V_th = np.sqrt((2*k_B*T)/m)
+            S = self._TAS/V_th
         return S
+
+    @_property_decorators
+    def Vc(self):
+        """Get circular orbital velocity :math:`V_c`"""
+        G = Phys.G
+        M_earth = Phys.M_earth
+        mu = G*M_earth
+        r = Phys.R_earth + self._h
+        Vc = np.sqrt(mu/r)
+        return Vc
 
 # =========================================================================== #
 #                        LENGTH FUNCTIONS & PROPERTIES                        #
 # =========================================================================== #
-    def _bylen_tostring(self, full_output=True, units=None, max_sym_chars=None,
+    def _bylen_tostring(self, full_output=True, highalt_output=None,
+                        units=None, max_sym_chars=None,
                         max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             units (str): Set to 'US' for US units or 'SI' for SI
             max_sym_chars (int): Maximum characters in symbol name
             max_name_chars (int): Maximum characters in full name
@@ -1236,6 +1292,13 @@ class FlightCondition(Atmosphere):
                 full_output = True
             else:
                 full_output = self.full_output
+
+        # Determine high-altitude output flag
+        if highalt_output is None:
+            if self.highalt_output is None:
+                highalt_output = False
+            else:
+                highalt_output = self.highalt_output
 
         # Set default unit system
         if units is None:
@@ -1290,9 +1353,13 @@ class FlightCondition(Atmosphere):
         if full_output:
             repr_str = (f"{L_str}\n{Re_str}\n{h_BL_lamr_str}\n"
                         f"{h_BL_turb_str}\n{Cf_lamr_str}\n{Cf_turb_str}\n"
-                        f"{h_yplus1_str}\n{Kn_str}")
+                        f"{h_yplus1_str}")
+            if highalt_output:
+                repr_str += f"\n{Kn_str}"
         else:
             repr_str = (f"{L_str}\n{Re_str}")
+            if highalt_output:
+                repr_str += f"\n{Kn_str}"
 
         return repr_str
 
@@ -1421,7 +1488,7 @@ class FlightCondition(Atmosphere):
     @_property_decorators
     def h_yplus1(self):
         """Get height from flat plate wall in turbulent flow where yplus=1. """
-        h_yplus1 = self.wall_distance_from_yplus(1)
+        h_yplus1 = self.wall_distance_from_yplus(1.0)
         return h_yplus1
 
     @_property_decorators

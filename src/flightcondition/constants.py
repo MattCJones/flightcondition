@@ -46,7 +46,9 @@ class PhysicalConstants():
     collision_diam_air = 0.365e-9 * unit('m')
     N_A = 6.02257e23 * unit('1/mol')
     k_B = R/N_A
-    R_earth = 6.356766e3 * unit('km')
+    R_earth = 6.356766e3 * unit('km')  # 6378.1370 km eq, 6356.7523 km polar
+    G = 6.67408e-11 * unit("m^3/kg/s^2")
+    M_earth = 5.9722e24 * unit("kg")
 
 
 class AtmosphereConstants():

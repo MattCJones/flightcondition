@@ -214,7 +214,7 @@ class Species(DimensionalData):
     }
 
     def __init__(self, species_arr, rho, T, full_output=True,
-                 units=None):
+                 highalt_output=None, units=None):
         """Initialize Species class.
 
         Args:
@@ -233,10 +233,10 @@ class Species(DimensionalData):
         nNO = species_arr[8]
 
         self.full_output = full_output
+        self.highalt_output = highalt_output
         self.units = units
 
-        self._nrho = nN2 + nO2 + nO + nHe + nH + nAr + nN\
-                   + naO + nNO
+        self._nrho = nN2 + nO2 + nO + nHe + nH + nAr + nN + naO + nNO
 
         # Compute number concentrations of each species
         self._N2 = nN2/self._nrho
@@ -290,10 +290,10 @@ class Species(DimensionalData):
         R_NO = R/MW_NO
 
         R_gas = (
-                R_N2*rho_N2 + R_O2*rho_O2 + R_O*rho_O + R_He*rho_He
-                + R_H*rho_H + R_Ar*rho_Ar + R_N*rho_N + R_aO*rho_aO
-                + R_NO*rho_NO
-                ) / rho
+            R_N2*rho_N2 + R_O2*rho_O2 + R_O*rho_O + R_He*rho_He
+            + R_H*rho_H + R_Ar*rho_Ar + R_N*rho_N + R_aO*rho_aO
+            + R_NO*rho_NO
+        ) / rho
         self._R_gas = R_gas
 
         # Compute ratio of specific heats
@@ -309,10 +309,10 @@ class Species(DimensionalData):
         y_NO = 1.386
 
         self._y = (
-                y_N2*rho_N2 + y_O2*rho_O2 + y_O*rho_O + y_He*rho_He
-                + y_H*rho_H + y_Ar*rho_Ar + y_N*rho_N + y_aO*rho_aO
-                + y_NO*rho_NO
-                ) / rho
+            y_N2*rho_N2 + y_O2*rho_O2 + y_O*rho_O + y_He*rho_He
+            + y_H*rho_H + y_Ar*rho_Ar + y_N*rho_N + y_aO*rho_aO
+            + y_NO*rho_NO
+        ) / rho
 
         # Compute thermal velocity
         k_B = Phys.k_B
@@ -320,13 +320,14 @@ class Species(DimensionalData):
         m = MW_gas/N_A
         self._V_th = np.sqrt((2*k_B*T)/m)
 
-
-    def tostring(self, full_output=None, units=None, max_sym_chars=None,
-                 max_name_chars=None, pretty_print=True):
+    def tostring(self, full_output=None, highalt_output=None, units=None,
+                 max_sym_chars=None, max_name_chars=None, pretty_print=True):
         """Output string representation of class object.
 
         Args:
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             units (str): Set to 'US' for US units or 'SI' for SI
             max_sym_chars (int): Maximum characters in symbol name
             max_name_chars (int): Maximum characters iin full name
@@ -341,6 +342,13 @@ class Species(DimensionalData):
                 full_output = True
             else:
                 full_output = self.full_output
+
+        # Determine high-altitude output flag
+        if highalt_output is None:
+            if self.highalt_output is None:
+                highalt_output = False
+            else:
+                highalt_output = self.highalt_output
 
         if units is not None:
             self.units = units
@@ -408,10 +416,10 @@ class Species(DimensionalData):
                                 fmt_val="10.5g", pretty_print=pretty_print)
 
         nrho_str = self._vartostr(var=self.nrho, var_str='nrho',
-                                to_units=nrho_units,
-                                max_sym_chars=max_sym_chars,
-                                max_name_chars=max_name_chars,
-                                fmt_val="10.5g", pretty_print=pretty_print)
+                                  to_units=nrho_units,
+                                  max_sym_chars=max_sym_chars,
+                                  max_name_chars=max_name_chars,
+                                  fmt_val="10.5g", pretty_print=pretty_print)
 
         R_gas_str = self._vartostr(var=self.R_gas, var_str='R_gas',
                                    to_units=R_gas_units,
@@ -419,10 +427,10 @@ class Species(DimensionalData):
                                    max_name_chars=max_name_chars,
                                    fmt_val="10.5g", pretty_print=pretty_print)
 
-        y_str = self._vartostr(var=self.y, var_str='y', to_units="",
-                               max_sym_chars=max_sym_chars,
-                               max_name_chars=max_name_chars,
-                               fmt_val="10.5g", pretty_print=pretty_print)
+        # y_str = self._vartostr(var=self.y, var_str='y', to_units="",
+        #                        max_sym_chars=max_sym_chars,
+        #                        max_name_chars=max_name_chars,
+        #                        fmt_val="10.5g", pretty_print=pretty_print)
 
         V_th_str = self._vartostr(var=self.V_th, var_str='V_th',
                                   to_units=speed_units,
@@ -434,14 +442,15 @@ class Species(DimensionalData):
         if full_output:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
                         f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}"
-                        #f"\n{R_gas_str}\n{y_str}"
-                        #f"\n{V_th_str}"
-                       )
+                        )
+            if highalt_output:
+                repr_str += f"\n{R_gas_str}\n{V_th_str}"
         else:
             repr_str = (f"{N2_str}\n{O2_str}\n{O_str}\n{He_str}\n{H_str}"
                         f"\n{Ar_str}\n{N_str}\n{aO_str}\n{NO_str}\n{nrho_str}")
+            if highalt_output:
+                repr_str += f"\n{V_th_str}"
         return repr_str
-
 
     @_property_decorators
     def N2(self):
@@ -554,9 +563,10 @@ class Atmosphere(DimensionalData):
         'MFP': 'mean_free_path',
     }
 
-    def __init__(self, h=None, units=None, full_output=None, model=None,
-                 datetime=None, lon=None, lat=None, f107=None,
-                 f107a=None, **kwargs):
+    def __init__(self, h=None, units=None, full_output=None,
+                 highalt_output=None, model=None,
+                 datetime=None, lon=None, lat=None, f107=None, f107a=None,
+                 **kwargs):
         """Input geometric altitude - object contains the corresponding
         atmospheric quantities.
 
@@ -568,6 +578,8 @@ class Atmosphere(DimensionalData):
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
             units (str): Set to 'US' for US units or 'SI' for SI
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
                 MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
             datetime (str): UTC datetime in format "YYYY-MM-DDTHH:SS", e.g.,
@@ -629,6 +641,12 @@ class Atmosphere(DimensionalData):
         else:
             self.model = model
 
+        # Set output altitude type to high or low altitude
+        if highalt_output is None:
+            self.highalt_output = True if (h > h_max_standard).any() else False
+        else:
+            self.highalt_output = highalt_output
+
         #  Set altitude bounds and set altitude
         self._H_min = Atmo.H_base[0]
         self._h_min = __class__._h_from_H(self._H_min)
@@ -651,12 +669,14 @@ class Atmosphere(DimensionalData):
         self.byname = AliasAttributes(
             varsobj_arr=[self, ], names_dict_arr=[__class__.names_dict, ])
 
-    def tostring(self, full_output=None, units=None, max_sym_chars=None,
-                 max_name_chars=None, pretty_print=True):
+    def tostring(self, full_output=None, highalt_output=None, units=None,
+                 max_sym_chars=None, max_name_chars=None, pretty_print=True):
         """String representation of data structure.
 
         Args:
             full_output (bool): Set to True for full output
+            highalt_output (bool): Set to True for "high-altitude",
+                thermospheric-tailored output quantities
             units (str): Set to 'US' for US units or 'SI' for SI
             max_sym_chars (int): Maximum characters in symbol name
             max_name_chars (int): Maximum characters iin full name
@@ -760,14 +780,25 @@ class Atmosphere(DimensionalData):
             else:
                 full_output = self.full_output
 
+        # Determine high-altitude output flag
+        if highalt_output is None:
+            if self.highalt_output is None:
+                highalt_output = False
+            else:
+                highalt_output = self.highalt_output
+
         # Assemble output string
         if full_output:
             repr_str = (f"{h_str}\n{H_str}\n{p_str}\n{T_str}\n{rho_str}\n"
                         f"{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n{g_str}\n"
-                        f"{MFP_str}\n{layer_str}")
+                        f"{layer_str}")
+            if highalt_output:
+                repr_str += f"\n{MFP_str}"
         else:
             repr_str = (f"{h_str}\n{p_str}\n{T_str}\n{rho_str}\n{a_str}\n"
                         f"{nu_str}")
+            if highalt_output:
+                repr_str += f"\n{MFP_str}"
         return repr_str
 
     def _run_msis(self):
@@ -812,12 +843,12 @@ class Atmosphere(DimensionalData):
         nNO = out[:, 9] * unit('1/m^3')
         T = out[:, 10] * unit('degK')
 
-        self._species = Species([nN2, nO2, nO, nHe, nH, nAr, nN, naO, nNO],
-                                 rho, T)
+        self._species = Species(
+            [nN2, nO2, nO, nHe, nH, nAr, nN, naO, nNO], rho, T)
 
         # Find pressure from temperature and density
         R_gas = self._species.R_gas
-        p =  rho*(R_gas*T)
+        p = rho*(R_gas*T)
 
         return p, T
 

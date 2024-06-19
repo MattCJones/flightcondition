@@ -160,14 +160,19 @@ class BoundaryLayer:
                                  "be the same size")
 
         # Empirical data curve coefficients
-        M_data_arr = np.array([0, 0.3, 0.7, 0.9, 1.0, 1.5, 2.0, 2.5, 3.0])
+        M_data_arr = np.array([
+            0, 0.3, 0.7, 0.9, 1.0, 1.5, 2.0, 2.5, 3.0,
+            99.0,  # forcing constant BL thickness for very high speeds
+        ])
         A_data_arr = np.array([
             0.0391, 0.0399, 0.0392, 0.0376, 0.0381, 0.0371, 0.0329, 0.0286,
             0.0261,
+            0.0261,  # forcing constant BL thickness for very high speeds
         ])
         B_data_arr = np.array([
             -0.157, -0.159, -0.160, -0.159, -0.161, -0.164, -0.162, -0.161,
             -0.161,
+            -0.161,  # forcing constant BL thickness for very high speeds
         ])
 
         # Interpolate to find Cf_turb for the given Mach number
@@ -234,10 +239,12 @@ class BoundaryLayer:
                 # 'roskam1987' is fitted to Re and Mach number
                 Cf_turb = __class__._roskam1987_skin_friction_coeff_turb(
                     Re_x=Re_x, M=M)
+                # TODO 2024-06-19: need default fit for M>3
             elif source == 'white2006':
                 Cf_turb = 0.523/(np.log(0.06*Re_x))**2
             else:
                 raise ValueError(
                     f"Input reference is invalid: {source}\n\tSee source code."
                 )
+
         return Cf_turb
