@@ -183,7 +183,7 @@ class FlightCondition(Atmosphere):
         if M is None:
             M = __class__._arg_from_alias(M_aliases, kwargs)
         TAS_aliases = ['tas', 'true_airspeed', 'U_inf', 'V_inf', 'VTAS',
-                       'vtas']
+                       'vtas', 'U']
         if TAS is None:
             TAS = __class__._arg_from_alias(TAS_aliases, kwargs)
         CAS_aliases = ['cas', 'calibrated_airspeed', 'VCAS', 'vcas']
@@ -212,6 +212,16 @@ class FlightCondition(Atmosphere):
         if EAS is None:
             KEAS = __class__._arg_from_alias(KEAS_aliases, kwargs)
             EAS = None if KEAS is None else KEAS * unit('knots')
+
+        # Check if mps or kmps input and append unit if so
+        mps_aliases = ['mps',]
+        if TAS is None:
+            mps = __class__._arg_from_alias(mps_aliases, kwargs)
+            TAS = None if mps is None else mps * unit('m/s')
+        kmps_aliases = ['kmps',]
+        if TAS is None:
+            kmps = __class__._arg_from_alias(kmps_aliases, kwargs)
+            TAS = None if kmps is None else kmps * unit('km/s')
 
         # By default hold EAS constant when altitude is changed
         self._holdconst_vel_var = 'EAS'

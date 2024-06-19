@@ -98,6 +98,12 @@ def _parse_args(args_arr):
         '--keas', dest='KEAS', metavar='', nargs=None, type=float,
         default=None, help=argparse.SUPPRESS)
     parser.add_argument(
+        '--mps', dest='mps', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
+        '--kmps', dest='kmps', metavar='', nargs=None, type=float,
+        default=None, help=argparse.SUPPRESS)
+    parser.add_argument(
         '--L', dest='length_scale', metavar='', nargs=2,
         type=str, default=None,
         help=("length scale, e.g. '10 ft'; aliases include: "
@@ -175,6 +181,8 @@ def main():
     TAS_ = TAS_ if args.KTAS is None else args.KTAS*unit('knots')
     CAS_ = CAS_ if args.KCAS is None else args.KCAS*unit('knots')
     EAS_ = EAS_ if args.KEAS is None else args.KEAS*unit('knots')
+    TAS_ = TAS_ if args.mps is None else args.mps*unit('m/s')
+    TAS_ = TAS_ if args.kmps is None else args.kmps*unit('km/s')
     L_ = None if args.length_scale is None else _dimension(args.length_scale)
     L_ = L_ if args.ft is None else args.ft*unit('ft')
     L_ = L_ if args.m is None else args.m*unit('m')
