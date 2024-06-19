@@ -561,6 +561,7 @@ class Atmosphere(DimensionalData):
         'k': 'thermal_conductivity',
         'g': 'gravity',
         'MFP': 'mean_free_path',
+        'V_c': 'circular_orbital_speed',
     }
 
     def __init__(self, h=None, units=None, full_output=None,
@@ -700,6 +701,7 @@ class Atmosphere(DimensionalData):
             k_units   = 'slug ft/s^3/degR'
             g_units   = 'ft/s^2'
             MFP_units = 'ft'
+            speed_units = ("ft/s")
         else:  # SI units
             h_units   = 'km'
             H_units   = 'km'
@@ -712,6 +714,7 @@ class Atmosphere(DimensionalData):
             k_units   = 'W/m/K'
             g_units   = 'm/s^2'
             MFP_units = 'm'
+            speed_units = ("m/s")
 
         # Insert longer variable name into output
         if max_sym_chars is None:
@@ -773,6 +776,12 @@ class Atmosphere(DimensionalData):
                                         max_sym_chars=max_sym_chars,
                                         max_name_chars=max_name_chars)
 
+        V_c_str = self._vartostr(var=self.V_c, var_str='V_c',
+                                 to_units=speed_units,
+                                 max_sym_chars=max_sym_chars,
+                                 max_name_chars=max_name_chars,
+                                 fmt_val="10.5g", pretty_print=pretty_print)
+
         # Determine full output flag
         if full_output is None:
             if self.full_output is None:
@@ -793,7 +802,7 @@ class Atmosphere(DimensionalData):
                         f"{a_str}\n{mu_str}\n{nu_str}\n{k_str}\n{g_str}\n"
                         f"{layer_str}")
             if highalt_output:
-                repr_str += f"\n{MFP_str}"
+                repr_str += f"\n{MFP_str}\n{V_c_str}"
         else:
             repr_str = (f"{h_str}\n{p_str}\n{T_str}\n{rho_str}\n{a_str}\n"
                         f"{nu_str}")
@@ -1148,3 +1157,13 @@ class Atmosphere(DimensionalData):
     def species(self):
         """Species concentrations. """
         return self._species
+
+    @_property_decorators
+    def V_c(self):
+        """Circular orbital speed :math:`V_c`"""
+        G = Phys.G
+        M_earth = Phys.M_earth
+        mu = G*M_earth
+        r = Phys.R_earth + self._h
+        V_c = np.sqrt(mu/r)
+        return V_c

@@ -1256,16 +1256,6 @@ class FlightCondition(Atmosphere):
             S = self._TAS/V_th
         return S
 
-    @_property_decorators
-    def Vc(self):
-        """Get circular orbital velocity :math:`V_c`"""
-        G = Phys.G
-        M_earth = Phys.M_earth
-        mu = G*M_earth
-        r = Phys.R_earth + self._h
-        Vc = np.sqrt(mu/r)
-        return Vc
-
 # =========================================================================== #
 #                        LENGTH FUNCTIONS & PROPERTIES                        #
 # =========================================================================== #
