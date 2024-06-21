@@ -22,7 +22,7 @@ from flightcondition.constants import AtmosphereConstants as Atmo
 from flightcondition.common import AliasAttributes, DimensionalData,\
     _property_decorators
 from flightcondition.units import unit, check_dimensioned,\
-    check_length_dimensioned, check_US_length_units,\
+    check_length_dimensioned, check_US_length_units, check_US_pressure_units,\
     check_pressure_dimensioned, check_temperature_dimensioned
 
 
@@ -564,7 +564,7 @@ class Atmosphere(DimensionalData):
         'V_c': 'circular_orbital_speed',
     }
 
-    def __init__(self, h=None, units=None, full_output=None,
+    def __init__(self, h=None, p=None, units=None, full_output=None,
                  highalt_output=None, model=None,
                  datetime=None, lon=None, lat=None, f107=None, f107a=None,
                  **kwargs):
@@ -578,6 +578,8 @@ class Atmosphere(DimensionalData):
         Args:
             h (length): Geometric altitude - aliases are 'alt', 'altitude'
             units (str): Set to 'US' for US units or 'SI' for SI
+            p (pressure): Pressure altitude - aliases are 'p_alt',
+                'pressure_altitude'
             full_output (bool): Set to True for full output
             highalt_output (bool): Set to True for "high-altitude",
                 thermospheric-tailored output quantities
@@ -626,11 +628,28 @@ class Atmosphere(DimensionalData):
             if h_km is not None:
                 h = h_km * unit('km')
 
+        # Check for pressure altitude aliases
+        p_aliases = ['p_alt', 'pressure_altitude',]
+        if p is None:
+            p = __class__._arg_from_alias(p_aliases, kwargs)
+
         # Compute altitude bounds
         H_max_standard = Atmo.H_base[8]
         H_max_msis = Atmo.H_base[-1]
         h_max_msis = __class__._h_from_H(H_max_msis)
         h_max_standard = __class__._h_from_H(H_max_standard)
+        self._h_max_msis = h_max_msis
+        self._h_max_standard = h_max_standard
+
+        # If pressure altitude given, compute altitude from pressure
+        if p is not None:
+            h = self.h_from_p(p)
+            if check_US_pressure_units(p):
+                self.units = 'US'
+                h = h.to('kft')
+            else:
+                self.units = 'SI'
+                h = h.to('km')
 
         # Default to 0 kft
         if h is None:
@@ -810,7 +829,36 @@ class Atmosphere(DimensionalData):
                 repr_str += f"\n{MFP_str}"
         return repr_str
 
-    def _run_msis(self):
+    def _run_standard_for_p(self):
+        """Compute pressure from standard atmospheric model.
+
+        Returns:
+            pressure: Atmospheric pressure
+        """
+        H_base = np.atleast_1d(self.layer.H_base)
+        T_base = np.atleast_1d(self.layer.T_base)
+        T_grad = np.atleast_1d(self.layer.T_grad)
+        p_base = np.atleast_1d(self.layer.p_base)
+
+        H = np.atleast_1d(self.H)
+        T = np.atleast_1d(self.T)
+        g_0 = Phys.g
+        R_gas = Phys.R_air
+
+        p = np.zeros_like(H) * unit('Pa')
+
+        # Pressure equation changes between T_grad == 0 and T_grad != 0
+        s = T_grad == 0
+        p[s] = p_base[s]*np.exp((-g_0/(R_gas*T[s]))*(H[s] - H_base[s]))
+
+        s = T_grad != 0
+        p[s] = p_base[s]*(
+            1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
+        )**((1/T_grad[s])*(-g_0/R_gas))
+
+        return p
+
+    def _run_msis_for_p_T_species(self):
         """Run NRL MSIS model.
 
         Returns:
@@ -819,21 +867,10 @@ class Atmosphere(DimensionalData):
         """
         h_km = self._h.to('km').magnitude
 
-        # Determine version
-        pattern = r"msis\s*(\d+(\.\d+)?)"
-        match = re.search(pattern, str(self.model).lower())
-        _default_version = 2.1
-        _version = float(match.group(1)) if match else _default_version
-
-        # Format version to int if 0 or 2 to accommodate pymsis
-        _version = 0 if _version == 0.0 else _version
-        _version = 2 if _version == 2.0 else _version
-
-        self.model = f"msis{_version:1.1f}"
-
+        msis_version = self.model.replace("msis", "")
         _out = msis.run(dates=self._datetime, lons=self._lon, lats=self._lat,
                         alts=h_km, f107s=self._f107, f107as=self._f107a,
-                        version=_version)
+                        version=msis_version)
         _out[np.isnan(_out)] = 0.0
         N_species = 9  # N2 O2 O He H Ar N aO NO
         N_fc = len(self._h)
@@ -852,14 +889,14 @@ class Atmosphere(DimensionalData):
         nNO = out[:, 9] * unit('1/m^3')
         T = out[:, 10] * unit('degK')
 
-        self._species = Species(
+        species = Species(
             [nN2, nO2, nO, nHe, nH, nAr, nN, naO, nNO], rho, T)
 
         # Find pressure from temperature and density
-        R_gas = self._species.R_gas
+        R_gas = species.R_gas
         p = rho*(R_gas*T)
 
-        return p, T
+        return p, T, species
 
     @staticmethod
     @unit.wraps(unit.m, (unit.m, unit.m))
@@ -893,6 +930,67 @@ class Atmosphere(DimensionalData):
             length: Geometric altitude
         """
         h = R_earth*H/(R_earth - H)
+
+        return h
+
+    def h_from_p(self, p):
+        """Compute geometric altitude from pressure input.
+
+        Args:
+            p (pressure): Pressure altitude
+
+        Returns:
+            length: Geometric altitude
+        """
+        check_dimensioned(p)
+        check_pressure_dimensioned(p)
+        tofloat = 1.0
+        p = np.atleast_1d(p) * tofloat
+        h = np.zeros_like(p) * unit('m')
+        p_min = np.min(p)
+
+        # Set to msis if pressure is high altitude
+        if p_min < Atmo.p_base[8]:
+            self.model = "msis"
+            h_upper = self._h_max_msis
+            h_lower = self._h_min_msis
+        else:
+            h_upper = self._h_max_standard
+            h_lower = 0.0 * unit('ft')
+        h_guess = 0.5*(h_upper + h_lower)
+        pert = 0.01
+        _hm2 = h_guess
+        _hm1 = (1+pert)*h_guess
+        _h = (1+pert)*_hm1
+        atm = Atmosphere(_hm2)
+        _pm2 = atm.p
+        atm = Atmosphere(_hm1)
+        _pm1 = atm.p
+
+        # For each pressure, root find to find corresponding altitude
+        max_i = 100
+        p_perc_tol = 0.1
+        for idx, p in enumerate(p):
+            # Newton's Method
+            for i in range(max_i):
+                atm = Atmosphere(_h)
+                _p = atm.p
+
+                # Compute next altitude
+                _pprime = (_pm1 - _pm2)/(_hm1 - _hm2)
+                _h = _hm1 - _p/_pprime
+
+                # Break if below tolerance
+                if np.abs(100*(_p - _pm1)/_pm1) < p_perc_tol:
+                    break
+
+                # Set previous iteration variables
+                _hm2 = _hm1
+                _hm1 = _h
+                _pm2 = _pm1
+                _pm1 = _p
+
+            h[idx] = _h
 
         return h
 
@@ -1003,10 +1101,12 @@ class Atmosphere(DimensionalData):
                            units=self.units)
         self._T = None
         self._p = None
+        # TODO 2024-06-20: consider removing this and just p T setters
         if not self.model == "standard":
-            p, T = self._run_msis()
+            p, T, species = self._run_msis_for_p_T_species()
             self._p = p
             self._T = T
+            self._species = species
 
     @_property_decorators
     def H(self):
@@ -1019,28 +1119,10 @@ class Atmosphere(DimensionalData):
         # Only compute p if not set by user
         if self._p is None:
             if self.model == "standard":
-                H_base = np.atleast_1d(self.layer.H_base)
-                T_base = np.atleast_1d(self.layer.T_base)
-                T_grad = np.atleast_1d(self.layer.T_grad)
-                p_base = np.atleast_1d(self.layer.p_base)
-
-                H = np.atleast_1d(self.H)
-                T = np.atleast_1d(self.T)
-                g_0 = Phys.g
-                R_gas = Phys.R_air
-
-                p = np.zeros_like(H) * unit('Pa')
-
-                # Pressure equation changes between T_grad == 0 and T_grad != 0
-                s = T_grad == 0
-                p[s] = p_base[s]*np.exp((-g_0/(R_gas*T[s]))*(H[s] - H_base[s]))
-
-                s = T_grad != 0
-                p[s] = p_base[s]*(
-                    1 + (T_grad[s]/T_base[s])*(H[s] - H_base[s])
-                )**((1/T_grad[s])*(-g_0/R_gas))
+                p = self._run_standard_for_p()
             else:
-                p, _, _ = self._run_msis()
+                p, _, species = self._run_msis_for_p_T_species()
+                self._species = species
         else:  # return user set value
             p = self._p
 
@@ -1067,7 +1149,8 @@ class Atmosphere(DimensionalData):
                 T_base = np.atleast_1d(self.layer.T_base)
                 T = T_base + T_grad*(self.H - H_base)
             else:
-                _, T = self._run_msis()
+                _, T, species = self._run_msis_for_p_T_species()
+                self._species = species
         else:  # return user set value
             T = self._T
 
@@ -1167,3 +1250,25 @@ class Atmosphere(DimensionalData):
         r = Phys.R_earth + self._h
         V_c = np.sqrt(mu/r)
         return V_c
+
+    @property
+    def model(self):
+        """Atmospheric model. """
+        return self._model
+
+    @model.setter
+    def model(self, model):
+        if model == "standard":
+            self._model = model
+        else:
+            # Determine version
+            pattern = r"msis\s*(\d+(\.\d+)?)"
+            match = re.search(pattern, str(model).lower())
+            _default_version = 2.1
+            _version = float(match.group(1)) if match else _default_version
+
+            # Format version to int if 0 or 2 to accommodate pymsis
+            _version = 0 if _version == 0.0 else _version
+            _version = 2 if _version == 2.0 else _version
+
+            self._model = f"msis{_version:1.1f}"

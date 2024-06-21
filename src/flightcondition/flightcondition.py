@@ -91,6 +91,7 @@ class FlightCondition(Atmosphere):
     """
     # Define dictionaries mapping variables to their full names
     _byalt_names = Atmosphere.names_dict
+    _byalt_names.update({'species': 'species', 'layer': 'layer'})
     _byvel_names = {
         'TAS': 'true_airspeed',
         'CAS': 'calibrated_airspeed',

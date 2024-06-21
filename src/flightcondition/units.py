@@ -41,6 +41,10 @@ _US_length_units = ('ft', 'feet', 'foot', 'kft', 'kilofoot', 'kilofeet'
                     'fts', 'feets', 'foots', 'kfts', 'kilofoots', 'kilofeets',
                     'mi', 'mile', 'miles')
 
+_US_pressure_units = ('psi', 'psf', 'lbf/in^2', 'lbf/ft^2',
+                      'pound_force_per_square_inch',
+                      'pound_force_per_square_foot', 'force_pound / foot ** 2')
+
 
 def check_same_registry(inp):
     """Check if input units are using this package's unit registry.
@@ -105,6 +109,18 @@ def check_US_length_units(ell):
         bool: True if US unit else False
     """
     return ell.units in _US_length_units
+
+
+def check_US_pressure_units(p):
+    """Check if pressure unit type is an US unit
+
+    Args:
+        p (pressure): Length unit of type Quantity from pint package.
+
+    Returns:
+        bool: True if US unit else False
+    """
+    return p.units in _US_pressure_units
 
 
 def check_area_dimensioned(inp):
