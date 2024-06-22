@@ -169,7 +169,7 @@ class FlightCondition(Atmosphere):
         """
         # Initialize Atmosphere super class
         # TODO 2023-11-24: if pressure altitude is given and no h, use that
-        super().__init__(h=h, units=units, full_output=full_output,
+        super().__init__(h=h, p=p, units=units, full_output=full_output,
                          highalt_output=highalt_output, model=model, **kwargs)
         self._byalt_tostring = super().tostring
 

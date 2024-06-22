@@ -300,9 +300,9 @@ def brents(f, x0, x1, max_iter=50, tolerance=1e-5):
             new = x1 - (fx1 * (x1 - x0)) / (fx1 - fx0)
 
         if (
-                (new < ((3 * x0 + x1) / 4) or new > x1)
-                or (mflag and abs(new - x1) >= abs(x1 - x2) / 2)
-                or (mflag and abs(x1 - x2) < tolerance)
+            (new < ((3 * x0 + x1) / 4) or new > x1)
+            or (mflag and abs(new - x1) >= abs(x1 - x2) / 2)
+            or (mflag and abs(x1 - x2) < tolerance)
         ):
             new = (x0 + x1) / 2
             mflag = True
