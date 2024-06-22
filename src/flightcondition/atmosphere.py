@@ -20,7 +20,7 @@ from pymsis import msis
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
 from flightcondition.common import AliasAttributes, DimensionalData,\
-    _property_decorators
+    _property_decorators, brents
 from flightcondition.units import unit, check_dimensioned,\
     check_length_dimensioned, check_US_length_units, check_US_pressure_units,\
     check_pressure_dimensioned, check_temperature_dimensioned
@@ -634,22 +634,21 @@ class Atmosphere(DimensionalData):
             p = __class__._arg_from_alias(p_aliases, kwargs)
 
         # Compute altitude bounds
+        H_min = Atmo.H_base[0]
         H_max_standard = Atmo.H_base[8]
         H_max_msis = Atmo.H_base[-1]
+        h_min = __class__._h_from_H(H_min)
         h_max_msis = __class__._h_from_H(H_max_msis)
         h_max_standard = __class__._h_from_H(H_max_standard)
+        self._h_min = h_min
         self._h_max_msis = h_max_msis
         self._h_max_standard = h_max_standard
 
         # If pressure altitude given, compute altitude from pressure
         if p is not None:
-            h = self.h_from_p(p)
-            if check_US_pressure_units(p):
-                self.units = 'US'
-                h = h.to('kft')
-            else:
-                self.units = 'SI'
-                h = h.to('km')
+            self.units = 'US' if check_US_pressure_units(p) else 'SI'
+            h = self.h_from_p(p, model=model)
+            h = h.to('kft') if check_US_pressure_units(p) else h.to('km')
 
         # Default to 0 kft
         if h is None:
@@ -933,11 +932,13 @@ class Atmosphere(DimensionalData):
 
         return h
 
-    def h_from_p(self, p):
+    def h_from_p(self, p, model=None):
         """Compute geometric altitude from pressure input.
 
         Args:
             p (pressure): Pressure altitude
+            model (str): "standard" for Standard Atmosphere, "msis0.0" for NRL
+                MSIS 0.0, "msis2.0" for MSIS 2.0, or "msis2.1" for MSIS 2.0
 
         Returns:
             length: Geometric altitude
@@ -948,49 +949,67 @@ class Atmosphere(DimensionalData):
         p = np.atleast_1d(p) * tofloat
         h = np.zeros_like(p) * unit('m')
         p_min = np.min(p)
+        p_max = np.max(p)
 
         # Set to msis if pressure is high altitude
         if p_min < Atmo.p_base[8]:
             self.model = "msis"
             h_upper = self._h_max_msis
-            h_lower = self._h_min_msis
+            self.model = "msis" if model is None else model
         else:
             h_upper = self._h_max_standard
-            h_lower = 0.0 * unit('ft')
-        h_guess = 0.5*(h_upper + h_lower)
-        pert = 0.01
-        _hm2 = h_guess
-        _hm1 = (1+pert)*h_guess
-        _h = (1+pert)*_hm1
-        atm = Atmosphere(_hm2)
-        _pm2 = atm.p
-        atm = Atmosphere(_hm1)
-        _pm1 = atm.p
+            self.model = "standard" if model is None else model
+        h_lower = self._h_min
 
+        # Abort if p_max is greater than sea level or less than high altitude
+        p_unit = 'psi' if self.units == 'US' else 'kPa'
+        p_upper = Atmo.p_base[0].to(p_unit)
+        p_lower = Atmo.p_base[-1].to(p_unit)
+        if p_max > p_upper or p_min < p_lower:
+            raise ValueError(
+                f"Input pressure is out of bounds "
+                f"({p_lower:.5g} < p < {p_upper:.5g})"
+            )
+
+        h_lower_km = 0.999*h_lower.to('km').magnitude
+        h_upper_km = 0.999*h_upper.to('km').magnitude
         # For each pressure, root find to find corresponding altitude
-        max_i = 100
-        p_perc_tol = 0.1
-        for idx, p in enumerate(p):
-            # Newton's Method
-            for i in range(max_i):
-                atm = Atmosphere(_h)
-                _p = atm.p
+        max_n = 100
+        for idx, p_truth in enumerate(p):
+            def f(x):
+                pn = Atmosphere(km=x, model=self.model).p
+                fn = (p_truth - pn).to('Pa').magnitude
+                return fn
 
-                # Compute next altitude
-                _pprime = (_pm1 - _pm2)/(_hm1 - _hm2)
-                _h = _hm1 - _p/_pprime
+            # # Newton's (Secant) Method
+            # h_guess = h_lower_km + 0.2*(h_upper_km - h_lower_km)
+            # pert = 0.5
+            # xnm2 = h_guess
+            # xnm1 = (1+pert)*xnm2
+            # xn = (1+pert)*xnm1
+            # fnm1 = f(xnm1)
+            # fnm2 = f(xnm2)
+            # for n in range(max_n):
+            #     # Compute next altitude
+            #     fprime = (fnm1 - fnm2)/(xnm1 - xnm2)
+            #     xn = xnm1 - fnm1/fprime
+            #     fn = f(xn)
 
-                # Break if below tolerance
-                if np.abs(100*(_p - _pm1)/_pm1) < p_perc_tol:
-                    break
+            #     # Break if below tolerance
+            #     if np.abs(100*(fn - fnm1)/fnm1) < f_perc_tol:
+            #         break
 
-                # Set previous iteration variables
-                _hm2 = _hm1
-                _hm1 = _h
-                _pm2 = _pm1
-                _pm1 = _p
+            #     # Set previous iteration variables
+            #     xnm2 = xnm1
+            #     xnm1 = xn
+            #     fnm2 = fnm1
+            #     fnm1 = f(xnm1)
 
-            h[idx] = _h
+            # Brent's method
+            xn, steps = brents(f, x0=h_lower_km, x1=h_upper_km,
+                               max_iter=max_n, tolerance=1e-5) * unit('km')
+
+            h[idx] = xn
 
         return h
 
