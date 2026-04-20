@@ -12,9 +12,7 @@ Email: matt.c.jones.aoe@gmail.com
 """
 
 from functools import wraps
-# from importlib.resources import files  # Python 3.9+
-from pathlib import Path
-from pkg_resources import resource_filename  # Python 3.8+
+from importlib.resources import files, as_file  # Python 3.9+
 from inspect import currentframe
 from warnings import warn
 
@@ -23,16 +21,14 @@ from pint import UnitRegistry, DefinitionSyntaxError
 __all__ = ['unit', 'dimless', 'printv']
 
 # For Python 3.9+:
-# fc_units_file = files("flightcondition").joinpath("data/fc_units_en.txt")
-# For Python 3.8+:
-fc_units_file = Path(
-    resource_filename("flightcondition", "data/fc_units_en.txt"))  # 3.8+
-try:
-    unit = UnitRegistry(str(fc_units_file))
-except DefinitionSyntaxError:
-    warn(f"Failed to load custom unit system:\n{fc_units_file}\n"
-         "Loading default 'pint' unit system instead")
-    unit = UnitRegistry(system='mks')
+resource_path = files('flightcondition').joinpath('data/fc_units_en.txt')
+with as_file(resource_path) as fc_units_file:
+    try:
+        unit = UnitRegistry(str(fc_units_file))
+    except DefinitionSyntaxError:
+        warn(f"Failed to load custom unit system:\n{fc_units_file}\n"
+             "Loading default 'pint' unit system instead")
+        unit = UnitRegistry(system='mks')
 
 unit.default_format = '~P'
 dimless = unit('dimensionless')

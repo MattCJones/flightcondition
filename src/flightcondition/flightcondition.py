@@ -19,12 +19,12 @@ import numpy as np
 from flightcondition.atmosphere import Atmosphere
 from flightcondition.boundarylayer import BoundaryLayer
 from flightcondition.constants import PhysicalConstants as Phys
-from flightcondition.common import AliasAttributes, _len1array_to_scalar,\
+from flightcondition.common import AliasAttributes, _len1array_to_scalar, \
     _property_decorators
 from flightcondition.isentropicflow import IsentropicFlow
 from flightcondition.nondimensional import NonDimensional
-from flightcondition.units import unit, dimless, check_area_dimensioned,\
-    check_dimensioned, check_dimensionless, check_length_dimensioned,\
+from flightcondition.units import unit, dimless, check_area_dimensioned, \
+    check_dimensioned, check_dimensionless, check_length_dimensioned, \
     check_US_length_units, to_base_units_wrapper
 
 

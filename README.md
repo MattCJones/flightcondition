@@ -1,4 +1,6 @@
 # Flight Condition
+See the web application here: [https://flightcondition.streamlit.app](
+https://flightcondition.streamlit.app/)
 
 ## About
 
@@ -17,9 +19,6 @@ more with built-in unit checking.  Specific sub-modules include:
   https://en.wikipedia.org/wiki/International_Standard_Atmosphere) model.
 * `units`: built-in unit-checking and conversion using the
   [pint](https://pint.readthedocs.io) package.
-
-See the web application here: [https://flightcondition.streamlit.app](
-https://flightcondition.streamlit.app/)
 
 ![Flight Condition Demo](
 https://github.com/MattCJones/videos/blob/main/flightcondition/flightcondition_demo.gif

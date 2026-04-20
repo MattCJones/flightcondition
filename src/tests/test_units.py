@@ -14,9 +14,9 @@ Email: matt.c.jones.aoe@gmail.com
 import difflib
 import pytest
 
-#from importlib.resources import files  # Python 3.9+
+from importlib.resources import files, as_file  # Python 3.9+
 from pathlib import Path
-from pkg_resources import resource_filename  # Python 3.8+
+from sys import version_info
 
 import pint
 
@@ -39,31 +39,25 @@ def test_custom_units_yard_to_feet():
     """Test that custom units database is only different from default pint
     database by one line. """
     pint_dir = Path(pint.__file__).parent
-    pint_default_en = pint_dir / "default_en.txt"
+    pint_default_path = pint_dir / "default_en.txt"
     # For Python 3.9+:
-    # fc_units_en = files("flightcondition").joinpath("data/fc_units_en.txt")
-    # For Python 3.8+:
-    fc_units_en = Path(
-        resource_filename("flightcondition", "data/fc_units_en.txt"))
+    resource_path = files('flightcondition').joinpath('data/fc_units_en.txt')
+    with as_file(resource_path) as fc_units_path:
+        print(f"Files to diff:\n{pint_default_path}\n{fc_units_path}")
+        units_diff_lines = diff(pint_default_path, fc_units_path)
+        assert any(['-    yard' in s for s in units_diff_lines])
+        assert any(['+    foot' in s for s in units_diff_lines])
 
-    print(f"Files to diff:\n{pint_default_en}\n{fc_units_en}")
-    units_diff_lines = diff(pint_default_en, fc_units_en)
-    assert any(['-    yard' in s for s in units_diff_lines])
-    assert any(['+    foot' in s for s in units_diff_lines])
-
+@pytest.mark.skipif(version_info < (3, 11), reason="Requires Python 3.11+")
 def test_custom_units_constants_unchanged():
     """Test that "constants_en.txt" units database is unchanged. """
     pint_dir = Path(pint.__file__).parent
-    pint_constants_en = pint_dir / "constants_en.txt"
+    pint_constants_path = pint_dir / "constants_en.txt"
     # For Python 3.9+:
-    # fc_constants_en = files(
-    #     "flightcondition").joinpath("data/constants_en.txt")
-    # For Python 3.8+:
-    fc_constants_en = Path(
-        resource_filename("flightcondition", "data/constants_en.txt"))
-
-    constants_diff_lines = diff(pint_constants_en, fc_constants_en)
-    assert constants_diff_lines == []
+    resource_path = files('flightcondition').joinpath('data/constants_en.txt')
+    with as_file(resource_path) as fc_constants_path:
+        constants_diff_lines = diff(pint_constants_path, fc_constants_path)
+        assert constants_diff_lines == []
 
 def test_feet_units():
     """Test that feet are properly set for custom 'US' units. """

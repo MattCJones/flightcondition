@@ -410,13 +410,13 @@ def test_command_line_interface():
 Flight Condition.*
 [=]+
 [-]+\s+Altitude Quantities\s+[-]+
-.*h\s+= 23 \w+
+.*h\s+=\s+23 \w+
 .*
 [-]+\s+Velocity Quantities\s+[-]+
-.*EAS\s+= 233 kt
+.*EAS\s+=\s+233 kt
 .*
 [-]+\s+Length Quantities\s+[-]+
-.*L\s+= 4 ft
+.*L\s+=\s+4 ft
 .*"""
     re_out = re.search(out_regex, out_str, re.DOTALL)
     # Helpful print statements for debugging failure:

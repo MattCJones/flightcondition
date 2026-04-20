@@ -19,10 +19,10 @@ from pymsis import msis
 
 from flightcondition.constants import PhysicalConstants as Phys
 from flightcondition.constants import AtmosphereConstants as Atmo
-from flightcondition.common import AliasAttributes, DimensionalData,\
+from flightcondition.common import AliasAttributes, DimensionalData, \
     _property_decorators, brents
-from flightcondition.units import unit, check_dimensioned,\
-    check_length_dimensioned, check_US_length_units, check_US_pressure_units,\
+from flightcondition.units import unit, check_dimensioned, \
+    check_length_dimensioned, check_US_length_units, check_US_pressure_units, \
     check_pressure_dimensioned, check_temperature_dimensioned
 
 
